@@ -40,7 +40,7 @@ module Kitchen
         # Make sure Chef container is running
         pull_if_missing('someara/chef', 'latest')
         @chef_container = run_if_missing(
-          "#{instance.name}-chef",
+          "chef",
           'Cmd' => 'true',
           'Image' => 'someara/chef',
           'Tag' => 'latest'
@@ -50,7 +50,7 @@ module Kitchen
         # Create a temporary cache container
         pull_if_missing('someara/kitchen-cache', 'latest')
         @kitchen_container = run_if_missing(
-          "#{instance.name}-kitchen_sandbox",
+          "kitchen_sandbox",
           'Cmd' => 'true',
           'Image' => 'someara/kitchen-cache',
           'Tag' => 'latest'
@@ -69,7 +69,7 @@ module Kitchen
           ],
           'Image' => 'someara/kitchen-cache',
           'Tag' => 'latest',
-          'VolumesFrom' => [state[:chef_container].id, state[:kitchen_container].id]
+          'VolumesFrom' => [ 'chef', 'kitchen_sandbox' ]
           )
         state[:runner_container] = @runner_container
       end
@@ -77,8 +77,6 @@ module Kitchen
       def destroy(_state)
         # require 'pry'; binding.pry
         destroy_if_running "#{instance.name}-chef_runner"
-        destroy_if_running "#{instance.name}-kitchen_sandbox"
-        destroy_if_running "#{instance.name}-chef"
       end
     end
   end

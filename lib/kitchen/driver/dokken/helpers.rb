@@ -11,8 +11,15 @@ module DokkenHelpers
 
     # repair
     container = Docker::Container.create(args)
-    container.rename(name)
-    container
+
+    begin
+      container.rename(name)
+      return container
+    rescue Docker::Error::ConflictError
+      puts "race condition detected. aborting rename on #{name}"
+      container.stop
+      container.remove
+    end
   end
 
   def destroy_if_running(name)
