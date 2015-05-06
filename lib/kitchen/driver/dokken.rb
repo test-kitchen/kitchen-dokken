@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 #
 # Author:: Sean OMeara (<sean@chef.io>)
 #
@@ -37,7 +36,7 @@ module Kitchen
         @chef_container = nil
         @kitchen_container = nil
         @runner_container = nil
-        
+
         # Make sure Chef container is running
         pull_if_missing('someara/chef', 'latest')
         @chef_container = run_if_missing(
@@ -70,17 +69,17 @@ module Kitchen
           ],
           'Image' => 'someara/kitchen-cache',
           'Tag' => 'latest',
-          'VolumesFrom' => [ state[:chef_container].id, state[:kitchen_container].id ]
+          'VolumesFrom' => [state[:chef_container].id, state[:kitchen_container].id]
           )
         state[:runner_container] = @runner_container
       end
 
-      def destroy(state)
-        puts "Destroying container " + state[:runner_container][:id] if  state[:runner_container][:id]
-        puts "Destroying container " + state[:kitchen_container][:id] if  state[:kitchen_container][:id]
-        puts "Destroying container " + state[:chef_container][:id] if  state[:chef_container][:id]
+      def destroy(_state)
+        # require 'pry'; binding.pry
+        destroy_if_running "#{instance.name}-chef_runner"
+        destroy_if_running "#{instance.name}-kitchen_sandbox"
+        destroy_if_running "#{instance.name}-chef"
       end
-
     end
   end
 end

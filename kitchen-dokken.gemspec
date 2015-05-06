@@ -8,12 +8,12 @@ Gem::Specification.new do |spec|
   spec.version       = Kitchen::Driver::DOKKEN_VERSION
   spec.authors       = ['Sean OMeara']
   spec.email         = ['sean@chef.io']
-  spec.description   = %q{A Test Kitchen Driver for Dokken}
+  spec.description   = 'A Test Kitchen Driver for Dokken'
   spec.summary       = spec.description
   spec.homepage      = ''
   spec.license       = 'Apache 2.0'
 
-  spec.files         = `git ls-files`.split($/)
+  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
   spec.executables   = []
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']

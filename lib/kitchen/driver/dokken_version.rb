@@ -17,10 +17,8 @@
 # limitations under the License.
 
 module Kitchen
-
   module Driver
-
     # Version string for Dokken Kitchen driver
-    DOKKEN_VERSION = "0.1.0.dev"
+    DOKKEN_VERSION = '0.1.0.dev'
   end
 end
