@@ -1,32 +1,26 @@
 module DokkenHelpers
   # Create container if missing
-  def run_if_missing(name, args)
+  #
+  # @param name [String]
+  # @param args [Hash]
+  # @return [Docker::Container]
+  #def run_if_missing(name, args)
+  def run_if_missing(args)
     # test
     begin
-      container = Docker::Container.get(name)
+      container = Docker::Container.get(args['name'])
       return container
     rescue Docker::Error::NotFoundError
-      puts "creating container #{name}"
+      puts "creating container #{args['name']}"
     end
 
-    # repair
-    container = Docker::Container.create(args)
-
-    begin
-      container.rename(name)
-      return container
-    rescue Docker::Error::ConflictError
-      puts "race condition detected. aborting rename on #{name}"
-      container.stop
-      container.remove
-    end
+    return Docker::Container.create(args)
   end
 
   def destroy_if_running(name)
     container = Docker::Container.get(name)
     puts "destroying container #{name}"
 
-    # require 'pry'; binding.pry
     container.stop
     container.remove
   rescue

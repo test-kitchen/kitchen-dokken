@@ -19,6 +19,7 @@ require 'kitchen'
 require 'docker'
 require_relative 'dokken/helpers.rb'
 
+# FIXME - make true
 Excon.defaults[:ssl_verify_peer] = false
 
 module Kitchen
@@ -29,54 +30,78 @@ module Kitchen
     class Dokken < Kitchen::Driver::Base
       include DokkenHelpers
 
+      # (see Base#create)
       def create(state)
         @repotags = []
         Docker::Image.all.each { |i| @repotags << i.info['RepoTags'] }
 
         @chef_container = nil
         @kitchen_container = nil
+        @bitmover_container = nil
         @runner_container = nil
 
         # Make sure Chef container is running
         pull_if_missing('someara/chef', 'latest')
+
         @chef_container = run_if_missing(
-          "chef",
+          'name' => "chef",
           'Cmd' => 'true',
           'Image' => 'someara/chef',
           'Tag' => 'latest'
           )
-        state[:chef_container] = @chef_container
+        # require 'pry'; binding.pry
+        state[:chef_container] = @chef_container.json
 
         # Create a temporary cache container
         pull_if_missing('someara/kitchen-cache', 'latest')
         @kitchen_container = run_if_missing(
-          "kitchen_sandbox",
+          'name' => "kitchen_cache-#{instance.name}",
           'Cmd' => 'true',
           'Image' => 'someara/kitchen-cache',
           'Tag' => 'latest'
           )
-        state[:kitchen_container] = @kitchen_container
+        # require 'pry'; binding.pry
+        state[:kitchen_container] = @kitchen_container.json
 
+        # Create an ssh+rsync service
+        pull_if_missing('someara/kitchen2docker', 'latest')
+        @bitmover_container = run_if_missing(
+          'name' => "bit_mover-#{instance.name}",
+          'Image' => 'someara/kitchen2docker',
+          'Tag' => 'latest',
+          'PortBindings' => {
+            '22/tcp' => [
+              { "HostPort" => "" }]
+          },
+          'PublishAllPorts' => true,
+          'VolumesFrom' => [ "kitchen_cache-#{instance.name}"]
+          )
+        @bitmover_container.start
+        state[:bitmover_container] = @bitmover_container.json
+        
         # Start the suite container
         pull_if_missing(instance.platform.name, 'latest')
         @runner_container = run_if_missing(
-          "#{instance.name}-chef_runner",
+          'name' => "chef_runner-#{instance.name}",
           'Cmd' => [
             '/opt/chef/embedded/bin/chef-client', '-z',
             '-c', '/tmp/kitchen/client.rb',
             '-k', '/tmp/kitchen/dna.json',
             '-F', 'doc'
           ],
-          'Image' => 'someara/kitchen-cache',
+          'Image' => instance.platform.name,
           'Tag' => 'latest',
-          'VolumesFrom' => [ 'chef', 'kitchen_sandbox' ]
+          'VolumesFrom' => [ 'chef', "kitchen_cache-#{instance.name}" ]
           )
-        state[:runner_container] = @runner_container
+        # require 'pry'; binding.pry
+        state[:runner_container] = @runner_container.json
       end
 
-      def destroy(_state)
+      def destroy(state)
         # require 'pry'; binding.pry
-        destroy_if_running "#{instance.name}-chef_runner"
+        destroy_if_running "chef_runner-#{instance.name}"
+        destroy_if_running "bit_mover-#{instance.name}"
+        destroy_if_running "kitchen_cache-#{instance.name}"
       end
     end
   end
