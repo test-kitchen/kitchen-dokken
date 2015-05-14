@@ -4,7 +4,7 @@ module DokkenHelpers
   # @param name [String]
   # @param args [Hash]
   # @return [Docker::Container]
-  #def run_if_missing(name, args)
+  # def run_if_missing(name, args)
   def run_if_missing(args)
     # test
     begin
@@ -14,7 +14,7 @@ module DokkenHelpers
       puts "creating container #{args['name']}"
     end
 
-    return Docker::Container.create(args)
+    Docker::Container.create(args)
   end
 
   def destroy_if_running(name)
