@@ -37,7 +37,6 @@ module Kitchen
 
         # Make sure Chef container is running
         pull_if_missing('someara/chef', 'latest')
-
         chef_container = run_if_missing(
           'name' => 'chef',
           'Cmd' => 'true',
@@ -46,31 +45,21 @@ module Kitchen
           )
         state[:chef_container] = chef_container.json
 
-        # Create a temporary cache container
+        # Create a temporary volume container
+        # Create an ssh+rsync service
         pull_if_missing('someara/kitchen-cache', 'latest')
         kitchen_container = run_if_missing(
           'name' => "kitchen_cache-#{instance.name}",
-          'Cmd' => 'true',
           'Image' => 'someara/kitchen-cache',
-          'Tag' => 'latest'
-          )
-        state[:kitchen_container] = kitchen_container.json
-
-        # Create an ssh+rsync service
-        pull_if_missing('someara/kitchen2docker', 'latest')
-        bitmover_container = run_if_missing(
-          'name' => "bit_mover-#{instance.name}",
-          'Image' => 'someara/kitchen2docker',
           'Tag' => 'latest',
           'PortBindings' => {
             '22/tcp' => [
               { 'HostPort' => '' }]
           },
           'PublishAllPorts' => true,
-          'VolumesFrom' => ["kitchen_cache-#{instance.name}"]
           )
-        bitmover_container.start
-        state[:bitmover_container] = bitmover_container.json
+        kitchen_container.start
+        state[:kitchen_container] = kitchen_container.json
 
         # pull runner image
         pull_if_missing(instance.platform.name, 'latest')
@@ -84,7 +73,6 @@ module Kitchen
       def destroy(_state)
         # require 'pry'; binding.pry
         destroy_if_running "chef_runner-#{instance.name}"
-        destroy_if_running "bit_mover-#{instance.name}"
         destroy_if_running "kitchen_cache-#{instance.name}"
       end
     end
