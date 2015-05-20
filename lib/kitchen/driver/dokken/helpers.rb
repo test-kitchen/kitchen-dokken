@@ -4,12 +4,12 @@ module DokkenHelpers
   # @param name [String]
   # @param args [Hash]
   # @return [Docker::Container]
-  # def run_if_missing(name, args)
-  def run_if_missing(args)
+  # def create_if_missing(name, args)
+  def create_if_missing(args)
     # test
     begin
-      container = Docker::Container.get(args['name'])
-      return container
+      c = Docker::Container.get(args['name'])
+      return c
     rescue Docker::Error::NotFoundError
       puts "creating container #{args['name']}"
     end
@@ -17,12 +17,24 @@ module DokkenHelpers
     Docker::Container.create(args)
   end
 
+  def run_if_missing(args)
+    begin
+      # require 'pry'; binding.pry
+      c = Docker::Container.get(args['name'])
+    rescue Docker::Error::NotFoundError
+      # require 'pry'; binding.pry
+      c = create_if_missing(args)
+      c.start
+      return c
+    end
+  end
+
   def destroy_if_running(name)
-    container = Docker::Container.get(name)
+    c = Docker::Container.get(name)
     puts "destroying container #{name}"
 
-    container.stop
-    container.remove
+    c.stop
+    c.remove
   rescue
     puts "container #{name} not found"
   end

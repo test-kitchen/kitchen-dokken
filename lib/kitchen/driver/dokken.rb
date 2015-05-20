@@ -35,15 +35,19 @@ module Kitchen
         @repotags = []
         Docker::Image.all.each { |i| @repotags << i.info['RepoTags'] }
 
+        # require 'pry'; binding.pry
+
         # Make sure Chef container is running
         pull_if_missing('someara/chef', 'latest')
-        chef_container = run_if_missing(
-          'name' => 'chef',
+        chef_container = create_if_missing(
+          'name' => "chef-#{instance.name}",
           'Cmd' => 'true',
           'Image' => 'someara/chef',
           'Tag' => 'latest'
           )
         state[:chef_container] = chef_container.json
+
+        # require 'pry'; binding.pry
 
         # Create a temporary volume container
         # Create an ssh+rsync service
@@ -58,8 +62,9 @@ module Kitchen
           },
           'PublishAllPorts' => true,
           )
-        kitchen_container.start
         state[:kitchen_container] = kitchen_container.json
+
+        # require 'pry'; binding.pry
 
         # pull runner image
         pull_if_missing(instance.platform.name, 'latest')
