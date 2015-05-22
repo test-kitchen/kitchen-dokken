@@ -12,7 +12,9 @@ Falling into the Docker rabbit hole
   initialize your shell. docker info should report overlayfs, etc.
 - It contains two Dockerfiles used for building `chef` and
   `kitchen-cache` volume containers use by kitchen-dokken.
-- Run the build.sh scripts in dockerfiles. 
+- My authorized_keys are hard coded into the kitchen-cache. You'll
+  need to change that.
+- Run the build.sh scripts in dockerfiles/chef and dockerfiles/kitchen-cache
 - Modifications required. s/someara/your_docker_repo_here/
 
 # httpd
@@ -31,3 +33,17 @@ The interesting stuff is split between this and kitchen-dokken.
 
 # kitchen-dokken plugin
 - https://github.com/someara/kitchen-dokken
+
+# Known issues
+- Cannot go from zero to "kitchen test -c" right off the bat.
+- Must do a "kitchen create" first. I do now know why yet.
+- Can't load transport from plugin. run dokken branch of test-kitchen.
+  Why? No idea.
+- hard coded authorized_keys
+- hard coded someara/whatever all over the place         
+- can't choose chef version yet
+- can't choose platform versions yet
+- supplement platform with start_image?                  
+- kitchen converge error handling
+- kitchen verify error handling                       
+- further converges commit a new image, even when nothing changes.
