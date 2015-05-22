@@ -47,3 +47,9 @@ The interesting stuff is split between this and kitchen-dokken.
 - kitchen converge error handling
 - kitchen verify error handling                       
 - further converges commit a new image, even when nothing changes.
+
+# Pasties
+b kitchen destroy -c
+docker ps -aq | xargs docker kill
+docker ps -aq | xargs docker rm
+docker images -q | xargs docker rmi
