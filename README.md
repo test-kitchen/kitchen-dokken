@@ -1,67 +1,31 @@
-# <a name="title"></a> Kitchen::Dokken
+Falling into the Docker rabbit hole
+===================================
 
-A Test Kitchen Driver for Dokken.
+# Community Docker cookbook
+1.0 branch, on Github at
+- https://github.com/someara/chef-docker/tree/1.0
 
-## <a name="requirements"></a> Requirements
+# kitchen2docker
+- This cookbook is used to spin up a dockerhost on Digital Ocean.
+- Berkshelf points to the 1.0 branch of the Docker cookbook
+- It contains two Dockerfiles used for building `chef` and
+  `kitchen-cache` volume containers use by kitchen-dokken.
+- Run the build.sh scripts in dockerfiles. 
+- Modifications required. s/someara/your_docker_repo_here/
 
-NOTHING TO SEE HERE MOVE ALONG
-------------------------------
+# httpd
+- Test cookbook for developing all this.
+- Dokken branch at https://github.com/chef-cookbooks/httpd/tree/dokken
+- export KITCHEN_YAML=.kitchen.dokken.yml
+- Uses the 'dokken' branch of someara/test-kitchen for transport
+- Uses the someara/kitchen-dokken plugin for driver
+- bundle install
+- bundle install kitchen list
 
-**TODO:** document any software or library prerequisites that are required to
-use this driver. Implement the `#verify_dependencies` method in your Driver
-class to enforce these requirements in code, if possible.
+# test-kitchen branch
+The interesting stuff is split between this and kitchen-dokken.
 
-## <a name="installation"></a> Installation and Setup
+- https://github.com/someara/test-kitchen/tree/dokken
 
-Please read the [Driver usage][driver_usage] page for more details.
-
-## <a name="config"></a> Configuration
-
-**TODO:** Write descriptions of all configuration options
-
-### <a name="config-require-chef-omnibus"></a> require\_chef\_omnibus
-
-Determines whether or not a Chef [Omnibus package][chef_omnibus_dl] will be
-installed. There are several different behaviors available:
-
-* `true` - the latest release will be installed. Subsequent converges
-  will skip re-installing if chef is present.
-* `latest` - the latest release will be installed. Subsequent converges
-  will always re-install even if chef is present.
-* `<VERSION_STRING>` (ex: `10.24.0`) - the desired version string will
-  be passed the the install.sh script. Subsequent converges will skip if
-  the installed version and the desired version match.
-* `false` or `nil` - no chef is installed.
-
-The default value is unset, or `nil`.
-
-## <a name="development"></a> Development
-
-* Source hosted at [GitHub][repo]
-* Report issues/questions/feature requests on [GitHub Issues][issues]
-
-Pull requests are very welcome! Make sure your patches are well tested.
-Ideally create a topic branch for every separate change you make. For
-example:
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
-
-## <a name="authors"></a> Authors
-
-Created and maintained by [Sean OMeara][author] (<sean@chef.io>)
-
-## <a name="license"></a> License
-
-Apache 2.0 (see [LICENSE][license])
-
-
-[author]:           https://github.com/enter-github-user
-[issues]:           https://github.com/enter-github-user/kitchen-dokken/issues
-[license]:          https://github.com/enter-github-user/kitchen-dokken/blob/master/LICENSE
-[repo]:             https://github.com/enter-github-user/kitchen-dokken
-[driver_usage]:     http://docs.kitchen-ci.org/drivers/usage
-[chef_omnibus_dl]:  http://www.getchef.com/chef/install/
+# kitchen-dokken plugin
+- https://github.com/someara/kitchen-dokken

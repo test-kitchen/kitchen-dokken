@@ -79,6 +79,7 @@ module Kitchen
         # require 'pry'; binding.pry
         destroy_if_running "chef_runner-#{instance.name}"
         destroy_if_running "kitchen_cache-#{instance.name}"
+        destroy_if_running "chef-#{instance.name}"
 
         begin
           work_image = Docker::Image.get("someara/#{instance.name}")

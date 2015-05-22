@@ -42,6 +42,8 @@ module DokkenHelpers
   # Pull image from the Docker registry if missing
   def pull_if_missing(image, tag)
     # test
+    # require 'pry'; binding.pry if image.nil?
+    # require 'pry'; binding.pry if tag.nil?
     @repotags.each { |t| return if t.include?("#{image}:#{tag}") }
     # repair
     Docker::Image.create('fromImage' => image, 'tag' => tag)
