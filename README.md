@@ -8,6 +8,8 @@ Falling into the Docker rabbit hole
 # kitchen2docker
 - This cookbook is used to spin up a dockerhost on Digital Ocean.
 - Berkshelf points to the 1.0 branch of the Docker cookbook
+- After the machine is done converging, run . bin/kitchen2docker to
+  initialize your shell. docker info should report overlayfs, etc.
 - It contains two Dockerfiles used for building `chef` and
   `kitchen-cache` volume containers use by kitchen-dokken.
 - Run the build.sh scripts in dockerfiles. 
