@@ -32,11 +32,6 @@ module Kitchen
 
       # (see Base#create)
       def create(state)
-        @repotags = []
-        Docker::Image.all.each { |i| @repotags << i.info['RepoTags'] }
-
-        # require 'pry'; binding.pry
-
         # Make sure Chef container is running
         pull_if_missing('someara/chef', 'latest')
         chef_container = create_if_missing(
