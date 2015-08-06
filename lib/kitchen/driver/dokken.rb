@@ -19,7 +19,7 @@ require 'kitchen'
 require 'docker'
 require_relative 'dokken/helpers.rb'
 
-# FIXME - make true
+# FIXME: - make true
 Excon.defaults[:ssl_verify_peer] = false
 
 module Kitchen
@@ -39,7 +39,7 @@ module Kitchen
           'Cmd' => 'true',
           'Image' => 'someara/chef',
           'Tag' => 'latest'
-          )
+        )
         state[:chef_container] = chef_container.json
 
         # require 'pry'; binding.pry
@@ -55,8 +55,8 @@ module Kitchen
             '22/tcp' => [
               { 'HostPort' => '' }]
           },
-          'PublishAllPorts' => true,
-          )
+          'PublishAllPorts' => true
+        )
         state[:kitchen_container] = kitchen_container.json
 
         # require 'pry'; binding.pry

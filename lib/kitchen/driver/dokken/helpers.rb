@@ -18,15 +18,12 @@ module DokkenHelpers
   end
 
   def run_if_missing(args)
-    begin
-      # require 'pry'; binding.pry
-      c = Docker::Container.get(args['name'])
-    rescue Docker::Error::NotFoundError
-      # require 'pry'; binding.pry
-      c = create_if_missing(args)
-      c.start
-      return c
-    end
+    c = Docker::Container.get(args['name'])
+  rescue Docker::Error::NotFoundError
+    # require 'pry'; binding.pry
+    c = create_if_missing(args)
+    c.start
+    return c
   end
 
   def destroy_if_running(name)
@@ -42,11 +39,8 @@ module DokkenHelpers
   # Pull image from the Docker registry if missing
   def pull_if_missing(image, tag)
     # test
-    @repotags = []
-    Docker::Image.all.each { |i| @repotags << i.info['RepoTags'] }
-    next if @repotags.include?(["#{image}:#{tag}"])
-    
-    # repair    
+    return if Docker::Image.exist?("#{image}:#{tag}")
+    # repair
     Docker::Image.create('fromImage' => image, 'tag' => tag)
   end
 end
