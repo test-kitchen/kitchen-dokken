@@ -17,7 +17,6 @@
 
 require 'kitchen'
 require 'docker'
-require_relative 'dokken/helpers.rb'
 
 # FIXME: - make true
 Excon.defaults[:ssl_verify_peer] = false
@@ -28,13 +27,78 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
-      include DokkenHelpers
+
+      def delete_container(name)
+        c = Docker::Container.get(name)
+        puts "destroying container #{name}"
+        c.stop
+        c.remove
+      rescue
+        puts "container #{name} not found"
+      end
+
+      # container
+      def container_created?(container_name)
+        Docker::Container.get(container_name)
+        return true
+      rescue Docker::Error::NotFoundError
+        return false
+      end
+
+      def create_container(args)
+        begin
+          c = Docker::Container.get(args['name'])
+          return c
+        rescue Docker::Error::NotFoundError
+          begin
+            tries ||= 3
+            c = Docker::Container.create(args)
+            return c
+          rescue Docker::Error => e
+            retry unless (tries -= 1).zero?
+            raise e.message
+          end
+        end
+      end
+          
+      def run_container(args)
+        c = create_container(args)
+        tries ||= 3
+        begin
+          c.start
+          return c
+        rescue
+          retry unless (tries -= 1).zero?
+          raise e.message
+        end
+      end
+
+      # pull
+      def pull_image(repo, tag)
+        retries ||= 3
+        Docker::Image.create(
+          'fromImage' => repo,
+          'tag' => tag
+          )
+      rescue Docker::Error => e
+        retry unless (tries -= 1).zero?
+        raise e.message
+      end
+
+      def pull_if_missing(repo, tag)
+        return if Docker::Image.exist?("#{repo}:#{tag}")
+        pull_image(repo, tag)
+      end
 
       # (see Base#create)
       def create(state)
-        # Make sure Chef container is running
+        # pull images
         pull_if_missing('someara/chef', 'latest')
-        chef_container = create_if_missing(
+        pull_if_missing('someara/kitchen-cache', 'latest')
+        pull_if_missing(instance.platform.name, 'latest')
+
+        # chef container
+        chef_container = create_container(
           'name' => "chef-#{instance.name}",
           'Cmd' => 'true',
           'Image' => 'someara/chef',
@@ -42,12 +106,8 @@ module Kitchen
         )
         state[:chef_container] = chef_container.json
 
-        # require 'pry'; binding.pry
-
-        # Create a temporary volume container
-        # Create an ssh+rsync service
-        pull_if_missing('someara/kitchen-cache', 'latest')
-        kitchen_container = run_if_missing(
+        # kitchen cache
+        kitchen_container = run_container(
           'name' => "kitchen_cache-#{instance.name}",
           'Image' => 'someara/kitchen-cache',
           'Tag' => 'latest',
@@ -59,22 +119,15 @@ module Kitchen
         )
         state[:kitchen_container] = kitchen_container.json
 
-        # require 'pry'; binding.pry
-
-        # pull runner image
-        pull_if_missing(instance.platform.name, 'latest')
-
-        # shove some information into state so we can get at it from
-        # the transport
+        # platform to test
         state[:instance_name] = instance.name
         state[:instance_platform_name] = instance.platform.name
       end
 
       def destroy(_state)
-        # require 'pry'; binding.pry
-        destroy_if_running "chef_runner-#{instance.name}"
-        destroy_if_running "kitchen_cache-#{instance.name}"
-        destroy_if_running "chef-#{instance.name}"
+        delete_container "chef_runner-#{instance.name}"
+        delete_container "kitchen_cache-#{instance.name}"
+        delete_container "chef-#{instance.name}"
 
         begin
           work_image = Docker::Image.get("someara/#{instance.name}")
@@ -83,6 +136,7 @@ module Kitchen
           puts "Image someara/#{instance.name} does not exist. Nothing to do"
         end
       end
+
     end
   end
 end
