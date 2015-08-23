@@ -18,4 +18,4 @@ end
 desc 'Run all quality tasks'
 task quality: [:cane, :tailor, :stats]
 
-task default: [:quality]
+# task default: [:quality]
