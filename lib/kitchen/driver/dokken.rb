@@ -19,7 +19,7 @@ require 'kitchen'
 require 'docker'
 
 # FIXME: - make true
-Excon.defaults[:ssl_verify_peer] = false
+Excon.defaults[:ssl_verify_peer] = true
 
 module Kitchen
   module Driver
