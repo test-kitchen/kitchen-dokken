@@ -29,8 +29,6 @@ module Kitchen
     class Dokken < Kitchen::Driver::Base
       # (see Base#create)
       def create(state)
-        # require 'pry' ; binding.pry
-
         # image to converge
         debug "driver - pulling #{platform_image}"
         debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
@@ -75,13 +73,10 @@ module Kitchen
           work_image = platform_image
         end
 
-        runner_container = create_container(
+        runner_container = run_container(
           'name' => runner_container_name,
           'Cmd' => [
-            '/opt/chef/embedded/bin/chef-client', '-z',
-            '-c', '/tmp/kitchen/client.rb',
-            '-j', '/tmp/kitchen/dna.json',
-            '-F', 'doc'
+            'sleep', '9000'
           ],
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'VolumesFrom' => [chef_container_name, kitchen_cache_container_name],

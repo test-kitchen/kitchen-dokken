@@ -38,7 +38,8 @@ module Kitchen
             info("Transferring files to #{instance.to_str}")
             conn.upload(sandbox_dirs, config[:root_path])
             debug('Transfer complete')
-          end
+            conn.execute(run_command)
+          end          
         rescue Kitchen::Transport::TransportFailed => ex
           raise ActionFailed, ex.message
         ensure
@@ -49,15 +50,20 @@ module Kitchen
         instance_name = state[:instance_name]
 
         puts 'why am I not in color?'
-
+        
         c = Docker::Container.get(runner_container_name)
-        # c.tap(&:start).attach { |stream, chunk| printf "#{chunk}" }
-        c.tap(&:start).attach { |_stream, chunk| puts "#{chunk}" }
-        new_image = c.commit
-        new_image.tag('repo' => "someara/#{instance_name}", 'tag' => 'latest', 'force' => 'true')
+        new_image = c.commit          
+        new_image.tag('repo' => "someara/#{instance_name}", 'tag' =>'latest', 'force' => 'true')        
       end
 
       private
+      
+      def run_command
+        cmd = '/opt/chef/embedded/bin/chef-client -z'
+        cmd << ' -c /tmp/kitchen/client.rb'
+        cmd << ' -j /tmp/kitchen/dna.json'
+        cmd << ' -F doc'
+      end
 
       def runner_container_name
         "#{instance.name}-runner"

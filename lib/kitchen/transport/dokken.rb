@@ -37,7 +37,7 @@ module Kitchen
 
       class Connection < Kitchen::Transport::Dokken::Connection
         def execute(command)
-          system("docker exec kitchen_cache-#{options[:instance_name]} #{command}")
+          system("docker exec #{options[:instance_name]}-runner #{command}") unless command.nil?
         end
 
         def upload(locals, remote)
