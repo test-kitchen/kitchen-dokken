@@ -36,20 +36,17 @@ module Kitchen
       end
 
       class Connection < Kitchen::Transport::Dokken::Connection
-        def close
-          puts "transport - doing some closing"
-        end
-
         def execute(command)
-          puts "transport - docker exec busser command"
+          system("docker exec kitchen_cache-#{options[:instance_name]} #{command}")
         end
 
         def upload(locals, remote)
-          puts "transport - doing some uploading"
-        end
-
-        def wait_until_ready
-          puts "transport - waiting until ready"
+          ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
+          port = options[:kitchen_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+          rsync_cmd = '/usr/bin/rsync -az '
+          rsync_cmd << "-e \"ssh -o StrictHostKeyChecking=no -p #{port}\""
+          rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
+          system(rsync_cmd)
         end
       end
     end

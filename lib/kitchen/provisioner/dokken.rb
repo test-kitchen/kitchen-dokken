@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
 #
-# Author:: Fletcher Nichol (<fnichol@nichol.ca>)
+# Author:: Sean OMeara (<sean@chef.io>)
 #
-# Copyright (C) 2013, Fletcher Nichol
+# Copyright (C) 2015, Sean OMeara
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,44 +16,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "kitchen"
+require 'kitchen'
+require 'kitchen/provisioner/chef_zero'
 
 module Kitchen
-
   module Provisioner
-
-    # Dummy provisioner for Kitchen. This driver does nothing but report what
-    # would happen if this provisioner did anything of consequence. As a result
-    # it may be a useful provisioner to use when debugging or developing new
-    # features or plugins.
-    #
-    # @author Fletcher Nichol <fnichol@nichol.ca>
-    class Dokken < Kitchen::Provisioner::Base
-
+    # @author Sean OMeara <sean@chef.io>
+    class Dokken < Kitchen::Provisioner::ChefZero
       kitchen_provisioner_api_version 2
 
       plugin_version Kitchen::VERSION
 
-      default_config :sleep, 0
-      default_config :random_failure, false
-
       # (see Base#call)
       def call(state)
-        info("[#{name}] Converge on instance=#{instance} with state=#{state}")
-        
-        puts "provisioner - create instance_name variable from options"
-        puts "provisioner - create instance_platform_name variable from options"
-        puts "provisioner - pull someara/instance_name ?"
-        puts "provisioner - create work_image from someara/instance_name ?"
-        puts "provisioner - work_image = instance_platform_name"
-        puts "provisioner - chef_run = docker run --volumes-from chef-instance_name --volumes-from kitchen-cache-instance_name work_image:latest chef-client -z -c -j -F"
-        puts "provisioner - new_image = chef_run.commit"
-        puts "provisioner - new_image.tag someara/instance_name latest"
-        puts "provisioner - chef_run.delete"
+        # transfer files
+        begin
+          create_sandbox
+          sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
 
-        debug("[#{name}] Converge completed (#{config[:sleep]}s).")
+          instance.transport.connection(state) do |conn|
+            info("Transferring files to #{instance.to_str}")
+            conn.upload(sandbox_dirs, config[:root_path])
+            debug('Transfer complete')
+          end
+        rescue Kitchen::Transport::TransportFailed => ex
+          raise ActionFailed, ex.message
+        ensure
+          cleanup_sandbox
+        end
+
+        # converge node
+        instance_name = state[:instance_name]
+
+        puts 'why am I not in color?'
+
+        c = Docker::Container.get(runner_container_name)
+        # c.tap(&:start).attach { |stream, chunk| printf "#{chunk}" }
+        c.tap(&:start).attach { |_stream, chunk| puts "#{chunk}" }
+        new_image = c.commit
+        new_image.tag('repo' => "someara/#{instance_name}", 'tag' => 'latest', 'force' => 'true')
       end
 
+      private
+
+      def runner_container_name
+        "#{instance.name}-runner"
+      end
     end
   end
 end
