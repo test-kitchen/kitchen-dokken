@@ -45,9 +45,6 @@ module Kitchen
         ensure
           cleanup_sandbox
         end
-
-        # converge node
-        puts 'why am I not in color?'
       end
 
       private
