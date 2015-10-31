@@ -16,6 +16,7 @@
 # limitations under the License.
 
 require 'kitchen'
+require 'tmpdir'
 require 'digest/sha1'
 require_relative 'dokken/helpers'
 
@@ -48,10 +49,10 @@ module Kitchen
           ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           port = options[:kitchen_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
-          # require 'pry' ; binding.pry
-          # tmpdir = Dir.tmpdir
-          # FileUtils.mkdir_p "#{tmpdir}/dokken"
-          # File.write("#{tmpdir}/dokken/id_rsa", insecure_ssh_private_key)
+          tmpdir = Dir.tmpdir
+          FileUtils.mkdir_p "#{tmpdir}/dokken"
+          File.write("#{tmpdir}/dokken/id_rsa", insecure_ssh_private_key)
+          FileUtils.chmod(0600, "#{tmpdir}/dokken/id_rsa")
 
           rsync_cmd = '/usr/bin/rsync -az '
           rsync_cmd << "-e \"ssh -i #{tmpdir}/dokken/id_rsa -o StrictHostKeyChecking=no -p #{port}\""
