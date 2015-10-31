@@ -30,25 +30,24 @@ module Kitchen
       # (see Base#call)
       def call(state)
         # transfer files
-        begin
-          create_sandbox
-          sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
 
-          instance.transport.connection(state) do |conn|
-            info("Transferring files to #{instance.to_str}")
-            conn.upload(sandbox_dirs, config[:root_path])
-            debug('Transfer complete')
-            conn.execute(run_command)
-          end          
-        rescue Kitchen::Transport::TransportFailed => ex
-          raise ActionFailed, ex.message
-        ensure
-          cleanup_sandbox
+        create_sandbox
+        sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
+
+        instance.transport.connection(state) do |conn|
+          info("Transferring files to #{instance.to_str}")
+          conn.upload(sandbox_dirs, config[:root_path])
+          debug('Transfer complete')
+          conn.execute(run_command)
         end
+      rescue Kitchen::Transport::TransportFailed => ex
+        raise ActionFailed, ex.message
+      ensure
+        cleanup_sandbox
       end
 
       private
-      
+
       def run_command
         cmd = '/opt/chef/embedded/bin/chef-client -z'
         cmd << ' -c /tmp/kitchen/client.rb'

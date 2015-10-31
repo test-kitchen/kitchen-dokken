@@ -16,7 +16,11 @@
 # limitations under the License.
 
 require 'kitchen'
+require 'tmpdir'
 require 'docker'
+require_relative 'dokken/helpers'
+
+include Dokken::Driver::Helpers
 
 # FIXME: - make true
 Excon.defaults[:ssl_verify_peer] = false
@@ -49,8 +53,10 @@ module Kitchen
         state[:chef_container] = chef_container.json
 
         # kitchen cache
-        debug "driver - pulling #{kitchen_cache_image}"
-        pull_if_missing kitchen_cache_image
+        # debug "driver - pulling #{kitchen_cache_image}"
+        # pull_if_missing kitchen_cache_image
+        create_kitchen_cache_image
+
         debug "driver - creating #{kitchen_cache_container_name}"
         kitchen_container = run_container(
           'name' => kitchen_cache_container_name,
@@ -65,6 +71,7 @@ module Kitchen
         debug 'driver - saving kitchen_container json to state[:kitchen_container]'
         state[:kitchen_container] = kitchen_container.json
 
+        # FIXME: remove this?
         # runner container
         begin
           Docker::Image.get("someara/#{instance.name}")
@@ -75,9 +82,8 @@ module Kitchen
 
         runner_container = run_container(
           'name' => runner_container_name,
-          'Cmd' => [
-            'sleep', '9000'
-          ],
+          'Cmd' => %w(
+            sleep 9000),
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'VolumesFrom' => [chef_container_name, kitchen_cache_container_name],
         # 'Tty' => true

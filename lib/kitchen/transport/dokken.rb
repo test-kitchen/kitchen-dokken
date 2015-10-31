@@ -17,6 +17,9 @@
 
 require 'kitchen'
 require 'digest/sha1'
+require_relative 'dokken/helpers'
+
+include Dokken::Transport::Helpers
 
 module Kitchen
   module Transport
@@ -44,8 +47,14 @@ module Kitchen
         def upload(locals, remote)
           ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           port = options[:kitchen_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+
+          # require 'pry' ; binding.pry
+          # tmpdir = Dir.tmpdir
+          # FileUtils.mkdir_p "#{tmpdir}/dokken"
+          # File.write("#{tmpdir}/dokken/id_rsa", insecure_ssh_private_key)
+
           rsync_cmd = '/usr/bin/rsync -az '
-          rsync_cmd << "-e \"ssh -o StrictHostKeyChecking=no -p #{port}\""
+          rsync_cmd << "-e \"ssh -i #{tmpdir}/dokken/id_rsa -o StrictHostKeyChecking=no -p #{port}\""
           rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
           system(rsync_cmd)
         end
