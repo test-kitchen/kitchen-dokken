@@ -54,8 +54,14 @@ module Kitchen
           File.write("#{tmpdir}/dokken/id_rsa", insecure_ssh_private_key)
           FileUtils.chmod(0600, "#{tmpdir}/dokken/id_rsa")
 
-          rsync_cmd = '/usr/bin/rsync -az '
-          rsync_cmd << "-e \"ssh -i #{tmpdir}/dokken/id_rsa -o StrictHostKeyChecking=no -p #{port}\""
+          rsync_cmd = '/usr/bin/rsync -a -e'
+          rsync_cmd << ' \''
+          rsync_cmd << "ssh -i #{tmpdir}/dokken/id_rsa"
+          rsync_cmd << ' -o StrictHostKeyChecking=no'
+          rsync_cmd << ' -o UserKnownHostsFile=/dev/null'
+          rsync_cmd << ' -o LogLevel=ERROR'
+          rsync_cmd << " -p #{port}"
+          rsync_cmd << '\''
           rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
           system(rsync_cmd)
         end

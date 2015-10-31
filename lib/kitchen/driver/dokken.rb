@@ -153,6 +153,7 @@ module Kitchen
       end
 
       def pull_image(image)
+        puts "SEANDEBUG: #{image}"
         retries ||= 3
         Docker::Image.create(
           'fromImage' => repo(image),
