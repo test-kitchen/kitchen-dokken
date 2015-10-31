@@ -53,7 +53,6 @@ module Kitchen
         cmd = '/opt/chef/embedded/bin/chef-client -z'
         cmd << ' -c /tmp/kitchen/client.rb'
         cmd << ' -j /tmp/kitchen/dna.json'
-        cmd << ' -F doc'
       end
 
       def runner_container_name
