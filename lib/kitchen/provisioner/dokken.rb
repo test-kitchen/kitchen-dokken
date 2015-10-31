@@ -47,13 +47,7 @@ module Kitchen
         end
 
         # converge node
-        instance_name = state[:instance_name]
-
         puts 'why am I not in color?'
-        
-        c = Docker::Container.get(runner_container_name)
-        new_image = c.commit          
-        new_image.tag('repo' => "someara/#{instance_name}", 'tag' =>'latest', 'force' => 'true')        
       end
 
       private
