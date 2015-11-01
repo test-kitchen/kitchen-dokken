@@ -142,6 +142,8 @@ module Kitchen
 
       def pull_image(image)
         retries ||= 3
+        # puts "SEANDEBUG: #{image}"
+        # puts "SEANDEBUG: #{repo(image)} #{tag(image)}"
         Docker::Image.create('fromImage' => repo(image), 'tag' => tag(image))
       rescue Docker::Error => e
         retry unless (tries -= 1).zero?

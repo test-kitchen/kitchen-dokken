@@ -46,7 +46,6 @@ module Kitchen
           
           c = Docker::Container.get("#{options[:instance_name]}-runner")
           o = c.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
-          # require 'pry' ; binding.pry
           exit_code = o[2]
 
           if exit_code != 0

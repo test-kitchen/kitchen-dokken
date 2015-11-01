@@ -29,8 +29,6 @@ module Kitchen
 
       # (see Base#call)
       def call(state)
-        # transfer files
-
         create_sandbox
         sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
 
