@@ -40,18 +40,21 @@ module Kitchen
       end
 
       class Connection < Kitchen::Transport::Dokken::Connection
-        
-        def execute(command)
-          return if command.nil?
-          
-          c = Docker::Container.get("#{options[:instance_name]}-runner")
-          o = c.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
-          exit_code = o[2]
 
-          if exit_code != 0
-            raise Transport::DockerExecFailed,
-            "Docker Exec (#{exit_code}) for command: [#{command}]"
-          end
+        def execute(command)
+          puts "SEANDEBUG: execute: docker exec #{options[:instance_name]}-runner #{command}"
+          system("docker exec #{options[:instance_name]}-runner #{command}")
+          # return if command.nil?
+
+          # c = Docker::Container.get("#{options[:instance_name]}-runner")
+          # puts "SEANDEBUG: command: #{command}"
+          # o = c.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
+          # exit_code = o[2]
+
+          # if exit_code != 0
+          #   raise Transport::DockerExecFailed,
+          #   "Docker Exec (#{exit_code}) for command: [#{command}]"
+          # end
         end
 
         def upload(locals, remote)
@@ -78,6 +81,11 @@ module Kitchen
           rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
           system(rsync_cmd)
         end
+
+        # def login_command
+        #   puts "hi"
+        # end
+
       end
     end
   end
