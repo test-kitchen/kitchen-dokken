@@ -34,12 +34,10 @@ module Kitchen
       # (see Base#create)
       def create(state)
         # image to converge
-        debug "driver - pulling #{platform_image}"
         debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
         pull_if_missing platform_image
 
         # chef container
-        debug "driver - pulling #{chef_image}"
         debug "driver - pulling #{chef_image} #{repo(chef_image)} #{tag(chef_image)}"
         pull_if_missing chef_image
 
@@ -49,12 +47,12 @@ module Kitchen
           'Cmd' => 'true',
           'Image' => "#{repo(chef_image)}:#{tag(chef_image)}"
         )
-        debug 'driver - saving container json to state[:chef_container]'
         state[:chef_container] = chef_container.json
 
         # kitchen cache
         # debug "driver - pulling #{kitchen_cache_image}"
         # pull_if_missing kitchen_cache_image
+        debug 'driver - calling create_kitchen_cache_image'
         create_kitchen_cache_image
 
         debug "driver - creating #{kitchen_cache_container_name}"
@@ -68,25 +66,15 @@ module Kitchen
           },
           'PublishAllPorts' => true
         )
-        debug 'driver - saving kitchen_container json to state[:kitchen_container]'
         state[:kitchen_container] = kitchen_container.json
 
-        # FIXME: remove this?
         # runner container
-        begin
-          Docker::Image.get("someara/#{instance.name}")
-          work_image = "someara/#{instance.name}"
-        rescue
-          work_image = platform_image
-        end
-
+        debug "driver - starting #{runner_container_name}"
         runner_container = run_container(
           'name' => runner_container_name,
-          'Cmd' => %w(
-            sleep 9000),
-          'Image' => "#{repo(work_image)}:#{tag(work_image)}",
-          'VolumesFrom' => [chef_container_name, kitchen_cache_container_name],
-        # 'Tty' => true
+          'Cmd' => %w(sleep 9000),
+          'Image' => "#{repo(platform_image)}:#{tag(platform_image)}",
+          'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
         )
 
         state[:platform_image] = platform_image
@@ -153,12 +141,8 @@ module Kitchen
       end
 
       def pull_image(image)
-        puts "SEANDEBUG: #{image}"
         retries ||= 3
-        Docker::Image.create(
-          'fromImage' => repo(image),
-          'tag' => tag(image)
-        )
+        Docker::Image.create('fromImage' => repo(image), 'tag' => tag(image))
       rescue Docker::Error => e
         retry unless (tries -= 1).zero?
         raise e.message
