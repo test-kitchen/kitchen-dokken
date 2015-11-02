@@ -34,13 +34,14 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
+      # default_config :login, ''
+
       def connection(state, &block)
         options = config.to_hash.merge(state)
         Kitchen::Transport::Dokken::Connection.new(options, &block)
       end
 
       class Connection < Kitchen::Transport::Dokken::Connection
-
         def execute(command)
           puts "SEANDEBUG: execute: docker exec #{options[:instance_name]}-runner #{command}"
           system("docker exec #{options[:instance_name]}-runner #{command}")
@@ -82,10 +83,12 @@ module Kitchen
           system(rsync_cmd)
         end
 
-        # def login_command
-        #   puts "hi"
-        # end
-
+        def login_command
+          # require 'pry' ; binding.pry
+          runner = "#{options[:instance_name]}-runner"
+          args = ['exec', '-it', runner, '/bin/sh']
+          LoginCommand.new('docker', args)
+        end
       end
     end
   end
