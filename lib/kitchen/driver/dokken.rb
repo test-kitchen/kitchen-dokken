@@ -31,6 +31,8 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
+      default_config :pid_one_command, 'sleep 9000'
+
       # (see Base#create)
       def create(state)
         # image to config
@@ -90,7 +92,7 @@ module Kitchen
         debug "driver - starting #{runner_container_name}"
         runner_container = run_container(
           'name' => runner_container_name,
-          'Cmd' => %w(sleep 9000),
+          'Cmd' => Shellwords.shellwords(config[:pid_one_command]),
           'Image' => "#{repo(platform_image)}:#{tag(platform_image)}",
           'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
         )
@@ -152,7 +154,7 @@ module Kitchen
         begin
           c.start
           return c
-        rescue
+        rescue e
           retry unless (tries -= 1).zero?
           raise e.message
         end

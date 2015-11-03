@@ -46,6 +46,7 @@ module Kitchen
 
       private
 
+      # magic method name because we're subclassing ChefZero
       def run_command
         cmd = '/opt/chef/embedded/bin/chef-client -z'
         cmd << ' -c /tmp/kitchen/client.rb'
