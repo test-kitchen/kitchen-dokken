@@ -43,9 +43,10 @@ module Kitchen
 
       class Connection < Kitchen::Transport::Dokken::Connection
         def execute(command)
-          puts "SEANDEBUG: execute: docker exec #{options[:instance_name]}-runner #{command}"
+          return if command.nil?
+
+          # puts "SEANDEBUG: execute: docker exec #{options[:instance_name]}-runner #{command}"
           system("docker exec #{options[:instance_name]}-runner #{command}")
-          # return if command.nil?
 
           # c = Docker::Container.get("#{options[:instance_name]}-runner")
           # puts "SEANDEBUG: command: #{command}"
@@ -86,7 +87,7 @@ module Kitchen
         def login_command
           # require 'pry' ; binding.pry
           runner = "#{options[:instance_name]}-runner"
-          args = ['exec', '-it', runner, '/bin/sh']
+          args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
       end

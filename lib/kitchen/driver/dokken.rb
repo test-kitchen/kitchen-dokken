@@ -33,9 +33,7 @@ module Kitchen
     class Dokken < Kitchen::Driver::Base
       # (see Base#create)
       def create(state)
-        # image to converge
-        debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
-        pull_if_missing platform_image
+        pull_platform_image
 
         # chef container
         debug "driver - pulling #{chef_image} #{repo(chef_image)} #{tag(chef_image)}"
@@ -92,11 +90,17 @@ module Kitchen
         debug "driver - deleting container #{runner_container_name}"
         delete_container runner_container_name
 
+        # FIXME: is this still needed?
         debug "driver - deleting image someara/#{instance.name}"
         delete_image "someara/#{instance.name}"
       end
 
       private
+
+      def pull_platform_image
+        debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
+        pull_if_missing platform_image
+      end
 
       def delete_image(name)
         i = Docker::Image.get(name)
