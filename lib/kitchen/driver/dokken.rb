@@ -33,26 +33,71 @@ module Kitchen
     class Dokken < Kitchen::Driver::Base
       # (see Base#create)
       def create(state)
+        # image to config
         pull_platform_image
 
-        # chef container
-        debug "driver - pulling #{chef_image} #{repo(chef_image)} #{tag(chef_image)}"
-        pull_if_missing chef_image
+        # chef
+        pull_chef_image
+        start_chef_container state
 
-        debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
-        chef_container = create_container(
-          'name' => chef_container_name,
-          'Cmd' => 'true',
-          'Image' => "#{repo(chef_image)}:#{tag(chef_image)}"
+        # kitchen_cache
+        make_kitchen_cache_image
+        start_kitchen_cache_container state
+
+        # runner
+        start_runner_container state
+
+        # misc
+        save_misc_state state
+      end
+
+      def destroy(_state)
+        delete_kitchen_cache
+        delete_chef_container
+        delete_runner
+        delete_work_image
+      end
+
+      private
+
+      def save_misc_state(state)
+        state[:platform_image] = platform_image
+        state[:instance_name] = instance.name
+        state[:instance_platform_name] = instance.platform.name
+      end
+
+      def delete_work_image
+        debug "driver - deleting image someara/#{instance.name}"
+        delete_image "someara/#{instance.name}"
+      end
+
+      def delete_runner
+        debug "driver - deleting container #{runner_container_name}"
+        delete_container runner_container_name
+      end
+
+      def delete_chef_container
+        debug "driver - deleting container #{chef_container_name}"
+        delete_container chef_container_name
+      end
+
+      def delete_kitchen_cache
+        debug "driver - deleting container #{kitchen_cache_container_name}"
+        delete_container kitchen_cache_container_name
+      end
+
+      def start_runner_container(state)
+        debug "driver - starting #{runner_container_name}"
+        runner_container = run_container(
+          'name' => runner_container_name,
+          'Cmd' => %w(sleep 9000),
+          'Image' => "#{repo(platform_image)}:#{tag(platform_image)}",
+          'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
         )
-        state[:chef_container] = chef_container.json
+        state[:runner_container] = runner_container.json
+      end
 
-        # kitchen cache
-        # debug "driver - pulling #{kitchen_cache_image}"
-        # pull_if_missing kitchen_cache_image
-        debug 'driver - calling create_kitchen_cache_image'
-        create_kitchen_cache_image
-
+      def start_kitchen_cache_container(state)
         debug "driver - creating #{kitchen_cache_container_name}"
         kitchen_container = run_container(
           'name' => kitchen_cache_container_name,
@@ -65,41 +110,33 @@ module Kitchen
           'PublishAllPorts' => true
         )
         state[:kitchen_container] = kitchen_container.json
+      end
 
-        # runner container
-        debug "driver - starting #{runner_container_name}"
-        runner_container = run_container(
-          'name' => runner_container_name,
-          'Cmd' => %w(sleep 9000),
-          'Image' => "#{repo(platform_image)}:#{tag(platform_image)}",
-          'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
+      def make_kitchen_cache_image
+        # debug "driver - pulling #{kitchen_cache_image}"
+        # pull_if_missing kitchen_cache_image
+        debug 'driver - calling create_kitchen_cache_image'
+        create_kitchen_cache_image
+      end
+
+      def start_chef_container(state)
+        debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
+        chef_container = create_container(
+          'name' => chef_container_name,
+          'Cmd' => 'true',
+          'Image' => "#{repo(chef_image)}:#{tag(chef_image)}"
         )
-
-        state[:platform_image] = platform_image
-        state[:instance_name] = instance.name
-        state[:instance_platform_name] = instance.platform.name
+        state[:chef_container] = chef_container.json
       end
-
-      def destroy(_state)
-        debug "driver - deleting container #{kitchen_cache_container_name}"
-        delete_container kitchen_cache_container_name
-
-        debug "driver - deleting container #{chef_container_name}"
-        delete_container chef_container_name
-
-        debug "driver - deleting container #{runner_container_name}"
-        delete_container runner_container_name
-
-        # FIXME: is this still needed?
-        debug "driver - deleting image someara/#{instance.name}"
-        delete_image "someara/#{instance.name}"
-      end
-
-      private
 
       def pull_platform_image
         debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
         pull_if_missing platform_image
+      end
+
+      def pull_chef_image
+        debug "driver - pulling #{chef_image} #{repo(chef_image)} #{tag(chef_image)}"
+        pull_if_missing chef_image
       end
 
       def delete_image(name)
