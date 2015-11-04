@@ -57,7 +57,6 @@ module Kitchen
         delete_kitchen_cache
         delete_chef_container
         delete_runner
-        delete_work_image
       end
 
       private
@@ -66,11 +65,6 @@ module Kitchen
         state[:platform_image] = platform_image
         state[:instance_name] = instance.name
         state[:instance_platform_name] = instance.platform.name
-      end
-
-      def delete_work_image
-        debug "driver - deleting image someara/#{instance.name}"
-        delete_image "someara/#{instance.name}"
       end
 
       def delete_runner
@@ -165,7 +159,7 @@ module Kitchen
         puts "Destroying container #{name}."
         c.stop
         c.delete(force: true, v: true)
-      rescue Docker::Error => e
+      rescue
         puts "Container #{name} not found. Nothing to delete."
       end
 
