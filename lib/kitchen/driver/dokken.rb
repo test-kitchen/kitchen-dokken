@@ -144,7 +144,7 @@ module Kitchen
       def delete_image(name)
         i = Docker::Image.get(name)
         i.remove(force: true)
-      rescue
+      rescue Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
       end
 
@@ -154,7 +154,7 @@ module Kitchen
         begin
           c.start
           return c
-        rescue e
+        rescue Docker::Error => e
           retry unless (tries -= 1).zero?
           raise e.message
         end
@@ -165,7 +165,7 @@ module Kitchen
         puts "Destroying container #{name}."
         c.stop
         c.delete(force: true, v: true)
-      rescue
+      rescue Docker::Error => e
         puts "Container #{name} not found. Nothing to delete."
       end
 
@@ -185,8 +185,6 @@ module Kitchen
 
       def pull_image(image)
         retries ||= 3
-        # puts "SEANDEBUG: #{image}"
-        # puts "SEANDEBUG: #{repo(image)} #{tag(image)}"
         Docker::Image.create('fromImage' => repo(image), 'tag' => tag(image))
       rescue Docker::Error => e
         retry unless (tries -= 1).zero?
@@ -223,7 +221,7 @@ module Kitchen
       end
 
       def runner_container_name
-        "#{instance.name}-runner"
+        "#{instance.name}"
       end
     end
   end

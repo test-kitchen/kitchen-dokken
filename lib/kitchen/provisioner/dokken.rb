@@ -54,7 +54,7 @@ module Kitchen
       end
 
       def runner_container_name
-        "#{instance.name}-runner"
+        "#{instance.name}"
       end
     end
   end

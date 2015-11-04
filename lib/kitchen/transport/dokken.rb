@@ -45,10 +45,10 @@ module Kitchen
         def execute(command)
           return if command.nil?
 
-          # puts "SEANDEBUG: execute: docker exec #{options[:instance_name]}-runner #{command}"
-          system("docker exec #{options[:instance_name]}-runner #{command}")
+          # puts "SEANDEBUG: execute: docker exec #{options[:instance_name]} #{command}"
+          system("docker exec #{options[:instance_name]} #{command}")
 
-          # c = Docker::Container.get("#{options[:instance_name]}-runner")
+          # c = Docker::Container.get("#{options[:instance_name]}")
           # puts "SEANDEBUG: command: #{command}"
           # o = c.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
           # exit_code = o[2]
@@ -86,7 +86,7 @@ module Kitchen
 
         def login_command
           # require 'pry' ; binding.pry
-          runner = "#{options[:instance_name]}-runner"
+          runner = "#{options[:instance_name]}"
           args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
