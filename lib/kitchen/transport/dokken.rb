@@ -34,8 +34,6 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
-      # default_config :login, ''
-
       def connection(state, &block)
         options = config.to_hash.merge(state)
         Kitchen::Transport::Dokken::Connection.new(options, &block)
@@ -45,20 +43,42 @@ module Kitchen
         def execute(command)
           return if command.nil?
 
-          # puts "SEANDEBUG: execute: docker exec #{options[:instance_name]} #{command}"
-          system("docker exec #{options[:instance_name]} #{command}")
+          # puts "SEANDEBUG: execute: docker exec #{instance_name} #{command}"
+          # system("docker exec #{options[:instance_name]} #{command}")
 
-          # c = Docker::Container.get("#{options[:instance_name]}")
-          # puts "SEANDEBUG: command: #{command}"
-          # o = c.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
-          # exit_code = o[2]
+          runner = Docker::Container.get(instance_name)
+          o = runner.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
+          exit_code = o[2]
 
-          # if exit_code != 0
-          #   raise Transport::DockerExecFailed,
-          #   "Docker Exec (#{exit_code}) for command: [#{command}]"
-          # end
+          if exit_code != 0
+            raise Transport::DockerExecFailed,
+            "Docker Exec (#{exit_code}) for command: [#{command}]"
+          end
+
+          begin
+            old_image = Docker::Image.get(work_image)
+            old_image.remove
+          rescue
+            debug "#{work_image} not present. nothing to remove."
+          end
+          
+          new_image = runner.commit
+          new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true')
         end
 
+        def instance_name
+          options[:instance_name]
+        end
+        
+        def work_image
+          return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
+          return instance_name
+        end
+
+        def image_prefix
+          'someara'
+        end
+        
         def upload(locals, remote)
           ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           port = options[:kitchen_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]

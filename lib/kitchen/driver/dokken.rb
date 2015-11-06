@@ -110,9 +110,9 @@ module Kitchen
 
       def make_kitchen_cache_image
         # debug "driver - pulling #{kitchen_cache_image}"
-        # pull_if_missing kitchen_cache_image
+        pull_if_missing kitchen_cache_image
         debug 'driver - calling create_kitchen_cache_image'
-        create_kitchen_cache_image
+        # create_kitchen_cache_image
       end
 
       def start_chef_container(state)
