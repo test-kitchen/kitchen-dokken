@@ -51,8 +51,8 @@ module Kitchen
           exit_code = o[2]
 
           if exit_code != 0
-            raise Transport::DockerExecFailed,
-            "Docker Exec (#{exit_code}) for command: [#{command}]"
+            fail Transport::DockerExecFailed,
+                 "Docker Exec (#{exit_code}) for command: [#{command}]"
           end
 
           begin
@@ -61,7 +61,7 @@ module Kitchen
           rescue
             debug "#{work_image} not present. nothing to remove."
           end
-          
+
           new_image = runner.commit
           new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true')
         end
@@ -69,16 +69,16 @@ module Kitchen
         def instance_name
           options[:instance_name]
         end
-        
+
         def work_image
           return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
-          return instance_name
+          instance_name
         end
 
         def image_prefix
           'someara'
         end
-        
+
         def upload(locals, remote)
           ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           port = options[:kitchen_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
