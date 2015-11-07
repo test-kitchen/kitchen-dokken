@@ -46,6 +46,9 @@ module Kitchen
         make_kitchen_cache_image
         start_kitchen_cache_container state
 
+        # work image
+        build_work_image state
+
         # runner
         start_runner_container state
 
@@ -57,14 +60,61 @@ module Kitchen
         delete_kitchen_cache
         delete_chef_container
         delete_runner
+        delete_work_image
       end
 
       private
 
+      def delete_work_image
+        return unless Docker::Image.exist?(work_image)
+        i = Docker::Image.get(work_image)
+        i.remove(force: true)
+      end
+
+      def build_work_image(state)
+        return if Docker::Image.exist?(work_image)
+
+        FileUtils.mkdir_p context_root
+        File.write("#{context_root}/Dockerfile", work_image_dockerfile)
+
+        i = Docker::Image.build_from_dir(context_root, 'nocache' => true, 'rm' => true)
+        i.tag('repo' => repo(work_image), 'tag' => tag(work_image), 'force' => true)
+        state[:work_image] = work_image
+      end
+
+      def context_root
+        tmpdir = Dir.tmpdir
+        "#{tmpdir}/dokken/#{instance_name}"
+      end
+
+      def work_image_dockerfile
+        from = "FROM #{platform_image}"
+        custom = []
+        Array(config[:intermediate_instructions]).each { |c| custom << c }
+        [from, custom].join("\n")
+      end
+
       def save_misc_state(state)
         state[:platform_image] = platform_image
-        state[:instance_name] = instance.name
-        state[:instance_platform_name] = instance.platform.name
+        state[:instance_name] = instance_name
+        state[:instance_platform_name] = instance_platform_name
+      end
+
+      def instance_name
+        instance.name
+      end
+
+      def instance_platform_name
+        instance.platform.name
+      end
+
+      def work_image
+        return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
+        instance_name
+      end
+
+      def image_prefix
+        'someara'
       end
 
       def delete_runner
@@ -87,7 +137,7 @@ module Kitchen
         runner_container = run_container(
           'name' => runner_container_name,
           'Cmd' => Shellwords.shellwords(config[:pid_one_command]),
-          'Image' => "#{repo(platform_image)}:#{tag(platform_image)}",
+          'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
         )
         state[:runner_container] = runner_container.json
@@ -109,9 +159,10 @@ module Kitchen
       end
 
       def make_kitchen_cache_image
-        # debug "driver - pulling #{kitchen_cache_image}"
+        debug "driver - pulling #{kitchen_cache_image}"
         pull_if_missing kitchen_cache_image
-        debug 'driver - calling create_kitchen_cache_image'
+        # -- or --
+        # debug 'driver - calling create_kitchen_cache_image'
         # create_kitchen_cache_image
       end
 
