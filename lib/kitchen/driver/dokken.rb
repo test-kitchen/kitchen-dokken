@@ -32,6 +32,7 @@ module Kitchen
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
       default_config :pid_one_command, 'sleep 9000'
+      default_config :privileged, false
 
       # (see Base#create)
       def create(state)
@@ -138,7 +139,10 @@ module Kitchen
           'name' => runner_container_name,
           'Cmd' => Shellwords.shellwords(config[:pid_one_command]),
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
-          'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
+          'HostConfig' => {
+            'Privileged' => config[:privileged],
+            'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
+          }
         )
         state[:runner_container] = runner_container.json
       end
