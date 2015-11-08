@@ -66,19 +66,28 @@ module Kitchen
 
       private
 
+      def connection
+        @connection ||= begin
+                          opts = Docker.options
+                          opts[:read_timeout] = 3600
+                          opts[:write_timeout] = 3600
+                          Docker::Connection.new(Docker.url, opts)
+                        end
+      end
+
       def delete_work_image
-        return unless Docker::Image.exist?(work_image)
-        i = Docker::Image.get(work_image)
+        return unless Docker::Image.exist?(work_image, connection)
+        i = Docker::Image.get(work_image, connection)
         i.remove(force: true)
       end
 
       def build_work_image(state)
-        return if Docker::Image.exist?(work_image)
+        return if Docker::Image.exist?(work_image, connection)
 
         FileUtils.mkdir_p context_root
         File.write("#{context_root}/Dockerfile", work_image_dockerfile)
 
-        i = Docker::Image.build_from_dir(context_root, 'nocache' => true, 'rm' => true)
+        i = Docker::Image.build_from_dir(context_root, { 'nocache' => true, 'rm' => true }, connection)
         i.tag('repo' => repo(work_image), 'tag' => tag(work_image), 'force' => true)
         state[:work_image] = work_image
       end
@@ -191,7 +200,7 @@ module Kitchen
       end
 
       def delete_image(name)
-        i = Docker::Image.get(name)
+        i = Docker::Image.get(name, connection)
         i.remove(force: true)
       rescue Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
@@ -210,7 +219,7 @@ module Kitchen
       end
 
       def delete_container(name)
-        c = Docker::Container.get(name)
+        c = Docker::Container.get(name, connection)
         puts "Destroying container #{name}."
         c.stop
         c.delete(force: true, v: true)
@@ -219,9 +228,9 @@ module Kitchen
       end
 
       def create_container(args)
-        Docker::Container.get(args['name'])
+        Docker::Container.get(args['name'], connection)
       rescue
-        return Docker::Container.create(args)
+        c = Docker::Container.create(args, connection)
       end
 
       def repo(image)
@@ -234,14 +243,14 @@ module Kitchen
 
       def pull_image(image)
         retries ||= 3
-        Docker::Image.create('fromImage' => repo(image), 'tag' => tag(image))
+        Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, connection)
       rescue Docker::Error => e
         retry unless (tries -= 1).zero?
         raise e.message
       end
 
       def pull_if_missing(image)
-        return if Docker::Image.exist?("#{repo(image)}:#{tag(image)}")
+        return if Docker::Image.exist?("#{repo(image)}:#{tag(image)}", connection)
         pull_image image
       end
 

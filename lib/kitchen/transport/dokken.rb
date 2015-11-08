@@ -40,12 +40,19 @@ module Kitchen
       end
 
       class Connection < Kitchen::Transport::Dokken::Connection
+        def connection
+          @connection ||= begin
+                            opts = Docker.options
+                            opts[:read_timeout] = 3600
+                            opts[:write_timeout] = 3600
+                            Docker::Connection.new(Docker.url, opts)
+                          end
+        end
+
         def execute(command)
           return if command.nil?
 
-          # system("docker exec #{options[:instance_name]} #{command}")
-
-          runner = Docker::Container.get(instance_name)
+          runner = Docker::Container.get(instance_name, {}, connection)
           o = runner.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
           exit_code = o[2]
 
@@ -55,7 +62,7 @@ module Kitchen
           end
 
           begin
-            old_image = Docker::Image.get(work_image)
+            old_image = Docker::Image.get(work_image, {}, connection)
             old_image.remove
           rescue
             debug "#{work_image} not present. nothing to remove."
@@ -104,7 +111,6 @@ module Kitchen
         end
 
         def login_command
-          # require 'pry' ; binding.pry
           runner = "#{options[:instance_name]}"
           args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
