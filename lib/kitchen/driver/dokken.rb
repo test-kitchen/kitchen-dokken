@@ -31,7 +31,7 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
-      default_config :pid_one_command, 'sleep 9000'
+      default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       default_config :privileged, false
 
       # (see Base#create)
