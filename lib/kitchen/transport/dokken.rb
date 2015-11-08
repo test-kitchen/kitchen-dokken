@@ -43,7 +43,7 @@ module Kitchen
         def execute(command)
           return if command.nil?
 
-          # puts "SEANDEBUG: execute: docker exec #{instance_name} #{command}"
+          puts "SEANDEBUG: execute: docker exec #{instance_name} #{command}"
           # system("docker exec #{options[:instance_name]} #{command}")
 
           runner = Docker::Container.get(instance_name)

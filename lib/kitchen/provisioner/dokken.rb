@@ -27,6 +27,8 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
+      default_config :root_path, '/opt/kitchen'
+
       # (see Base#call)
       def call(state)
         create_sandbox
@@ -49,8 +51,8 @@ module Kitchen
       # magic method name because we're subclassing ChefZero
       def run_command
         cmd = '/opt/chef/embedded/bin/chef-client -z'
-        cmd << ' -c /tmp/kitchen/client.rb'
-        cmd << ' -j /tmp/kitchen/dna.json'
+        cmd << ' -c /opt/kitchen/client.rb'
+        cmd << ' -j /opt/kitchen/dna.json'
       end
 
       def runner_container_name

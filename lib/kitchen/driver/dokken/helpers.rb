@@ -41,8 +41,8 @@ COPY authorized_keys /root/.ssh/authorized_keys
 EXPOSE 22
 CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "UsePrivilegeSeparation=no" ]
 
-VOLUME /tmp/kitchen
-VOLUME /tmp/verifier
+VOLUME /opt/kitchen
+VOLUME /opt/verifier
 EOF
       end
 
