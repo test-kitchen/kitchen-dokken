@@ -29,30 +29,40 @@ module Kitchen
     # @author Sean OMeara <sean@chef.io>
     class DockerExecFailed < TransportFailed; end
 
+    # A Transport which uses Docker tricks to execute commands and
+    # transfer files.
+    #
+    # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Transport::Base
       kitchen_transport_api_version 1
 
       plugin_version Kitchen::VERSION
 
+      default_config :read_timeout, 3600
+      default_config :write_timeout, 3600
+
+      # (see Base#connection)
       def connection(state, &block)
-        options = config.to_hash.merge(state)
-        Kitchen::Transport::Dokken::Connection.new(options, &block)
+        options = connection_options(config.to_hash.merge(state))
+
+        if @connection && @connection_options == options
+          reuse_connection(&block)
+        else
+          create_new_connection(options, &block)
+        end
       end
 
+      # @author Sean OMeara <sean@chef.io>
       class Connection < Kitchen::Transport::Dokken::Connection
-        def connection
-          @connection ||= begin
-                            opts = Docker.options
-                            opts[:read_timeout] = 3600
-                            opts[:write_timeout] = 3600
-                            Docker::Connection.new(Docker.url, opts)
-                          end
+        # FIXME: hax for now. Remove this later.
+        def docker_connection
+          @docker_connection ||= Docker::Connection.new(Docker.url, options[:docker_host])
         end
 
         def execute(command)
           return if command.nil?
 
-          runner = Docker::Container.get(instance_name, {}, connection)
+          runner = Docker::Container.get(instance_name, {}, docker_connection)
           o = runner.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{stream}: #{chunk}" }
           exit_code = o[2]
 
@@ -62,7 +72,7 @@ module Kitchen
           end
 
           begin
-            old_image = Docker::Image.get(work_image, {}, connection)
+            old_image = Docker::Image.get(work_image, {}, docker_connection)
             old_image.remove
           rescue
             debug "#{work_image} not present. nothing to remove."
@@ -70,19 +80,6 @@ module Kitchen
 
           new_image = runner.commit
           new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true')
-        end
-
-        def instance_name
-          options[:instance_name]
-        end
-
-        def work_image
-          return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
-          instance_name
-        end
-
-        def image_prefix
-          'someara'
         end
 
         def upload(locals, remote)
@@ -110,11 +107,69 @@ module Kitchen
           system(rsync_cmd)
         end
 
+        private
+
+        def instance_name
+          options[:instance_name]
+        end
+
+        def work_image
+          return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
+          instance_name
+        end
+
+        def image_prefix
+          'someara'
+        end
+
         def login_command
           runner = "#{options[:instance_name]}"
           args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
+      end
+
+      private
+
+      # Builds the hash of options needed by the Connection object on
+      # construction.
+      #
+      # @param data [Hash] merged configuration and mutable state data
+      # @return [Hash] hash of connection options
+      # @api private
+      def connection_options(data) # rubocop:disable Metrics/MethodLength
+        opts = {}
+        opts[:docker_host] = Docker.options
+        opts[:kitchen_container] = data[:kitchen_container]
+        opts[:instance_name] = data[:instance_name]
+        opts
+      end
+
+      # Creates a new Dokken Connection instance and save it for potential future
+      # reuse.
+      #
+      # @param options [Hash] conneciton options
+      # @return [Ssh::Connection] an SSH Connection instance
+      # @api private
+      def create_new_connection(options, &block)
+        if @connection
+          logger.debug("[Dokken] shutting previous connection #{@connection}")
+          # require 'pry' ; binding.pry
+          @connection.close
+        end
+
+        @connection_options = options
+        @connection = Kitchen::Transport::Dokken::Connection.new(options, &block)
+      end
+
+      # Return the last saved Dokken connection instance.
+      #
+      # @return [Dokken::Connection] an Dokken Connection instance
+      # @api private
+      def reuse_connection
+        logger.debug("[Dokken] reusing existing connection #{@connection}")
+        yield @connection if block_given?
+        @connection
       end
     end
   end
