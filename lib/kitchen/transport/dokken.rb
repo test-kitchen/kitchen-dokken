@@ -54,7 +54,6 @@ module Kitchen
 
       # @author Sean OMeara <sean@chef.io>
       class Connection < Kitchen::Transport::Dokken::Connection
-        # FIXME: hax for now. Remove this later.
         def docker_connection
           @docker_connection ||= Docker::Connection.new(Docker.url, options[:docker_host])
         end
@@ -154,7 +153,6 @@ module Kitchen
       def create_new_connection(options, &block)
         if @connection
           logger.debug("[Dokken] shutting previous connection #{@connection}")
-          # require 'pry' ; binding.pry
           @connection.close
         end
 
