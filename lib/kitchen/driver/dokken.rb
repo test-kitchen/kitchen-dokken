@@ -232,10 +232,16 @@ module Kitchen
         puts "Container #{name} not found. Nothing to delete."
       end
 
-      def create_container(args)
-        Docker::Container.get(args['name'], connection)
+      def container_exist?(name)
+        return true if Docker::Container.get(name)
       rescue
-        c = Docker::Container.create(args, connection)
+        false
+      end
+
+      def create_container(args)
+        c = Docker::Container.create(args.clone, connection)
+      rescue Docker::Error::ConflictError
+        c = Docker::Container.get(args['name'])
       end
 
       def repo(image)
@@ -280,7 +286,7 @@ module Kitchen
       end
 
       def data_container_name
-        "#{instance.name}-data"
+        "#{instance.suite.name}-data"
       end
 
       def runner_container_name
