@@ -59,7 +59,6 @@ module Kitchen
 
       def destroy(_state)
         delete_kitchen_cache
-        delete_chef_container
         delete_runner
         delete_work_image
       end
@@ -180,13 +179,19 @@ module Kitchen
       end
 
       def start_chef_container(state)
-        debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
-        chef_container = create_container(
-          'name' => chef_container_name,
-          'Cmd' => 'true',
-          'Image' => "#{repo(chef_image)}:#{tag(chef_image)}"
-        )
-        state[:chef_container] = chef_container.json
+        c = Docker::Container.get(chef_container_name)
+      rescue Docker::Error::NotFoundError
+        begin
+          debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
+          chef_container = create_container(
+            'name' => chef_container_name,
+            'Cmd' => 'true',
+            'Image' => "#{repo(chef_image)}:#{tag(chef_image)}"
+          )
+          state[:chef_container] = chef_container.json
+        rescue
+          debug "driver - #{chef_container_name} alreay exists"
+        end
       end
 
       def pull_platform_image
@@ -267,7 +272,7 @@ module Kitchen
       end
 
       def chef_container_name
-        "#{instance.name}-chef"
+        "chef-#{chef_version}"
       end
 
       def kitchen_cache_image
