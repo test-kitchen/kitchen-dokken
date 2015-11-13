@@ -83,7 +83,8 @@ module Kitchen
 
         def upload(locals, remote)
           ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
-          port = options[:kitchen_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+          # require 'pry' ; binding.pry
+          port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
           tmpdir = Dir.tmpdir
           FileUtils.mkdir_p "#{tmpdir}/dokken"
@@ -139,7 +140,7 @@ module Kitchen
       def connection_options(data) # rubocop:disable Metrics/MethodLength
         opts = {}
         opts[:docker_host] = Docker.options
-        opts[:kitchen_container] = data[:kitchen_container]
+        opts[:data_container] = data[:data_container]
         opts[:instance_name] = data[:instance_name]
         opts
       end

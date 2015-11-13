@@ -43,9 +43,9 @@ module Kitchen
         pull_chef_image
         start_chef_container state
 
-        # kitchen_cache
-        make_kitchen_cache_image
-        start_kitchen_cache_container state
+        # data
+        make_data_image
+        start_data_container state
 
         # work image
         build_work_image state
@@ -58,7 +58,7 @@ module Kitchen
       end
 
       def destroy(_state)
-        delete_kitchen_cache
+        delete_data
         delete_runner
         delete_work_image
       end
@@ -136,9 +136,9 @@ module Kitchen
         delete_container chef_container_name
       end
 
-      def delete_kitchen_cache
-        debug "driver - deleting container #{kitchen_cache_container_name}"
-        delete_container kitchen_cache_container_name
+      def delete_data
+        debug "driver - deleting container #{data_container_name}"
+        delete_container data_container_name
       end
 
       def start_runner_container(state)
@@ -149,17 +149,17 @@ module Kitchen
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'HostConfig' => {
             'Privileged' => config[:privileged],
-            'VolumesFrom' => [chef_container_name, kitchen_cache_container_name]
+            'VolumesFrom' => [chef_container_name, data_container_name]
           }
         )
         state[:runner_container] = runner_container.json
       end
 
-      def start_kitchen_cache_container(state)
-        debug "driver - creating #{kitchen_cache_container_name}"
-        kitchen_container = run_container(
-          'name' => kitchen_cache_container_name,
-          'Image' => "#{repo(kitchen_cache_image)}:#{tag(kitchen_cache_image)}",
+      def start_data_container(state)
+        debug "driver - creating #{data_container_name}"
+        data_container = run_container(
+          'name' => data_container_name,
+          'Image' => "#{repo(data_image)}:#{tag(data_image)}",
           'PortBindings' => {
             '22/tcp' => [
               { 'HostPort' => '' }
@@ -167,15 +167,15 @@ module Kitchen
           },
           'PublishAllPorts' => true
         )
-        state[:kitchen_container] = kitchen_container.json
+        state[:data_container] = data_container.json
       end
 
-      def make_kitchen_cache_image
-        debug "driver - pulling #{kitchen_cache_image}"
-        pull_if_missing kitchen_cache_image
+      def make_data_image
+        debug "driver - pulling #{data_image}"
+        pull_if_missing data_image
         # -- or --
-        # debug 'driver - calling create_kitchen_cache_image'
-        # create_kitchen_cache_image
+        # debug 'driver - calling create_data_image'
+        # create_data_image
       end
 
       def start_chef_container(state)
@@ -275,12 +275,12 @@ module Kitchen
         "chef-#{chef_version}"
       end
 
-      def kitchen_cache_image
+      def data_image
         'someara/kitchen-cache:latest'
       end
 
-      def kitchen_cache_container_name
-        "#{instance.name}-kitchen_cache"
+      def data_container_name
+        "#{instance.name}-data"
       end
 
       def runner_container_name
