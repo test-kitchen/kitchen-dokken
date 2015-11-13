@@ -24,14 +24,14 @@ vVnsIrCx2rI5/KEQZ+oG
 EOF
       end
 
-      def kitchen_cache_dockerfile
+      def data_dockerfile
         <<-EOF
 FROM centos:7
 MAINTAINER Sean OMeara \"sean@chef.io\"
 
 ENV LANG en_US.UTF-8
 
-RUN yum -y install tar rsync openssh-server passwd
+RUN yum -y install tar rsync openssh-server passwd git
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''
 
@@ -46,16 +46,16 @@ VOLUME /opt/verifier
 EOF
       end
 
-      def create_kitchen_cache_image
-        return if Docker::Image.exist?(kitchen_cache_image)
+      def create_data_image
+        return if Docker::Image.exist?(data_image)
 
         tmpdir = Dir.tmpdir
         FileUtils.mkdir_p "#{tmpdir}/dokken"
-        File.write("#{tmpdir}/dokken/Dockerfile", kitchen_cache_dockerfile)
+        File.write("#{tmpdir}/dokken/Dockerfile", data_dockerfile)
         File.write("#{tmpdir}/dokken/authorized_keys", insecure_ssh_public_key)
 
         i = Docker::Image.build_from_dir("#{tmpdir}/dokken", { 'nocache' => true, 'rm' => true })
-        i.tag('repo' => repo(kitchen_cache_image), 'tag' => tag(kitchen_cache_image), 'force' => true)
+        i.tag('repo' => repo(data_image), 'tag' => tag(data_image), 'force' => true)
       end
     end
   end

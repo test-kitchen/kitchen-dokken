@@ -171,11 +171,11 @@ module Kitchen
       end
 
       def make_data_image
-        debug "driver - pulling #{data_image}"
-        pull_if_missing data_image
+        # debug "driver - pulling #{data_image}"
+        # pull_if_missing data_image
         # -- or --
-        # debug 'driver - calling create_data_image'
-        # create_data_image
+        debug 'driver - calling create_data_image'
+        create_data_image
       end
 
       def start_chef_container(state)
@@ -286,7 +286,8 @@ module Kitchen
       end
 
       def data_container_name
-        "#{instance.suite.name}-data"
+        # "#{instance.suite.name}-data"
+        "#{instance.name}-data"
       end
 
       def runner_container_name
