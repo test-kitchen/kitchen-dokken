@@ -107,6 +107,12 @@ module Kitchen
           system(rsync_cmd)
         end
 
+        def login_command
+          runner = "#{options[:instance_name]}"
+          args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
+          LoginCommand.new('docker', args)
+        end
+        
         private
 
         def instance_name
@@ -120,12 +126,6 @@ module Kitchen
 
         def image_prefix
           'someara'
-        end
-
-        def login_command
-          runner = "#{options[:instance_name]}"
-          args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
-          LoginCommand.new('docker', args)
         end
       end
 
