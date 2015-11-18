@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Sean OMeara']
   spec.email         = ['sean@chef.io']
   spec.description   = 'A Test Kitchen Driver for Dokken'
-  spec.summary       = spec.description
-  spec.homepage      = ''
+  spec.summary       = 'A Test Kitchen Driver that talks to the Docker Remote API and uses Volumes to produce sparse container images'
+  spec.homepage      = 'https://github.com/someara/kitchen-dokken'
   spec.license       = 'Apache 2.0'
 
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
