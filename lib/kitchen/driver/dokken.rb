@@ -31,11 +31,13 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
+      default_config :docker_host, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       default_config :privileged, false
 
       # (see Base#create)
       def create(state)
+        require 'pry'; binding.pry
         # image to config
         pull_platform_image
 
@@ -70,7 +72,7 @@ module Kitchen
                           opts = Docker.options
                           opts[:read_timeout] = 3600
                           opts[:write_timeout] = 3600
-                          Docker::Connection.new(Docker.url, opts)
+                          Docker::Connection.new(config[:docker_host], opts)
                         end
       end
 

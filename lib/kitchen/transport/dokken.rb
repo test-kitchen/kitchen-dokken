@@ -43,6 +43,7 @@ module Kitchen
 
       # (see Base#connection)
       def connection(state, &block)
+        puts 'SEANDEBUG: - sean was here'
         options = connection_options(config.to_hash.merge(state))
 
         if @connection && @connection_options == options
@@ -82,8 +83,9 @@ module Kitchen
         end
 
         def upload(locals, remote)
-          ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           # require 'pry' ; binding.pry
+          puts 'SEANDEBUG: - sean was here'
+          ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
           tmpdir = Dir.tmpdir
@@ -112,7 +114,7 @@ module Kitchen
           args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
-        
+
         private
 
         def instance_name
