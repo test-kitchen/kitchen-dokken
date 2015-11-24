@@ -4,6 +4,8 @@
 .config
 .yardoc
 Gemfile.lock
+Berksfile.lock
+Cheffile.lock
 InstalledFiles
 _yardoc
 coverage
@@ -15,3 +17,5 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
+.kitchen
+.librarian
