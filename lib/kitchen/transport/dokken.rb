@@ -83,7 +83,14 @@ module Kitchen
         end
 
         def upload(locals, remote)
-          ip = options[:docker_host_url].split('://')[1].split(':')[0]
+          if options[:docker_host_url] =~ /unix:/
+            ip = '127.0.0.1'
+          elsif options[:docker_host_url] =~ /tcp:/
+            ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
+          else
+            fail Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
+          end
+
           port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
           tmpdir = Dir.tmpdir
