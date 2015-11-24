@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/someara/kitchen-dokken'
   spec.license       = 'Apache 2.0'
 
-  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(%r{LICENSE|^CHANGELOG|^lib})
+  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(/LICENSE|^CHANGELOG|^lib/)
   spec.executables   = []
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
