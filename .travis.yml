@@ -8,11 +8,22 @@ services: docker
 install: bundle install
 bundler_args: "--binstubs=$PWD/bin --jobs 3 --retry 3"
 
+env:
+  matrix:
+  - INSTANCE=dokken-test-centos-6
+  - INSTANCE=dokken-test-centos-7
+  - INSTANCE=dokken-test-fedora-21
+  - INSTANCE=dokken-test-debian-7
+  - INSTANCE=dokken-test-debian-8
+  - INSTANCE=dokken-test-ubuntu-1204
+  - INSTANCE=dokken-test-ubuntu-1404
+  - INSTANCE=dokken-test-ubuntu-1510
+
 before_script:
   - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
 
 script:
-  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge -c
+  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge ${INSTANCE}
 
 after_script:
   - docker images
