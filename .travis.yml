@@ -12,7 +12,7 @@ before_script:
   - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
 
 script:
-  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge dokken-test-centos-6
+  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge
 
 after_script:
   - docker images
