@@ -13,7 +13,7 @@ before_script:
   - eval "$(/opt/chefdk/bin/chef shell-init bash)"
 
 script:
-  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge
+  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge dokken-test-centos-6
 
 after_script:
   - docker images
