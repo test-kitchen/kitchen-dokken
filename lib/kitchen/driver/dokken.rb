@@ -31,12 +31,14 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
-      default_config :docker_host, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       default_config :privileged, false
       default_config :image_prefix, nil
       default_config :chef_version, '12.5.1'
       default_config :data_image, 'someara/kitchen-cache:latest'
+      default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
+      default_config :read_timeout, 3600
+      default_config :write_timeout, 3600
 
       # (see Base#create)
       def create(state)
@@ -69,28 +71,26 @@ module Kitchen
 
       private
 
-      def connection
-        @connection ||= begin
-                          opts = Docker.options
-                          opts[:read_timeout] = 3600
-                          opts[:write_timeout] = 3600
-                          Docker::Connection.new(config[:docker_host], opts)
-                        end
+      def docker_connection
+        opts = Docker.options
+        opts[:read_timeout] = config[:read_timeout]
+        opts[:write_timeout] = config[:write_timeout]
+        @docker_connection ||= Docker::Connection.new(config[:docker_host_url], opts)
       end
 
       def delete_work_image
-        return unless Docker::Image.exist?(work_image, connection)
-        i = Docker::Image.get(work_image, connection)
+        return unless Docker::Image.exist?(work_image, docker_connection)
+        i = Docker::Image.get(work_image, docker_connection)
         i.remove(force: true)
       end
 
       def build_work_image(state)
-        return if Docker::Image.exist?(work_image, connection)
+        return if Docker::Image.exist?(work_image, docker_connection)
 
         FileUtils.mkdir_p context_root
         File.write("#{context_root}/Dockerfile", work_image_dockerfile)
 
-        i = Docker::Image.build_from_dir(context_root, { 'nocache' => true, 'rm' => true }, connection)
+        i = Docker::Image.build_from_dir(context_root, { 'nocache' => true, 'rm' => true }, docker_connection)
         i.tag('repo' => repo(work_image), 'tag' => tag(work_image), 'force' => true)
         state[:work_image] = work_image
       end
@@ -210,7 +210,7 @@ module Kitchen
       end
 
       def delete_image(name)
-        i = Docker::Image.get(name, connection)
+        i = Docker::Image.get(name, docker_connection)
         i.remove(force: true)
       rescue Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
@@ -229,7 +229,7 @@ module Kitchen
       end
 
       def delete_container(name)
-        c = Docker::Container.get(name, connection)
+        c = Docker::Container.get(name, docker_connection)
         puts "Destroying container #{name}."
         c.stop
         c.delete(force: true, v: true)
@@ -244,7 +244,7 @@ module Kitchen
       end
 
       def create_container(args)
-        c = Docker::Container.create(args.clone, connection)
+        c = Docker::Container.create(args.clone, docker_connection)
       rescue Docker::Error::ConflictError
         c = Docker::Container.get(args['name'])
       end
@@ -259,14 +259,14 @@ module Kitchen
 
       def pull_image(image)
         retries ||= 3
-        Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, connection)
+        Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, docker_connection)
       rescue Docker::Error => e
         retry unless (tries -= 1).zero?
         raise e.message
       end
 
       def pull_if_missing(image)
-        return if Docker::Image.exist?("#{repo(image)}:#{tag(image)}", connection)
+        return if Docker::Image.exist?("#{repo(image)}:#{tag(image)}", docker_connection)
         pull_image image
       end
 

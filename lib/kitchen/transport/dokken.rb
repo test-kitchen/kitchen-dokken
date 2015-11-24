@@ -38,6 +38,7 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
+      default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
 
@@ -55,7 +56,7 @@ module Kitchen
       # @author Sean OMeara <sean@chef.io>
       class Connection < Kitchen::Transport::Dokken::Connection
         def docker_connection
-          @docker_connection ||= Docker::Connection.new(Docker.url, options[:docker_host])
+          @docker_connection ||= Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])
         end
 
         def execute(command)
@@ -82,8 +83,7 @@ module Kitchen
         end
 
         def upload(locals, remote)
-          # require 'pry' ; binding.pry
-          ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
+          ip = options[:docker_host_url].split('://')[1].split(':')[0]
           port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
           tmpdir = Dir.tmpdir
@@ -139,7 +139,8 @@ module Kitchen
       # @api private
       def connection_options(data) # rubocop:disable Metrics/MethodLength
         opts = {}
-        opts[:docker_host] = Docker.options
+        opts[:docker_host_url] = config[:docker_host_url]
+        opts[:docker_host_options] = Docker.options
         opts[:data_container] = data[:data_container]
         opts[:instance_name] = data[:instance_name]
         opts
