@@ -13,11 +13,11 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/someara/kitchen-dokken'
   spec.license       = 'Apache 2.0'
 
-  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
+  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(%r{LICENSE|^CHANGELOG|^lib})
   spec.executables   = []
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
   spec.add_dependency 'test-kitchen', '~> 1.4'
-  spec.add_dependency 'docker-api', '~> 1.23.0'
+  spec.add_dependency 'docker-api', '~> 1.23'
 end
