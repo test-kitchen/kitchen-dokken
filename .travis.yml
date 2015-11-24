@@ -1,19 +1,22 @@
 rvm: 2.2
+cache: bundler
 
 sudo: required
 
-install: bundle install
-
 services: docker
+
+install: bundle install
+bundler_args: "--binstubs=$PWD/bin --jobs 3 --retry 3"
 
 before_script:
   - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
   - eval "$(/opt/chefdk/bin/chef shell-init bash)"
 
 script:
-  - KITCHEN_LOCAL_YAML=.kitchen.yml bundle exec kitchen converge
+  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen converge
 
 after_script:
   - docker images
   - docker ps -a
   - cat .kitchen/logs/kitchen.log
+  - cat Gemfile.lock
