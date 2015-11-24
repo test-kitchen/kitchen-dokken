@@ -43,7 +43,6 @@ module Kitchen
 
       # (see Base#connection)
       def connection(state, &block)
-        puts 'SEANDEBUG: - sean was here'
         options = connection_options(config.to_hash.merge(state))
 
         if @connection && @connection_options == options
@@ -84,7 +83,6 @@ module Kitchen
 
         def upload(locals, remote)
           # require 'pry' ; binding.pry
-          puts 'SEANDEBUG: - sean was here'
           ip = ENV['DOCKER_HOST'].split('tcp://')[1].split(':')[0]
           port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
@@ -127,7 +125,7 @@ module Kitchen
         end
 
         def image_prefix
-          'someara'
+          options[:image_prefix]
         end
       end
 

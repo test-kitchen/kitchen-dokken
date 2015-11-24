@@ -34,10 +34,12 @@ module Kitchen
       default_config :docker_host, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       default_config :privileged, false
+      default_config :image_prefix, nil
+      default_config :chef_version, '12.5.1'
+      default_config :data_image, 'someara/kitchen-cache:latest'
 
       # (see Base#create)
       def create(state)
-        require 'pry'; binding.pry
         # image to config
         pull_platform_image
 
@@ -109,6 +111,7 @@ module Kitchen
         state[:platform_image] = platform_image
         state[:instance_name] = instance_name
         state[:instance_platform_name] = instance_platform_name
+        state[:image_prefix] = image_prefix
       end
 
       def instance_name
@@ -125,7 +128,7 @@ module Kitchen
       end
 
       def image_prefix
-        'someara'
+        config[:image_prefix]
       end
 
       def delete_runner
@@ -284,11 +287,10 @@ module Kitchen
       end
 
       def data_image
-        'someara/kitchen-cache:latest'
+        config[:data_image]
       end
 
       def data_container_name
-        # "#{instance.suite.name}-data"
         "#{instance.name}-data"
       end
 
