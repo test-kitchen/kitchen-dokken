@@ -3,7 +3,7 @@ rvm:
 - "2.2"
 cache: bundler
 
-sudo: required
+sudo: false
 
 services: docker
 
@@ -29,8 +29,8 @@ env:
   # - INSTANCE=dokken-test-1251-ubuntu-1404
   - INSTANCE=dokken-test-1251-ubuntu-1510
 
-Before_script:
-  - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
+# before_script:
+#  - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
 
 script:
   - KITCHEN_YAML=.kitchen.yml bundle exec kitchen test ${INSTANCE}
