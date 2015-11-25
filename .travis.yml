@@ -1,5 +1,5 @@
 rvm:
-- "2.1"
+# - "2.1"
 - "2.2"
 cache: bundler
 
@@ -33,7 +33,7 @@ before_script:
  - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
 
 script:
-  - KITCHEN_YAML=.kitchen.yml bundle exec kitchen test ${INSTANCE}
+  - KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE}
 
 after_script:
   - docker images
