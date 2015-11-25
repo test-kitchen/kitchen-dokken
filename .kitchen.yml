@@ -59,10 +59,18 @@ platforms:
 
 - name: ubuntu-15.10
   driver:
-    image: ubuntu:15.04
+    image: ubuntu:15.10
     pid_one_command: /bin/systemd
 
 suites:
-  - name: dokken_test
+  - name: dokken_test-12.4.3
+    driver:
+      chef_version: 12.4.3
+    run_list:
+    - recipe[dokken_test]
+
+  - name: dokken_test-12.5.1
+    driver:
+      chef_version: 12.5.1
     run_list:
     - recipe[dokken_test]
