@@ -12,14 +12,22 @@ bundler_args: "--binstubs=$PWD/bin --jobs 3 --retry 3"
 
 env:
   matrix:
-  - INSTANCE=dokken-test-centos-6
-  - INSTANCE=dokken-test-centos-7
-  - INSTANCE=dokken-test-fedora-21
-  - INSTANCE=dokken-test-debian-7
-  - INSTANCE=dokken-test-debian-8
-  - INSTANCE=dokken-test-ubuntu-1204
-  - INSTANCE=dokken-test-ubuntu-1404
-  - INSTANCE=dokken-test-ubuntu-1510
+  - INSTANCE=dokken-test-1243-centos-6
+  - INSTANCE=dokken-test-1243-centos-7
+  - INSTANCE=dokken-test-1243-fedora-21
+  - INSTANCE=dokken-test-1243-debian-7
+  - INSTANCE=dokken-test-1243-debian-8
+  - INSTANCE=dokken-test-1243-ubuntu-1204
+  - INSTANCE=dokken-test-1243-ubuntu-1404
+  - INSTANCE=dokken-test-1243-ubuntu-1510
+  - INSTANCE=dokken-test-1251-centos-6
+  - INSTANCE=dokken-test-1251-centos-7
+  - INSTANCE=dokken-test-1251-fedora-21
+  - INSTANCE=dokken-test-1251-debian-7
+  - INSTANCE=dokken-test-1251-debian-8
+  - INSTANCE=dokken-test-1251-ubuntu-1204
+  - INSTANCE=dokken-test-1251-ubuntu-1404
+  - INSTANCE=dokken-test-1251-ubuntu-1510
 
 before_script:
   - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
