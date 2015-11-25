@@ -1,8 +1,7 @@
 kitchen-dokken
 ==============
 
-[![Build Status](https://travis-ci.org/chef-cookbooks/docker.svg?branch=master)](https://travis-ci.org/chef-cookbooks/docker) 
-
+[![Build Status](https://travis-ci.org/someara/kitchen-dokken.svg?branch=master)](https://travis-ci.org/someara/kitchen-dokken)
 
 Overview
 --------
@@ -12,7 +11,7 @@ for rapid container development using Docker and Chef.
 
 - Behold `.kitchen.yml`
 ```
-laptop:~/src/chef-cookbooks/hello_dokken$ cat .kitchen.yml 
+laptop:~/src/chef-cookbooks/hello_dokken$ cat .kitchen.yml
 ---
 driver:
   name: dokken
@@ -41,7 +40,7 @@ suites:
 
 - List suites
 ```
-laptop:~/src/chef-cookbooks/hello_dokken$ kitchen list
+laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen list
 Instance          Driver  Provisioner  Verifier  Transport  Last
 Action
 default-centos-7  Dokken  Dokken       Busser    Dokken     Converged
@@ -49,7 +48,7 @@ default-centos-7  Dokken  Dokken       Busser    Dokken     Converged
 
 - Converge suite
 ```
-laptop:~/src/chef-cookbooks/hello_dokken$ kitchen converge
+laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
 -----> Starting Kitchen (v1.4.2)
 -----> Creating <default-centos-7>...
        Finished creating <default-centos-7> (0m4.47s).
@@ -99,7 +98,7 @@ sys	0m0.187s
 
 - Verify suite
 ```
-laptop:~/src/chef-cookbooks/hello_dokken$ kitchen verify
+laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen verify
 -----> Starting Kitchen (v1.4.2)
 -----> Setting up <default-centos-7>...
        Finished setting up <default-centos-7> (0m0.00s).
@@ -161,3 +160,58 @@ Say to yourself, "Wow, that was fast! I love how the resulting
 container only contains the changes Chef made, and not the tooling and
 test data!"
 ```
+
+How it works
+------------
+
+- Examine Docker host
+
+```
+laptop:~$ docker ps -a
+CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
+69857ded6bd1        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   2 minutes ago       Up 2 minutes                                default-centos-7
+779cffd75183        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   2 minutes ago       Up 2 minutes        0.0.0.0:32842->22/tcp   default-centos-7-data
+871ff832adde        someara/chef:12.5.1            "true"                   2 minutes ago       Created                                     chef-12.5.1
+
+laptop:~$ docker images
+REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+default-centos-7        latest              6ea7bf319111        2 minutes ago       172.3 MB
+someara/kitchen-cache   latest              abbdb063dff1        11 days ago         300.8 MB
+someara/chef            12.5.1              86245605bbe3        3 weeks ago         168.1 MB
+centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
+```
+
+The `kitchen create` phase of the kitchen run pulls (if missing)
+the `someara/chef` image from the Docker hub, then creates a volume
+container named `chef-<version>`. This makes `/opt/chef` available for
+mounting by other containers.
+
+The driver then pulls the `someara/kitchen-cache` image and starts a
+volume container named `<suite-name>-data`, exposing `/opt/kitchen`,
+and `/opt/verifier`. This data container is the "trick" to the whole
+thing. It comes with rsync pre-installed, runs an openssh daemon, and
+uses a pre-installed, insecure, authorized_key ala Vagrant. This will
+later be used for uploading testing data. The usual `/tmp` directory
+is avoided due tmpfs clobbering.
+
+Finally, the driver pulls the image specified by the suite's platform
+section. and creates a runner container named `<suitename>`. This
+container bind-mounts the volumes from `chef-<version>` and
+`<suite-name>-data`, allowing access to Chef and the test data. By
+default, the `pid_one_command` of the runner container is a script
+that sleeps in a loop, letting us `exec` our provisioner in the next
+phase. It can be overridden with init systems like Upstart and
+Systemd, for testing service resources as needed.
+
+The `kitchen-converge` phase of the kitchen run uses the provisioner
+to upload cookbooks through the data container, then runs
+`chef-client` in the runner container. It does NOT install Chef, as it
+is has already mounted by the driver. The transport then commits the
+runner container, creating an image the only containers the changes
+made by Chef.
+
+The `kitchen-verify` phase uses the transport to run integration tests
+and verify image state.
+
+README work in progress
+=======================
