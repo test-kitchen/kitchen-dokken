@@ -7,7 +7,7 @@ Overview
 --------
 
 This test-kitchen plugin provides a driver, transport, and provisioner
-for rapid container development using Docker and Chef.
+for rapid cookbook testing and container development using Docker and Chef.
 
 - Behold `.kitchen.yml`
 
@@ -298,7 +298,7 @@ Advanced Configuration
 Due to the nature of Docker, there are a handful of considerations that need to be addressed.
 
 For a complete example of a non-trivial `kitchen.yml`, refer to the `httpd` cookbook.
-https://github.com/chef-cookbooks/httpd/blob/8150974cdbff8004016037e4e460c8a2f083cc6f/.kitchen.yml
+https://github.com/chef-cookbooks/httpd/blob/master/.kitchen.yml
 
 ### Minimalist images
 The Distros (debian, centos, etc) will typically manage an official image on the
