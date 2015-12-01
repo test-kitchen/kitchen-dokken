@@ -292,5 +292,134 @@ someara/chef            12.5.1              86245605bbe3        4 weeks ago     
 centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
 ```
 
-README work in progress
-=======================
+Advanced Configuration
+======================
+
+Due to the nature of Docker, there are a handful of considerations that need to be addressed.
+
+For a complete example of a non-trivial `kitchen.yml`, refer to the `httpd` cookbook.
+https://github.com/chef-cookbooks/httpd/blob/8150974cdbff8004016037e4e460c8a2f083cc6f/.kitchen.yml
+
+### Minimalist images
+The Distros (debian, centos, etc) will typically manage an official image on the
+Docker Hub. They are really pushing the boundaries of minimalist images.. well
+beyond what has laid to disk as part of an installer driven "base installation".
+
+Very often, an image will come with a package manager, gnu core-utils, and
+that's about it. This can differ greatly from what is found in Vagrant and
+popular IaaS images.
+
+Because of this, might be necessary to "cheat" and install some prerequisites
+into the image before running Chef, Serverspec, or your own programs.
+
+To help with this, the Dokken driver provides an `intermediate_instructions`
+directive. Here is an example from httpd
+
+```
+platforms:
+- name: debian-7
+  driver:
+    image: debian:7
+    intermediate_instructions:
+      - RUN /usr/bin/apt-get update
+      - RUN /usr/bin/apt-get install -y apt-transport-https net-tools
+```
+
+If present, an intermediate image will built from the specified image, using a Dockerfile
+rendered from lines provided. Any valid instruction will work, including `MAINTAINER`,
+`ENTRYPOINT`, `VOLUMES`, etc. Knowledge of Docker is assumed.
+
+Try and use this as little as possible.
+
+### Process orientation
+
+Docker containers are process oriented rather than machine oriented. This makes life
+interesting when testing things not necessarily destined to run in Docker. Specifically,
+Chef recipes that utilize the `service` resource present a problem. To overcome this,
+we run the container in a way that mimics a machine.
+
+As mentioned previously,we use an infinite loop to keep the container process from exiting.
+This allows us to do multiple `kitchen converge` and `kitchen login` operations without
+needing to commit a layer and start a new container. This is good enough for Chef recipes
+that do not utilize the `service` resource (with the exception of Sysvinit)
+
+The default `pid_one_command` is `'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'`
+
+If you need to use the service resource to drive Upstart or Systemd, you'll need to
+specify the path to init. Here are more examples from httpd
+
+- Systemd for RHEL-7 based platforms
+```
+platforms:
+- name: centos-7
+  driver:
+    image: centos:7
+    pid_one_command: /usr/lib/systemd/systemd
+```
+
+You can combine `intermediate_instructions` and `pid_one_command` as needed.
+
+- Upstart for Ubuntu 12.04
+```
+- name: ubuntu-12.04
+  driver:
+    image: ubuntu-upstart:12.04
+    pid_one_command: /sbin/init
+    intermediate_instructions:
+      - RUN /usr/bin/apt-get update
+      - RUN /usr/bin/apt-get install apt-transport-https
+```
+
+### Tmpfs on /tmp
+
+When starting a container in with Systemd or Upstart, it will mount a tmpfs into `/tmp`.
+When this happens, it is necessary to specify a `root_path` for the verifier if using the
+traditional Bats or Serverspec. This is due to Docker bind mounting the kitchen data
+before running init. This is not necessary when using Inspec.
+
+```
+verifier:
+  root_path: '/opt/verifier'
+  sudo: false
+```
+
+FAQ
+===
+
+### What about kitchen-docker?
+We already had a thing that drives Docker, why did you make this instead of modifying that?
+
+The current kitchen-docker driver ends up baking SSH, Chef, and the kitchen data
+into the image. This does not. To make this work, I had to create a Driver, a Transport,
+and a Provisioner that blur the traditional duties of each. The current Docker driver
+can be used with Puppet, Ansible, CFEngine provisioners. This (for the time being) requires
+Chef.
+
+It also relies on two images from the Docker Hub that currently live in my personal namespace.
+The `someara/chef` and `someara/kitchen-cache` images are probably not suitable for many of the
+environments where kitchen-docker is currently in use.
+
+### Who is this `someara` person on Docker Hub?
+Why should I trust him? I don't want to run random images from strangers on my Docker Host. Wharrgarbl SECURITY!!
+
+You totally shouldn't trust him.
+
+Here is the code used to generate the Chef image - https://github.com/someara/chef-docker-images/blob/1eca7eb16573b87865dfa6d8accfd78bb48607f5/recipes/default.rb#L35-L44
+
+Here is the code used to generate the kitchen-cache image - https://github.com/someara/kitchen-dokken/blob/b98b44f98bc71f64ba1893c27efdb5d0a9b364cb/lib/kichen/driver/dokken/helpers.rb
+
+In the future, these may be published by Chef Software, whom you can trust. Until then, remain vigilant.
+
+### How can I use kitchen to automatically test and publish containers?
+
+Right now there is no `kitchen publish` mechanism. [See this issue](https://github.com/test-kitchen/test-kitchen/issues/329).
+
+You can, however, do it manually.
+
+```
+cd my_cookbook ;
+kitchen verify suite_name
+docker tag suite_name:latest my.computers.biz:5043/something/whatever
+docker push my.computers.biz:5043/something/whatever
+kitchen destroy
+```
