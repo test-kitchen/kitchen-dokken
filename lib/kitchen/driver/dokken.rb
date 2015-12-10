@@ -102,7 +102,7 @@ module Kitchen
 
       def work_image_dockerfile
         from = "FROM #{platform_image}"
-        custom = []
+        custom = [ 'RUN /bin/sh -c "echo Built with Test Kitchen"' ]
         Array(config[:intermediate_instructions]).each { |c| custom << c }
         [from, custom].join("\n")
       end
