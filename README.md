@@ -75,15 +75,15 @@ container named `chef-<version>`. This makes `/opt/chef` available for
 mounting by other containers.
 
 The driver then pulls the `someara/kitchen-cache` image and starts a
-volume container named `<suite-name>-data`, exposing `/opt/kitchen`,
+volume container named `<suite-name>-data` exposing `/opt/kitchen`
 and `/opt/verifier`. This data container is the "trick" to the whole
 thing. It comes with rsync pre-installed, runs an openssh daemon, and
 uses a pre-installed, insecure, authorized_key ala Vagrant. This will
-later be used for uploading testing data. The usual `/tmp` directory
+later be used for uploading test data. The usual `/tmp` directory
 is avoided due tmpfs clobbering.
 
 Finally, the driver pulls the image specified by the suite's platform
-section. and creates a runner container named `<suitename>`. This
+section and creates a runner container named `<suitename>`. This
 container bind-mounts the volumes from `chef-<version>` and
 `<suite-name>-data`, allowing access to Chef and the test data. By
 default, the `pid_one_command` of the runner container is a script
@@ -129,31 +129,31 @@ laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
 stdout: [2015-11-29T21:43:25+00:00] INFO: Started chef-zero at chefzero://localhost:8889 with repository at /opt/kitchen, /opt/kitchen
   One version per cookbook
 
-stdout: [2015-11-29T21:43:25+00:00] INFO: Forking chef instance to converge...
-stdout: [2015-11-29T21:43:25+00:00] INFO: *** Chef 12.5.1 ***
-stdout: [2015-11-29T21:43:25+00:00] INFO: Chef-client pid: 30
-stdout: [2015-11-29T21:43:25+00:00] INFO: Client key /opt/kitchen/client.pem is not present - registering
-stdout: [2015-11-29T21:43:25+00:00] INFO: HTTP Request Returned 404 Not Found: Object not found: chefzero://localhost:8889/nodes/default-centos-7
-stdout: [2015-11-29T21:43:25+00:00] INFO: Setting the run_list to ["recipe[hello_dokken::default]"] from CLI options
-stdout: [2015-11-29T21:43:25+00:00] INFO: Run List is [recipe[hello_dokken::default]]
-stdout: [2015-11-29T21:43:25+00:00] INFO: Run List expands to [hello_dokken::default]
-stdout: [2015-11-29T21:43:25+00:00] INFO: Starting Chef Run for default-centos-7
-stdout: [2015-11-29T21:43:25+00:00] INFO: Running start handlers
-stdout: [2015-11-29T21:43:25+00:00] INFO: Start handlers complete.
-stdout: [2015-11-29T21:43:25+00:00] INFO: HTTP Request Returned 404 Not Found: Object not found:
-stdout: [2015-11-29T21:43:25+00:00] INFO: Loading cookbooks [hello_dokken@0.1.0]
-stdout: [2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/README.md in the cache.
-stdout: [2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/metadata.rb in the cache.
-stdout: [2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/recipes/default.rb in the cache.
-stdout: [2015-11-29T21:43:25+00:00] INFO: Processing file[/hello] action create (hello_dokken::default line 1)
-stdout: [2015-11-29T21:43:25+00:00] INFO: file[/hello] created file /hello
-stdout: [2015-11-29T21:43:26+00:00] INFO: file[/hello] updated file contents /hello
-stdout: [2015-11-29T21:43:26+00:00] INFO: file[/hello] owner changed to 0
-stdout: [2015-11-29T21:43:26+00:00] INFO: file[/hello] group changed to 0
-stdout: [2015-11-29T21:43:26+00:00] INFO: file[/hello] mode changed to 644
-stdout: [2015-11-29T21:43:26+00:00] INFO: Chef Run complete in 0.048119366 seconds
-stdout: [2015-11-29T21:43:26+00:00] INFO: Running report handlers
-stdout: [2015-11-29T21:43:26+00:00] INFO: Report handlers complete
+[2015-11-29T21:43:25+00:00] INFO: Forking chef instance to converge...
+[2015-11-29T21:43:25+00:00] INFO: *** Chef 12.5.1 ***
+[2015-11-29T21:43:25+00:00] INFO: Chef-client pid: 30
+[2015-11-29T21:43:25+00:00] INFO: Client key /opt/kitchen/client.pem is not present - registering
+[2015-11-29T21:43:25+00:00] INFO: HTTP Request Returned 404 Not Found: Object not found: chefzero://localhost:8889/nodes/default-centos-7
+[2015-11-29T21:43:25+00:00] INFO: Setting the run_list to ["recipe[hello_dokken::default]"] from CLI options
+[2015-11-29T21:43:25+00:00] INFO: Run List is [recipe[hello_dokken::default]]
+[2015-11-29T21:43:25+00:00] INFO: Run List expands to [hello_dokken::default]
+[2015-11-29T21:43:25+00:00] INFO: Starting Chef Run for default-centos-7
+[2015-11-29T21:43:25+00:00] INFO: Running start handlers
+[2015-11-29T21:43:25+00:00] INFO: Start handlers complete.
+[2015-11-29T21:43:25+00:00] INFO: HTTP Request Returned 404 Not Found: Object not found:
+[2015-11-29T21:43:25+00:00] INFO: Loading cookbooks [hello_dokken@0.1.0]
+[2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/README.md in the cache.
+[2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/metadata.rb in the cache.
+[2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/recipes/default.rb in the cache.
+[2015-11-29T21:43:25+00:00] INFO: Processing file[/hello] action create (hello_dokken::default line 1)
+[2015-11-29T21:43:25+00:00] INFO: file[/hello] created file /hello
+[2015-11-29T21:43:26+00:00] INFO: file[/hello] updated file contents /hello
+[2015-11-29T21:43:26+00:00] INFO: file[/hello] owner changed to 0
+[2015-11-29T21:43:26+00:00] INFO: file[/hello] group changed to 0
+[2015-11-29T21:43:26+00:00] INFO: file[/hello] mode changed to 644
+[2015-11-29T21:43:26+00:00] INFO: Chef Run complete in 0.048119366 seconds
+[2015-11-29T21:43:26+00:00] INFO: Running report handlers
+[2015-11-29T21:43:26+00:00] INFO: Report handlers complete
        Finished converging <default-centos-7> (0m6.89s).
 -----> Kitchen is finished. (0m7.03s)
 
@@ -163,10 +163,10 @@ sys	0m0.114s
 ```
 
 The `kitchen-converge` phase of the kitchen run uses the provisioner
-to upload cookbooks through the data container, then runs
+to upload cookbooks through the data container, then execs
 `chef-client` in the runner container. It does NOT install Chef, as it
 is has already mounted by the driver. The transport then commits the
-runner container, creating an image the only containers the changes
+runner container, creating an image that only contains the changes
 made by Chef.
 
 - List containers
@@ -213,29 +213,29 @@ laptop:~/src/chef-cookbooks/hello_dokken$  kitchen verify
        Finished setting up <default-centos-7> (0m0.00s).
 -----> Verifying <default-centos-7>...
        Preparing files for transfer
-stdout: -----> Installing Busser (busser)
-stdout: Successfully installed thor-0.19.0
+-----> Installing Busser (busser)
+Successfully installed thor-0.19.0
 Successfully installed busser-0.7.1
 2 gems installed
-stdout: -----> Setting up Busser
-stdout:        Creating BUSSER_ROOT in /opt/verifier
-stdout:        Creating busser binstub
-stdout:        Installing Busser plugins: busser-serverspec
-stdout:        Plugin serverspec installed (version 0.5.7)
-stdout: -----> Running postinstall for serverspec plugin
-stdout:        Suite path directory /opt/verifier/suites does not exist, skipping.
+-----> Setting up Busser
+       Creating BUSSER_ROOT in /opt/verifier
+       Creating busser binstub
+       Installing Busser plugins: busser-serverspec
+       Plugin serverspec installed (version 0.5.7)
+-----> Running postinstall for serverspec plugin
+       Suite path directory /opt/verifier/suites does not exist, skipping.
        Transferring files to <default-centos-7>
-stdout: -----> Running serverspec test suite
-stdout: -----> Installing Serverspec..
-stdout: -----> serverspec installed (version 2.24.3)
-stdout: /opt/chef/embedded/bin/ruby -I/opt/verifier/suites/serverspec -I/opt/verifier/gems/gems/rspec-support-3.4.1/lib:/opt/verifier/gems/gems/rspec-core-3.4.1/lib /opt/chef/embedded/bin/rspec --pattern /opt/verifier/suites/serverspec/\*\*/\*_spec.rb --color --format documentation --default-path /opt/verifier/suites/serverspec
-stdout:
-stdout: File "/hello"
-stdout:   should be file
-stdout:   should be mode 644
-stdout:   should be owned by "root"
-stdout:   should be grouped into "root"
-stdout:
+-----> Running serverspec test suite
+-----> Installing Serverspec..
+-----> serverspec installed (version 2.24.3)
+/opt/chef/embedded/bin/ruby -I/opt/verifier/suites/serverspec -I/opt/verifier/gems/gems/rspec-support-3.4.1/lib:/opt/verifier/gems/gems/rspec-core-3.4.1/lib /opt/chef/embedded/bin/rspec --pattern /opt/verifier/suites/serverspec/\*\*/\*_spec.rb --color --format documentation --default-path /opt/verifier/suites/serverspec
+
+File "/hello"
+  should be file
+  should be mode 644
+  should be owned by "root"
+  should be grouped into "root"
+
 Finished in 0.04909 seconds (files took 0.31393 seconds to load)
 4 examples, 0 failures
 stdout:
@@ -244,7 +244,7 @@ stdout:
 laptop:~/src/chef-cookbooks/hello_dokken$
 ```
 
-The `kitchen-verify` phase uses the transport to run integration tests and verify image state.
+The `kitchen-verify` phase uses the transport to run acceptance tests to verify image state.
 
 - List containers
 ```
@@ -302,18 +302,18 @@ https://github.com/chef-cookbooks/httpd/blob/master/.kitchen.yml
 
 ### Minimalist images
 The Distros (debian, centos, etc) will typically manage an official image on the
-Docker Hub. They are really pushing the boundaries of minimalist images.. well
-beyond what has laid to disk as part of an installer driven "base installation".
+Docker Hub. They are really pushing the boundaries of minimalist images, well
+beyond what is typically laid to disk as part of a "base installation".
 
-Very often, an image will come with a package manager, gnu core-utils, and
-that's about it. This can differ greatly from what is found in Vagrant and
-popular IaaS images.
+Very often, an image will come with a package manager, GNU coreutils, and
+that's about it. This can differ greatly from what is found typical Vagrant and
+IaaS images.
 
-Because of this, might be necessary to "cheat" and install some prerequisites
+Because of this, it is often necessary to "cheat" and install prerequisites
 into the image before running Chef, Serverspec, or your own programs.
 
 To help with this, the Dokken driver provides an `intermediate_instructions`
-directive. Here is an example from httpd
+directive. Here is an example from `httpd`
 
 ```
 platforms:
@@ -325,11 +325,11 @@ platforms:
       - RUN /usr/bin/apt-get install -y apt-transport-https net-tools
 ```
 
-If present, an intermediate image will built from the specified image, using a Dockerfile
-rendered from lines provided. Any valid instruction will work, including `MAINTAINER`,
+If present, an intermediate image is built, using a Dockerfile rendered from lines
+provided. Any valid instruction will work, including `MAINTAINER`,
 `ENTRYPOINT`, `VOLUMES`, etc. Knowledge of Docker is assumed.
 
-Try and use this as little as possible.
+This should be used as little as possible.
 
 ### Process orientation
 
@@ -338,15 +338,15 @@ interesting when testing things not necessarily destined to run in Docker. Speci
 Chef recipes that utilize the `service` resource present a problem. To overcome this,
 we run the container in a way that mimics a machine.
 
-As mentioned previously,we use an infinite loop to keep the container process from exiting.
+As mentioned previously, we use an infinite loop to keep the container process from exiting.
 This allows us to do multiple `kitchen converge` and `kitchen login` operations without
-needing to commit a layer and start a new container. This is good enough for Chef recipes
-that do not utilize the `service` resource (with the exception of Sysvinit)
+needing to commit a layer and start a new container. This is fine until we need to start
+testing recipes that use the `service` resource.
 
 The default `pid_one_command` is `'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'`
 
 If you need to use the service resource to drive Upstart or Systemd, you'll need to
-specify the path to init. Here are more examples from httpd
+specify the path to init. Here are more examples from `httpd`
 
 - Systemd for RHEL-7 based platforms
 ```
@@ -372,8 +372,8 @@ You can combine `intermediate_instructions` and `pid_one_command` as needed.
 
 ### Tmpfs on /tmp
 
-When starting a container in with Systemd or Upstart, it will mount a tmpfs into `/tmp`.
-When this happens, it is necessary to specify a `root_path` for the verifier if using the
+When starting a container with an init system, it will often mount a tmpfs into `/tmp`.
+When this happens, it is necessary to specify a `root_path` for the verifier if using
 traditional Bats or Serverspec. This is due to Docker bind mounting the kitchen data
 before running init. This is not necessary when using Inspec.
 
@@ -389,7 +389,7 @@ FAQ
 ### What about kitchen-docker?
 We already had a thing that drives Docker, why did you make this instead of modifying that?
 
-The current kitchen-docker driver ends up baking SSH, Chef, and the kitchen data
+The current `kitchen-docker` driver ends up baking SSH, Chef, and the kitchen data
 into the image. This does not. To make this work, I had to create a Driver, a Transport,
 and a Provisioner that blur the traditional duties of each. The current Docker driver
 can be used with Puppet, Ansible, CFEngine provisioners. This (for the time being) requires
