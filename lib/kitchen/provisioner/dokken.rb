@@ -50,9 +50,11 @@ module Kitchen
 
       # magic method name because we're subclassing ChefZero
       def run_command
-        cmd = '/opt/chef/embedded/bin/chef-client -z'
+        cmd = '/opt/chef/embedded/bin/chef-client'
+        cmd << ' -z'
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
+        cmd << ' -F doc'
       end
 
       def runner_container_name
