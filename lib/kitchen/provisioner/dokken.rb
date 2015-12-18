@@ -54,6 +54,7 @@ module Kitchen
         cmd << ' -z'
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
+        cmd << ' -l warn'
         cmd << ' -F doc'
       end
 
