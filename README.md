@@ -116,6 +116,7 @@ default-centos-7        latest              e9fa5d3a0d0e        6 weeks ago     
 
 - Converge suite
 ```
+laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
 -----> Starting Kitchen (v1.4.2)
 -----> Creating <default-centos-7>...
        Finished creating <default-centos-7> (0m1.82s).
