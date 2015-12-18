@@ -116,8 +116,9 @@ default-centos-7        latest              e9fa5d3a0d0e        6 weeks ago     
 
 - Converge suite
 ```
-laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
 -----> Starting Kitchen (v1.4.2)
+-----> Creating <default-centos-7>...
+       Finished creating <default-centos-7> (0m1.82s).
 -----> Converging <default-centos-7>...
        Preparing files for transfer
        Preparing dna.json
@@ -126,40 +127,36 @@ laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
        Preparing validation.pem
        Preparing client.rb
        Transferring files to <default-centos-7>
-stdout: [2015-11-29T21:43:25+00:00] INFO: Started chef-zero at chefzero://localhost:8889 with repository at /opt/kitchen, /opt/kitchen
-  One version per cookbook
+Starting Chef Client, version 12.5.1
+[2015-12-18T05:35:03+00:00] WARN: unable to detect ipaddress
+[2015-12-18T05:35:03+00:00] WARN: unable to detect macaddress
+Creating a new client identity for default-centos-7 using the validator key.
+resolving cookbooks for run list: ["hello_dokken::default"]
+Synchronizing Cookbooks:
+  - hello_dokken (0.1.0)
+Compiling Cookbooks...
+Converging 1 resources
+Recipe: hello_dokken::default
+  * file[/hello] action create
+    - create new file /hello
+    - update content in file /hello from none to 2d6944
+    --- /hello	2015-12-18 05:35:04.220069059 +0000
+    +++ /.hello20151218-27-1qrtph8	2015-12-18 05:35:04.220069059 +0000
+    @@ -1 +1,2 @@
+    +hello\n
+    - change mode from '' to '0644'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
 
-[2015-11-29T21:43:25+00:00] INFO: Forking chef instance to converge...
-[2015-11-29T21:43:25+00:00] INFO: *** Chef 12.5.1 ***
-[2015-11-29T21:43:25+00:00] INFO: Chef-client pid: 30
-[2015-11-29T21:43:25+00:00] INFO: Client key /opt/kitchen/client.pem is not present - registering
-[2015-11-29T21:43:25+00:00] INFO: HTTP Request Returned 404 Not Found: Object not found: chefzero://localhost:8889/nodes/default-centos-7
-[2015-11-29T21:43:25+00:00] INFO: Setting the run_list to ["recipe[hello_dokken::default]"] from CLI options
-[2015-11-29T21:43:25+00:00] INFO: Run List is [recipe[hello_dokken::default]]
-[2015-11-29T21:43:25+00:00] INFO: Run List expands to [hello_dokken::default]
-[2015-11-29T21:43:25+00:00] INFO: Starting Chef Run for default-centos-7
-[2015-11-29T21:43:25+00:00] INFO: Running start handlers
-[2015-11-29T21:43:25+00:00] INFO: Start handlers complete.
-[2015-11-29T21:43:25+00:00] INFO: HTTP Request Returned 404 Not Found: Object not found:
-[2015-11-29T21:43:25+00:00] INFO: Loading cookbooks [hello_dokken@0.1.0]
-[2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/README.md in the cache.
-[2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/metadata.rb in the cache.
-[2015-11-29T21:43:25+00:00] INFO: Storing updated cookbooks/hello_dokken/recipes/default.rb in the cache.
-[2015-11-29T21:43:25+00:00] INFO: Processing file[/hello] action create (hello_dokken::default line 1)
-[2015-11-29T21:43:25+00:00] INFO: file[/hello] created file /hello
-[2015-11-29T21:43:26+00:00] INFO: file[/hello] updated file contents /hello
-[2015-11-29T21:43:26+00:00] INFO: file[/hello] owner changed to 0
-[2015-11-29T21:43:26+00:00] INFO: file[/hello] group changed to 0
-[2015-11-29T21:43:26+00:00] INFO: file[/hello] mode changed to 644
-[2015-11-29T21:43:26+00:00] INFO: Chef Run complete in 0.048119366 seconds
-[2015-11-29T21:43:26+00:00] INFO: Running report handlers
-[2015-11-29T21:43:26+00:00] INFO: Report handlers complete
-       Finished converging <default-centos-7> (0m6.89s).
------> Kitchen is finished. (0m7.03s)
+Running handlers:
+Running handlers complete
+Chef Client finished, 1/1 resources updated in 02 seconds
+       Finished converging <default-centos-7> (0m10.98s).
+-----> Kitchen is finished. (0m13.04s)
 
-real	0m7.602s
-user	0m0.717s
-sys	0m0.114s
+real	0m7.123s
+user	0m1.128s
+sys	0m0.246s
 ```
 
 The `kitchen-converge` phase of the kitchen run uses the provisioner
