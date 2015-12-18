@@ -63,7 +63,7 @@ module Kitchen
           return if command.nil?
 
           runner = Docker::Container.get(instance_name, {}, docker_connection)
-          o = runner.exec(Shellwords.shellwords(command)) { |stream, chunk| puts "#{chunk}" }
+          o = runner.exec(Shellwords.shellwords(command)) { |stream, chunk| print "#{chunk}" }
           exit_code = o[2]
 
           if exit_code != 0
