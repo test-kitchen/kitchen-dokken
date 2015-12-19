@@ -85,7 +85,7 @@ is avoided due tmpfs clobbering.
 Finally, the driver pulls the image specified by the suite's platform
 section and creates a runner container named `<suitename>`. This
 container bind-mounts the volumes from `chef-<version>` and
-`<suite-name>-data`, allowing access to Chef and the test data. By
+`<suite-name>-data`, giving access to Chef and the test data. By
 default, the `pid_one_command` of the runner container is a script
 that sleeps in a loop, letting us `exec` our provisioner in the next
 phase. It can be overridden with init systems like Upstart and
