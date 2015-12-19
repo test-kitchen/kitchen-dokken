@@ -75,12 +75,13 @@ container named `chef-<version>`. This makes `/opt/chef` available for
 mounting by other containers.
 
 The driver then pulls the `someara/kitchen-cache` image and starts a
-volume container named `<suite-name>-data` exposing `/opt/kitchen`
-and `/opt/verifier`. This data container is the "trick" to the whole
-thing. It comes with rsync pre-installed, runs an openssh daemon, and
-uses a pre-installed, insecure, authorized_key ala Vagrant. This will
-later be used for uploading test data. The usual `/tmp` directory
-is avoided due tmpfs clobbering.
+volume container named `<suite-name>-data`. This makes `/opt/kitchen`
+and `/opt/verifier` available for mounting. This data container is the
+"trick" to the whole thing. It comes with rsync, runs an openssh
+daemon, and uses an, insecure, authorized_key ala Vagrant. This is
+later used to upload cookbook test data. The venerable `/tmp`
+directory is avoided, due to the popularity of `tmpfs` clobbering by
+inits.
 
 Finally, the driver pulls the image specified by the suite's platform
 section and creates a runner container named `<suitename>`. This
@@ -242,7 +243,7 @@ stdout:
 laptop:~/src/chef-cookbooks/hello_dokken$
 ```
 
-The `kitchen-verify` phase uses the transport to run acceptance tests to verify image state.
+The `kitchen-verify` phase uses the transport to run acceptance tests, verifying image state.
 
 - List containers
 ```
@@ -293,9 +294,9 @@ centos                  7                   e9fa5d3a0d0e        6 weeks ago     
 Advanced Configuration
 ======================
 
-Due to the nature of Docker, there are a handful of considerations that need to be addressed.
+Due to the nature of Docker, a handful of considerations need to be addressed.
 
-For a complete example of a non-trivial `kitchen.yml`, refer to the `httpd` cookbook.
+A complete example of a non-trivial `kitchen.yml` is found in the `httpd` cookbook, at
 https://github.com/chef-cookbooks/httpd/blob/master/.kitchen.yml
 
 ### Minimalist images
