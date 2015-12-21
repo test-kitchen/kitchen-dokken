@@ -297,7 +297,6 @@ module Kitchen
                Docker::Error::TimeoutError,
                Docker::Error::IOError => e
           tries -= 1
-          puts "SEANDEBUG - :#{e}:"
           retry if tries > 0
           raise e
         end
