@@ -80,8 +80,8 @@ module Kitchen
 
       def delete_work_image
         return unless Docker::Image.exist?(work_image, docker_connection)
-        i = Docker::Image.get(work_image, docker_connection)
-        i.remove(force: true)
+        with_retries { @work_image = Docker::Image.get(work_image, docker_connection) }
+        with_retries { @work_image.remove(force: true)}
       end
 
       def build_work_image(state)
@@ -90,8 +90,8 @@ module Kitchen
         FileUtils.mkdir_p context_root
         File.write("#{context_root}/Dockerfile", work_image_dockerfile)
 
-        i = Docker::Image.build_from_dir(context_root, { 'nocache' => true, 'rm' => true }, docker_connection)
-        i.tag('repo' => repo(work_image), 'tag' => tag(work_image), 'force' => true)
+        with_retries { @work_image = Docker::Image.build_from_dir(context_root, { 'nocache' => true, 'rm' => true }, docker_connection) }
+        with_retries { @work_image.tag('repo' => repo(work_image), 'tag' => tag(work_image), 'force' => true) }
         state[:work_image] = work_image
       end
 
@@ -102,7 +102,7 @@ module Kitchen
 
       def work_image_dockerfile
         from = "FROM #{platform_image}"
-        custom = [ 'RUN /bin/sh -c "echo Built with Test Kitchen"' ]
+        custom = ['RUN /bin/sh -c "echo Built with Test Kitchen"']
         Array(config[:intermediate_instructions]).each { |c| custom << c }
         [from, custom].join("\n")
       end
@@ -211,28 +211,21 @@ module Kitchen
 
       def delete_image(name)
         i = Docker::Image.get(name, docker_connection)
-        i.remove(force: true)
+        with_retries { i.remove(force: true) }
       rescue Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
       end
 
       def run_container(args)
         c = create_container(args)
-        tries ||= 3
-        begin
-          c.start
-          return c
-        rescue Docker::Error => e
-          retry unless (tries -= 1).zero?
-          raise e.message
-        end
+        with_retries { c.start }
       end
 
       def delete_container(name)
         c = Docker::Container.get(name, docker_connection)
         puts "Destroying container #{name}."
-        c.stop
-        c.delete(force: true, v: true)
+        with_retries { c.stop(force: true) }
+        with_retries { c.delete(force: true, v: true) }
       rescue
         puts "Container #{name} not found. Nothing to delete."
       end
@@ -258,11 +251,7 @@ module Kitchen
       end
 
       def pull_image(image)
-        retries ||= 3
-        Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, docker_connection)
-      rescue Docker::Error => e
-        retry unless (tries -= 1).zero?
-        raise e.message
+        with_retries { Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, docker_connection) }
       end
 
       def pull_if_missing(image)
@@ -296,6 +285,22 @@ module Kitchen
 
       def runner_container_name
         "#{instance.name}"
+      end
+
+      def with_retries(&block)
+        tries = 5
+        begin
+          block.call
+          # Only catch errors that can be fixed with retries.
+        rescue Docker::Error::ServerError, # 404
+               Docker::Error::UnexpectedResponseError, # 400
+               Docker::Error::TimeoutError,
+               Docker::Error::IOError => e
+          tries -= 1
+          puts "SEANDEBUG - :#{e}:"
+          retry if tries > 0
+          raise e
+        end
       end
     end
   end
