@@ -39,6 +39,7 @@ module Kitchen
       default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
+      default_config :api_retries, 20
 
       # (see Base#create)
       def create(state)
@@ -63,6 +64,10 @@ module Kitchen
         save_misc_state state
       end
 
+      def api_retries
+        config[:api_retries]
+      end
+
       def destroy(_state)
         delete_data
         delete_runner
@@ -81,7 +86,7 @@ module Kitchen
       def delete_work_image
         return unless Docker::Image.exist?(work_image, docker_connection)
         with_retries { @work_image = Docker::Image.get(work_image, docker_connection) }
-        with_retries { @work_image.remove(force: true)}
+        with_retries { @work_image.remove(force: true) }
       end
 
       def build_work_image(state)
@@ -210,22 +215,17 @@ module Kitchen
       end
 
       def delete_image(name)
-        i = Docker::Image.get(name, docker_connection)
-        with_retries { i.remove(force: true) }
+        @image = Docker::Image.get(name, docker_connection)
+        with_retries { @image.remove(force: true) }
       rescue Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
       end
 
-      def run_container(args)
-        c = create_container(args)
-        with_retries { c.start }
-      end
-
       def delete_container(name)
-        c = Docker::Container.get(name, docker_connection)
+        @container = Docker::Container.get(name, docker_connection)
         puts "Destroying container #{name}."
-        with_retries { c.stop(force: true) }
-        with_retries { c.delete(force: true, v: true) }
+        with_retries { @container.stop(force: true) }
+        with_retries { @container.delete(force: true, v: true) }
       rescue
         puts "Container #{name} not found. Nothing to delete."
       end
@@ -244,6 +244,11 @@ module Kitchen
 
       def repo(image)
         image.split(':')[0]
+      end
+
+      def run_container(args)
+        @container = create_container(args)
+        with_retries { @container.start }
       end
 
       def tag(image)
@@ -288,7 +293,7 @@ module Kitchen
       end
 
       def with_retries(&block)
-        tries = 5
+        tries = api_retries
         begin
           block.call
           # Only catch errors that can be fixed with retries.
