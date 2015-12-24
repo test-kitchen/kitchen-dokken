@@ -74,14 +74,14 @@ module Kitchen
           end
 
           begin
-            old_image = Docker::Image.get(work_image, {}, docker_connection)
-            with_retries { old_image.remove }
+            @old_image = Docker::Image.get(work_image, {}, docker_connection)
+            with_retries { @old_image.remove }
           rescue
             debug "#{work_image} not present. nothing to remove."
           end
 
-          new_image = @runner.commit
-          new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true')
+          @new_image = @runner.commit
+          with_retries { @new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true') }
         end
 
         def upload(locals, remote)
@@ -143,14 +143,14 @@ module Kitchen
             block.call
             # Only catch errors that can be fixed with retries.
           rescue Docker::Error::ServerError, # 404
-            Docker::Error::UnexpectedResponseError, # 400
-            Docker::Error::TimeoutError,
-            Docker::Error::IOError => e
+                 Docker::Error::UnexpectedResponseError, # 400
+                 Docker::Error::TimeoutError,
+                 Docker::Error::IOError => e
             tries -= 1
             retry if tries > 0
             raise e
           end
-        end        
+        end
       end
 
       private

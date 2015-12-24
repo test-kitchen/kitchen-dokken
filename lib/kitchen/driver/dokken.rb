@@ -97,13 +97,13 @@ module Kitchen
 
         with_retries do
           begin
-          @work_image = Docker::Image.build_from_dir(
-            context_root,
-            { 'nocache' => true, 'rm' => true },
-            docker_connection
-              )
+            @work_image = Docker::Image.build_from_dir(
+              context_root,
+              { 'nocache' => true, 'rm' => true },
+              docker_connection
+            )
           rescue
-            puts "SEANDEBUG: EXPLOSIONS"
+            debug "work_image build failed. retrying."
           end
         end
 
