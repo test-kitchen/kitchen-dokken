@@ -62,23 +62,25 @@ module Kitchen
         def execute(command)
           return if command.nil?
 
-          runner = Docker::Container.get(instance_name, {}, docker_connection)
-          o = runner.exec(Shellwords.shellwords(command)) { |_stream, chunk| print "#{chunk}" }
-          exit_code = o[2]
+          with_retries { @runner = Docker::Container.get(instance_name, {}, docker_connection) }
+          with_retries do
+            o = @runner.exec(Shellwords.shellwords(command)) { |_stream, chunk| print "#{chunk}" }
+            @exit_code = o[2]
+          end
 
-          if exit_code != 0
+          if @exit_code != 0
             fail Transport::DockerExecFailed,
-                 "Docker Exec (#{exit_code}) for command: [#{command}]"
+                 "Docker Exec (#{@exit_code}) for command: [#{command}]"
           end
 
           begin
             old_image = Docker::Image.get(work_image, {}, docker_connection)
-            old_image.remove
+            with_retries { old_image.remove }
           rescue
             debug "#{work_image} not present. nothing to remove."
           end
 
-          new_image = runner.commit
+          new_image = @runner.commit
           new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true')
         end
 
@@ -115,8 +117,8 @@ module Kitchen
         end
 
         def login_command
-          runner = "#{options[:instance_name]}"
-          args = ['exec', '-it', runner, '/bin/bash', '-login', '-i']
+          @runner = "#{options[:instance_name]}"
+          args = ['exec', '-it', @runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
 
@@ -134,6 +136,21 @@ module Kitchen
         def image_prefix
           options[:image_prefix]
         end
+
+        def with_retries(&block)
+          tries = 20
+          begin
+            block.call
+            # Only catch errors that can be fixed with retries.
+          rescue Docker::Error::ServerError, # 404
+            Docker::Error::UnexpectedResponseError, # 400
+            Docker::Error::TimeoutError,
+            Docker::Error::IOError => e
+            tries -= 1
+            retry if tries > 0
+            raise e
+          end
+        end        
       end
 
       private

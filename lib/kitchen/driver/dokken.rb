@@ -95,8 +95,24 @@ module Kitchen
         FileUtils.mkdir_p context_root
         File.write("#{context_root}/Dockerfile", work_image_dockerfile)
 
-        with_retries { @work_image = Docker::Image.build_from_dir(context_root, { 'nocache' => true, 'rm' => true }, docker_connection) }
-        with_retries { @work_image.tag('repo' => repo(work_image), 'tag' => tag(work_image), 'force' => true) }
+        with_retries do
+          begin
+          @work_image = Docker::Image.build_from_dir(
+            context_root,
+            { 'nocache' => true, 'rm' => true },
+            docker_connection
+              )
+          rescue
+            puts "SEANDEBUG: EXPLOSIONS"
+          end
+        end
+
+        with_retries do
+          @work_image.tag(
+            'repo' => repo(work_image),
+            'tag' => tag(work_image),
+            'force' => true)
+        end
         state[:work_image] = work_image
       end
 
