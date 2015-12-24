@@ -48,7 +48,7 @@ module Kitchen
 
         # chef
         pull_chef_image
-        start_chef_container state
+        create_chef_container state
 
         # data
         make_data_image
@@ -177,6 +177,7 @@ module Kitchen
           },
           'PublishAllPorts' => true
         )
+        # require 'pry' ; binding.pry
         state[:data_container] = data_container.json
       end
 
@@ -188,7 +189,7 @@ module Kitchen
         # create_data_image
       end
 
-      def start_chef_container(state)
+      def create_chef_container(state)
         c = Docker::Container.get(chef_container_name)
       rescue Docker::Error::NotFoundError
         begin
@@ -215,14 +216,14 @@ module Kitchen
       end
 
       def delete_image(name)
-        @image = Docker::Image.get(name, docker_connection)
+        with_retries { @image = Docker::Image.get(name, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
       end
 
       def delete_container(name)
-        @container = Docker::Container.get(name, docker_connection)
+        with_retries { @container = Docker::Container.get(name, docker_connection) }
         puts "Destroying container #{name}."
         with_retries { @container.stop(force: true) }
         with_retries { @container.delete(force: true, v: true) }
@@ -236,19 +237,44 @@ module Kitchen
         false
       end
 
-      def create_container(args)
-        c = Docker::Container.create(args.clone, docker_connection)
-      rescue Docker::Error::ConflictError
-        c = Docker::Container.get(args['name'])
-      end
-
       def repo(image)
         image.split(':')[0]
       end
 
+      def create_container(args)
+        with_retries do
+          @container = Docker::Container.create(args.clone, docker_connection)
+          @container = Docker::Container.get(args['name'])
+        end
+      rescue Docker::Error::ConflictError
+        with_retries { @container = Docker::Container.get(args['name']) }
+      end
+
       def run_container(args)
-        @container = create_container(args)
-        with_retries { @container.start }
+        create_container(args)
+        with_retries do
+          @container.start
+          @container = Docker::Container.get(args['name'])
+          wait_running_state(args['name'], true)
+        end
+        @container
+      end
+
+      def container_state
+        @container ? @container.info['State'] : {}
+      end
+
+      def wait_running_state(name, v)
+        @container = Docker::Container.get(name)
+        # require 'pry' ; binding.pry
+        i = 0
+        tries = 20
+        until container_state['Running'] == v || container_state['FinishedAt'] != '0001-01-01T00:00:00Z'
+          i += 1
+          break if i == tries
+          sleep 0.1
+          @container = Docker::Container.get(name)
+        end
       end
 
       def tag(image)
