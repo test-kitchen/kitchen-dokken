@@ -273,13 +273,12 @@ module Kitchen
       end
 
       def delete_container(name)
-        with_retries { @container = Docker::Container.get(name, docker_connection) }
-        puts "Destroying container #{name}."
-
         begin
-          with_retries { @container.delete(force: true, v: true) }
+          puts "Destroying container #{name}."
+          with_retries { @container = Docker::Container.get(name, docker_connection) }
         rescue
-          puts "Container #{name} not found. Nothing to stop."
+          puts "Container #{name} not found. Nothing to destroy"
+          return
         end
 
         begin
@@ -288,7 +287,13 @@ module Kitchen
             wait_running_state(args['name'], false)
           end
         rescue
-          puts "Container #{name} not found. Nothing to delete."
+          debug "Container #{name} not found. Nothing to stop."
+        end
+
+        begin
+          with_retries { @container.delete(force: true, v: true) }
+        rescue
+          debug "Container #{name} not found. Nothing to delete."
         end
       end
 
