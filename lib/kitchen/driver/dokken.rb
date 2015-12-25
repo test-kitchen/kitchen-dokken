@@ -239,18 +239,6 @@ module Kitchen
         puts "Image #{name} not found. Nothing to delete."
       end
 
-      def delete_container(name)
-        with_retries { @container = Docker::Container.get(name, docker_connection) }
-        puts "Destroying container #{name}."
-        with_retries do
-          @container.stop(force: true)
-          wait_running_state(args['name'], false)
-        end
-        with_retries { @container.delete(force: true, v: true) }
-      rescue
-        puts "Container #{name} not found. Nothing to delete."
-      end
-
       def container_exist?(name)
         return true if Docker::Container.get(name)
       rescue
@@ -284,15 +272,33 @@ module Kitchen
         @container ? @container.info['State'] : {}
       end
 
+      def delete_container(name)
+        with_retries { @container = Docker::Container.get(name, docker_connection) }
+        puts "Destroying container #{name}."
+
+        begin
+          with_retries { @container.delete(force: true, v: true) }
+        rescue
+          puts "Container #{name} not found. Nothing to stop."
+        end
+
+        begin
+          with_retries do
+            @container.stop(force: true)
+            wait_running_state(args['name'], false)
+          end
+        rescue
+          puts "Container #{name} not found. Nothing to delete."
+        end
+      end
+
       def wait_running_state(name, v)
         @container = Docker::Container.get(name)
-        # require 'pry' ; binding.pry
         i = 0
         tries = 20
         until container_state['Running'] == v || container_state['FinishedAt'] != '0001-01-01T00:00:00Z'
           i += 1
           break if i == tries
-          puts "SEANDEBUG: #{container_state['Running']}"
           sleep 0.1
           @container = Docker::Container.get(name)
         end
