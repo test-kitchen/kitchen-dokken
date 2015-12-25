@@ -64,17 +64,19 @@ module Kitchen
         save_misc_state state
       end
 
-      def api_retries
-        config[:api_retries]
-      end
-
       def destroy(_state)
-        delete_data
-        delete_runner
+        stop_data_container
+        delete_data_container
+        stop_runner_container
+        delete_runner_container
         delete_work_image
       end
 
       private
+
+      def api_retries
+        config[:api_retries]
+      end
 
       def docker_connection
         opts = Docker.options
@@ -97,23 +99,26 @@ module Kitchen
 
         begin
           with_retries do
-            @work_image = Docker::Image.build_from_dir(
+            @intermediate_image = Docker::Image.build_from_dir(
               context_root,
               { 'nocache' => true, 'forcerm' => true },
               docker_connection
             )
           end
+
+          with_retries do
+            @intermediate_image.tag(
+              'repo' => repo(work_image),
+              'tag' => tag(work_image),
+              'force' => true
+              )
+          end
         rescue
-          raise 'work_image build failed'
+          fail 'work_image build failed'
+        # ensure
+        #   @intermediate_image.remove(force: true)
         end
 
-        with_retries do
-          @work_image.tag(
-            'repo' => repo(work_image),
-            'tag' => tag(work_image),
-            'force' => true
-          )
-        end
         state[:work_image] = work_image
       end
 
@@ -140,32 +145,42 @@ module Kitchen
         instance.name
       end
 
-      def instance_platform_name
-        instance.platform.name
+      def delete_chef_container
+        debug "driver - deleting container #{chef_container_name}"
+        delete_container chef_container_name
       end
 
-      def work_image
-        return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
-        instance_name
+      def delete_data_container
+        debug "driver - deleting container #{data_container_name}"
+        delete_container data_container_name
+      end
+
+      def delete_runner_container
+        debug "driver - deleting container #{runner_container_name}"
+        delete_container runner_container_name
       end
 
       def image_prefix
         config[:image_prefix]
       end
 
-      def delete_runner
-        debug "driver - deleting container #{runner_container_name}"
-        delete_container runner_container_name
+      def instance_platform_name
+        instance.platform.name
       end
 
-      def delete_chef_container
-        debug "driver - deleting container #{chef_container_name}"
-        delete_container chef_container_name
+      def stop_runner_container
+        debug "driver - stopping container #{runner_container_name}"
+        stop_container runner_container_name
       end
 
-      def delete_data
-        debug "driver - deleting container #{data_container_name}"
-        delete_container data_container_name
+      def stop_data_container
+        debug "driver - stopping container #{data_container_name}"
+        stop_container data_container_name
+      end
+
+      def work_image
+        return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
+        instance_name
       end
 
       def start_runner_container(state)
@@ -272,27 +287,23 @@ module Kitchen
         @container ? @container.info['State'] : {}
       end
 
-      def delete_container(name)
+      def stop_container(name)
         begin
-          puts "Destroying container #{name}."
           with_retries { @container = Docker::Container.get(name, docker_connection) }
-        rescue
-          puts "Container #{name} not found. Nothing to destroy"
-          return
-        end
-
-        begin
           with_retries do
             @container.stop(force: true)
-            wait_running_state(args['name'], false)
+            wait_running_state(name, false)
           end
-        rescue
+        rescue Docker::Error::NotFoundError
           debug "Container #{name} not found. Nothing to stop."
         end
+      end
 
+      def delete_container(name)
         begin
+          with_retries { @container = Docker::Container.get(name, docker_connection) }
           with_retries { @container.delete(force: true, v: true) }
-        rescue
+        rescue Docker::Error::NotFoundError
           debug "Container #{name} not found. Nothing to delete."
         end
       end
@@ -313,8 +324,28 @@ module Kitchen
         image.split(':')[1] || 'latest'
       end
 
-      def pull_image(image)
-        with_retries { Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, docker_connection) }
+      def chef_container_name
+        "chef-#{chef_version}"
+      end
+
+      def chef_image
+        "someara/chef:#{chef_version}"
+      end
+
+      def chef_version
+        config[:chef_version]
+      end
+
+      def data_container_name
+        "#{instance.name}-data"
+      end
+
+      def data_image
+        config[:data_image]
+      end
+
+      def platform_image
+        config[:image]
       end
 
       def pull_if_missing(image)
@@ -322,28 +353,8 @@ module Kitchen
         pull_image image
       end
 
-      def platform_image
-        config[:image]
-      end
-
-      def chef_version
-        config[:chef_version]
-      end
-
-      def chef_image
-        "someara/chef:#{chef_version}"
-      end
-
-      def chef_container_name
-        "chef-#{chef_version}"
-      end
-
-      def data_image
-        config[:data_image]
-      end
-
-      def data_container_name
-        "#{instance.name}-data"
+      def pull_image(image)
+        with_retries { Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, docker_connection) }
       end
 
       def runner_container_name
@@ -364,6 +375,7 @@ module Kitchen
           raise e
         end
       end
+
     end
   end
 end
