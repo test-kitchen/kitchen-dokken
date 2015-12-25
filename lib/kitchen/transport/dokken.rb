@@ -74,13 +74,13 @@ module Kitchen
           end
 
           begin
-            @old_image = Docker::Image.get(work_image, {}, docker_connection)
+            with_retries { @old_image = Docker::Image.get(work_image, {}, docker_connection) }
             with_retries { @old_image.remove }
           rescue
             debug "#{work_image} not present. nothing to remove."
           end
 
-          @new_image = @runner.commit
+          with_retries { @new_image = @runner.commit }
           with_retries { @new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true') }
         end
 

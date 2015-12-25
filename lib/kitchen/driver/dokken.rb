@@ -95,23 +95,24 @@ module Kitchen
         FileUtils.mkdir_p context_root
         File.write("#{context_root}/Dockerfile", work_image_dockerfile)
 
-        with_retries do
-          begin
+        begin
+          with_retries do
             @work_image = Docker::Image.build_from_dir(
               context_root,
               { 'nocache' => true, 'rm' => true },
               docker_connection
             )
-          rescue
-            debug "work_image build failed. retrying."
           end
+        rescue
+          raise 'work_image build failed'
         end
 
         with_retries do
           @work_image.tag(
             'repo' => repo(work_image),
             'tag' => tag(work_image),
-            'force' => true)
+            'force' => true
+          )
         end
         state[:work_image] = work_image
       end
@@ -241,7 +242,10 @@ module Kitchen
       def delete_container(name)
         with_retries { @container = Docker::Container.get(name, docker_connection) }
         puts "Destroying container #{name}."
-        with_retries { @container.stop(force: true) }
+        with_retries do
+          @container.stop(force: true)
+          wait_running_state(args['name'], false)
+        end
         with_retries { @container.delete(force: true, v: true) }
       rescue
         puts "Container #{name} not found. Nothing to delete."
