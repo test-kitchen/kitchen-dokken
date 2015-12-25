@@ -101,24 +101,18 @@ module Kitchen
           with_retries do
             @intermediate_image = Docker::Image.build_from_dir(
               context_root,
-              { 'nocache' => true, 'forcerm' => true },
+              {
+                'nocache' => true,
+                'forcerm' => true,
+                'q' => true,
+                't' => work_image
+              },
               docker_connection
             )
           end
-
-          with_retries do
-            @intermediate_image.tag(
-              'repo' => repo(work_image),
-              'tag' => tag(work_image),
-              'force' => true
-              )
-          end
         rescue
           fail 'work_image build failed'
-        # ensure
-        #   @intermediate_image.remove(force: true)
         end
-
         state[:work_image] = work_image
       end
 
@@ -375,7 +369,6 @@ module Kitchen
           raise e
         end
       end
-
     end
   end
 end
