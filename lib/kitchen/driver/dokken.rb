@@ -99,7 +99,7 @@ module Kitchen
           with_retries do
             @work_image = Docker::Image.build_from_dir(
               context_root,
-              { 'nocache' => true, 'rm' => true },
+              { 'nocache' => true, 'forcerm' => true },
               docker_connection
             )
           end
@@ -292,6 +292,7 @@ module Kitchen
         until container_state['Running'] == v || container_state['FinishedAt'] != '0001-01-01T00:00:00Z'
           i += 1
           break if i == tries
+          puts "SEANDEBUG: #{container_state['Running']}"
           sleep 0.1
           @container = Docker::Container.get(name)
         end
