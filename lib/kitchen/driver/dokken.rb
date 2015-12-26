@@ -323,7 +323,7 @@ module Kitchen
       end
 
       def chef_image
-        "someara/chef:#{chef_version}"
+        "chef/chef:#{chef_version}"
       end
 
       def chef_version
