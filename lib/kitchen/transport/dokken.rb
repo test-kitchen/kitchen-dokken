@@ -73,15 +73,13 @@ module Kitchen
                  "Docker Exec (#{@exit_code}) for command: [#{command}]"
           end
 
-          begin
-            with_retries { @old_image = Docker::Image.get(work_image, {}, docker_connection) }
-            with_retries { @old_image.remove }
-          rescue
-            debug "#{work_image} not present. nothing to remove."
-          end
-
-          with_retries { @new_image = @runner.commit }
-          with_retries { @new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true') }
+          # Disabling this for now.. the Docker ZFS driver won't let us
+          # commit running containers.
+          #
+          # with_retries { @old_image = Docker::Image.get(work_image, {}, docker_connection) }
+          # with_retries { @new_image = @runner.commit }
+          # with_retries { @new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true') }
+          # with_retries { @old_image.remove }
         end
 
         def upload(locals, remote)

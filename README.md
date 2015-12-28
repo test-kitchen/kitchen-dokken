@@ -418,6 +418,7 @@ You can, however, do it manually.
 ```
 cd my_cookbook ;
 kitchen verify suite_name
+docker stop suite_name
 docker tag suite_name:latest my.computers.biz:5043/something/whatever
 docker push my.computers.biz:5043/something/whatever
 kitchen destroy
