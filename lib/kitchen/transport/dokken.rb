@@ -34,6 +34,9 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Transport::Base
+
+      include Kitchen::Logging
+
       kitchen_transport_api_version 1
 
       plugin_version Kitchen::VERSION
@@ -55,6 +58,20 @@ module Kitchen
 
       # @author Sean OMeara <sean@chef.io>
       class Connection < Kitchen::Transport::Dokken::Connection
+
+        def initialize(options = {})
+          init_options(options)
+
+          if block_given?
+            yield self
+          end
+        end
+
+        def init_options(options)
+          @options = options.dup
+          @logger = @options.delete(:logger) || Kitchen.logger
+        end
+
         def docker_connection
           @docker_connection ||= Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])
         end
@@ -64,7 +81,9 @@ module Kitchen
 
           with_retries { @runner = Docker::Container.get(instance_name, {}, docker_connection) }
           with_retries do
-            o = @runner.exec(Shellwords.shellwords(command)) { |_stream, chunk| print "#{chunk}" }
+            o = @runner.exec(Shellwords.shellwords(command)) do |_stream, chunk|
+              logger << (chunk + "\n")
+            end
             @exit_code = o[2]
           end
 
@@ -160,7 +179,9 @@ module Kitchen
       # @return [Hash] hash of connection options
       # @api private
       def connection_options(data) # rubocop:disable Metrics/MethodLength
-        opts = {}
+        opts = {
+          :logger => logger
+        }
         opts[:docker_host_url] = config[:docker_host_url]
         opts[:docker_host_options] = Docker.options
         opts[:data_container] = data[:data_container]
