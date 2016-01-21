@@ -46,6 +46,10 @@ module Kitchen
         cleanup_sandbox
       end
 
+      def log_level
+        config[:log_level] || 'warn'
+      end
+
       private
 
       # magic method name because we're subclassing ChefZero
@@ -54,7 +58,7 @@ module Kitchen
         cmd << ' -z'
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
-        cmd << ' -l warn'
+        cmd << " -l #{log_level}"
         cmd << ' -F doc'
       end
 
