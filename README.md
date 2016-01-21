@@ -382,6 +382,22 @@ verifier:
   sudo: false
 ```
 
+
+### Chef Logging
+
+By default, the provisioner logs at `warn` level, meaning very little
+information is available for troubleshooting the Chef run. The logging level can
+ be overridden in the provisioner configuration:
+
+```
+provisioner:
+  name: dokken
+  log_level: debug
+```
+
+Available logging levels are: `auto`, `debug`, `info`, `warn`, `error`, and
+`fatal`.
+
 FAQ
 ===
 
