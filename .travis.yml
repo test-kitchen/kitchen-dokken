@@ -36,6 +36,7 @@ script:
   - KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE}
 
 after_script:
+  - docker --version
   - docker images
   - docker ps -a
   - cat .kitchen/logs/kitchen.log
