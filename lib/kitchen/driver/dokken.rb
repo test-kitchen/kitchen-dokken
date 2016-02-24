@@ -92,6 +92,8 @@ module Kitchen
       end
 
       def build_work_image(state)
+        # require 'pry' ; binding.pry
+        
         return if Docker::Image.exist?(work_image, docker_connection)
 
         FileUtils.mkdir_p context_root
@@ -102,9 +104,9 @@ module Kitchen
             @intermediate_image = Docker::Image.build_from_dir(
               context_root,
               {
-                'nocache' => true,
-                'forcerm' => true,
-                'q' => true,
+                # 'nocache' => true,
+                # 'forcerm' => true,
+                # 'q' => true,
                 't' => work_image
               },
               docker_connection
@@ -347,8 +349,10 @@ module Kitchen
         pull_image image
       end
 
-      def pull_image(image)
-        with_retries { Docker::Image.create({ 'fromImage' => repo(image), 'tag' => tag(image) }, docker_connection) }
+      def pull_image(image)        
+        with_retries {
+          Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
+        }
       end
 
       def runner_container_name
