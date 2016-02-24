@@ -19,5 +19,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'test-kitchen', '~> 1.5'
-  spec.add_dependency 'docker-api', '~> 1.26.1'
+  spec.add_dependency 'docker-api', '~> 1.26.2'
 end
