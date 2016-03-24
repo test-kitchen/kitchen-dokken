@@ -16,7 +16,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ cat .kitchen.yml
 ---
 driver:
   name: dokken
-    chef_version: 12.5.1
+  chef_version: 12.5.1
 
 transport:
   name: dokken
@@ -27,7 +27,7 @@ provisioner:
 platforms:
 - name: centos-7
   driver:
-      image: centos:7
+    image: centos:7
 
 verifier:
   root_path: '/opt/verifier'
@@ -35,8 +35,8 @@ verifier:
 
 suites:
   - name: default
-      run_list:
-          - recipe[hello_dokken::default]
+    run_list:
+      - recipe[hello_dokken::default]
 ```
 
 How it works
