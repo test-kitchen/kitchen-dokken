@@ -56,13 +56,13 @@ module Kitchen
       # @author Sean OMeara <sean@chef.io>
       class Connection < Kitchen::Transport::Dokken::Connection
         def docker_connection
-          @docker_connection ||= Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])
+          @docker_connection ||= ::Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])
         end
 
         def execute(command)
           return if command.nil?
 
-          with_retries { @runner = Docker::Container.get(instance_name, {}, docker_connection) }
+          with_retries { @runner = ::Docker::Container.get(instance_name, {}, docker_connection) }
           with_retries do
             o = @runner.exec(Shellwords.shellwords(command)) { |_stream, chunk| print "#{chunk}" }
             @exit_code = o[2]
@@ -76,7 +76,7 @@ module Kitchen
           # Disabling this for now.. the Docker ZFS driver won't let us
           # commit running containers.
           #
-          # with_retries { @old_image = Docker::Image.get(work_image, {}, docker_connection) }
+          # with_retries { @old_image = ::Docker::Image.get(work_image, {}, docker_connection) }
           # with_retries { @new_image = @runner.commit }
           # with_retries { @new_image.tag('repo' => work_image, 'tag' => 'latest', 'force' => 'true') }
           # with_retries { @old_image.remove }
@@ -140,10 +140,10 @@ module Kitchen
           begin
             block.call
             # Only catch errors that can be fixed with retries.
-          rescue Docker::Error::ServerError, # 404
-                 Docker::Error::UnexpectedResponseError, # 400
-                 Docker::Error::TimeoutError,
-                 Docker::Error::IOError => e
+          rescue ::Docker::Error::ServerError, # 404
+                 ::Docker::Error::UnexpectedResponseError, # 400
+                 ::Docker::Error::TimeoutError,
+                 ::Docker::Error::IOError => e
             tries -= 1
             retry if tries > 0
             raise e
@@ -162,7 +162,7 @@ module Kitchen
       def connection_options(data) # rubocop:disable Metrics/MethodLength
         opts = {}
         opts[:docker_host_url] = config[:docker_host_url]
-        opts[:docker_host_options] = Docker.options
+        opts[:docker_host_options] = ::Docker.options
         opts[:data_container] = data[:data_container]
         opts[:instance_name] = data[:instance_name]
         opts

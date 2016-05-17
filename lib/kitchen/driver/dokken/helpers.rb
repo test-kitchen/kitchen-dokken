@@ -47,14 +47,14 @@ EOF
       end
 
       def create_data_image
-        return if Docker::Image.exist?(data_image)
+        return if ::Docker::Image.exist?(data_image)
 
         tmpdir = Dir.tmpdir
         FileUtils.mkdir_p "#{tmpdir}/dokken"
         File.write("#{tmpdir}/dokken/Dockerfile", data_dockerfile)
         File.write("#{tmpdir}/dokken/authorized_keys", insecure_ssh_public_key)
 
-        i = Docker::Image.build_from_dir("#{tmpdir}/dokken", { 'nocache' => true, 'rm' => true })
+        i = ::Docker::Image.build_from_dir("#{tmpdir}/dokken", { 'nocache' => true, 'rm' => true })
         i.tag('repo' => repo(data_image), 'tag' => tag(data_image), 'force' => true)
       end
     end

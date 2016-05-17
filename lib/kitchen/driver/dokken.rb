@@ -79,29 +79,29 @@ module Kitchen
       end
 
       def docker_connection
-        opts = Docker.options
+        opts = ::Docker.options
         opts[:read_timeout] = config[:read_timeout]
         opts[:write_timeout] = config[:write_timeout]
-        @docker_connection ||= Docker::Connection.new(config[:docker_host_url], opts)
+        @docker_connection ||= ::Docker::Connection.new(config[:docker_host_url], opts)
       end
 
       def delete_work_image
-        return unless Docker::Image.exist?(work_image, docker_connection)
-        with_retries { @work_image = Docker::Image.get(work_image, docker_connection) }
+        return unless ::Docker::Image.exist?(work_image, docker_connection)
+        with_retries { @work_image = ::Docker::Image.get(work_image, docker_connection) }
         with_retries { @work_image.remove(force: true) }
       end
 
       def build_work_image(state)
         # require 'pry' ; binding.pry
         
-        return if Docker::Image.exist?(work_image, docker_connection)
+        return if ::Docker::Image.exist?(work_image, docker_connection)
 
         FileUtils.mkdir_p context_root
         File.write("#{context_root}/Dockerfile", work_image_dockerfile)
 
         begin
           with_retries do
-            @intermediate_image = Docker::Image.build_from_dir(
+            @intermediate_image = ::Docker::Image.build_from_dir(
               context_root,
               {
                 # 'nocache' => true,
@@ -218,8 +218,8 @@ module Kitchen
       end
 
       def create_chef_container(state)
-        c = Docker::Container.get(chef_container_name)
-      rescue Docker::Error::NotFoundError
+        c = ::Docker::Container.get(chef_container_name)
+      rescue ::Docker::Error::NotFoundError
         begin
           debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
           chef_container = create_container(
@@ -244,14 +244,14 @@ module Kitchen
       end
 
       def delete_image(name)
-        with_retries { @image = Docker::Image.get(name, docker_connection) }
+        with_retries { @image = ::Docker::Image.get(name, docker_connection) }
         with_retries { @image.remove(force: true) }
-      rescue Docker::Error => e
+      rescue ::Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
       end
 
       def container_exist?(name)
-        return true if Docker::Container.get(name)
+        return true if ::Docker::Container.get(name)
       rescue
         false
       end
@@ -262,18 +262,18 @@ module Kitchen
 
       def create_container(args)
         with_retries do
-          @container = Docker::Container.create(args.clone, docker_connection)
-          @container = Docker::Container.get(args['name'])
+          @container = ::Docker::Container.create(args.clone, docker_connection)
+          @container = ::Docker::Container.get(args['name'])
         end
-      rescue Docker::Error::ConflictError
-        with_retries { @container = Docker::Container.get(args['name']) }
+      rescue ::Docker::Error::ConflictError
+        with_retries { @container = ::Docker::Container.get(args['name']) }
       end
 
       def run_container(args)
         create_container(args)
         with_retries do
           @container.start
-          @container = Docker::Container.get(args['name'])
+          @container = ::Docker::Container.get(args['name'])
           wait_running_state(args['name'], true)
         end
         @container
@@ -285,34 +285,34 @@ module Kitchen
 
       def stop_container(name)
         begin
-          with_retries { @container = Docker::Container.get(name, docker_connection) }
+          with_retries { @container = ::Docker::Container.get(name, docker_connection) }
           with_retries do
             @container.stop(force: true)
             wait_running_state(name, false)
           end
-        rescue Docker::Error::NotFoundError
+        rescue ::Docker::Error::NotFoundError
           debug "Container #{name} not found. Nothing to stop."
         end
       end
 
       def delete_container(name)
         begin
-          with_retries { @container = Docker::Container.get(name, docker_connection) }
+          with_retries { @container = ::Docker::Container.get(name, docker_connection) }
           with_retries { @container.delete(force: true, v: true) }
-        rescue Docker::Error::NotFoundError
+        rescue ::Docker::Error::NotFoundError
           debug "Container #{name} not found. Nothing to delete."
         end
       end
 
       def wait_running_state(name, v)
-        @container = Docker::Container.get(name)
+        @container = ::Docker::Container.get(name)
         i = 0
         tries = 20
         until container_state['Running'] == v || container_state['FinishedAt'] != '0001-01-01T00:00:00Z'
           i += 1
           break if i == tries
           sleep 0.1
-          @container = Docker::Container.get(name)
+          @container = ::Docker::Container.get(name)
         end
       end
 
@@ -345,13 +345,13 @@ module Kitchen
       end
 
       def pull_if_missing(image)
-        return if Docker::Image.exist?("#{repo(image)}:#{tag(image)}", docker_connection)
+        return if ::Docker::Image.exist?("#{repo(image)}:#{tag(image)}", docker_connection)
         pull_image image
       end
 
       def pull_image(image)        
         with_retries {
-          Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
+          ::Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
         }
       end
 
@@ -364,10 +364,10 @@ module Kitchen
         begin
           block.call
           # Only catch errors that can be fixed with retries.
-        rescue Docker::Error::ServerError, # 404
-               Docker::Error::UnexpectedResponseError, # 400
-               Docker::Error::TimeoutError,
-               Docker::Error::IOError => e
+        rescue ::Docker::Error::ServerError, # 404
+               ::Docker::Error::UnexpectedResponseError, # 400
+               ::Docker::Error::TimeoutError,
+               ::Docker::Error::IOError => e
           tries -= 1
           retry if tries > 0
           raise e
