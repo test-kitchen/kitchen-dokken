@@ -84,7 +84,8 @@ module Kitchen
 
         def upload(locals, remote)
           if options[:docker_host_url] =~ /unix:/
-            ip = '127.0.0.1'
+            # we should read the proper mapped ip, since this allows us to upload the files
+            ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
           elsif options[:docker_host_url] =~ /tcp:/
             ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
           else
