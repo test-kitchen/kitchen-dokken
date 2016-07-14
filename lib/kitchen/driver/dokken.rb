@@ -201,7 +201,7 @@ module Kitchen
             'Links' => Array(config[:links]),
             'CapAdd' => Array(config[:cap_add]),
             'CapDrop' => Array(config[:cap_drop]),
-            'SecurityOpts' => Array(config[:security_opt]),
+            'SecurityOpt' => Array(config[:security_opt]),
             'NetworkMode' => config[:network_mode],
           }
         )
