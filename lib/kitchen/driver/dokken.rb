@@ -32,7 +32,6 @@ module Kitchen
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
-      default_config :privileged, false
       default_config :image_prefix, nil
       default_config :chef_version, '12.5.1'
       default_config :data_image, 'someara/kitchen-cache:latest'
@@ -40,6 +39,15 @@ module Kitchen
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
       default_config :api_retries, 20
+      # docker run args
+      default_config :privileged, false
+      default_config :hostname, nil
+      default_config :binds, nil # volumes to mount
+      default_config :links, nil
+      default_config :cap_add, nil
+      default_config :cap_drop, nil
+      default_config :security_opt, nil
+      default_config :network_mode, 'bridge'
 
       # (see Base#create)
       def create(state)
@@ -185,9 +193,16 @@ module Kitchen
           'name' => runner_container_name,
           'Cmd' => Shellwords.shellwords(config[:pid_one_command]),
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
+          'Hostname' => config[:hostname],
           'HostConfig' => {
             'Privileged' => config[:privileged],
-            'VolumesFrom' => [chef_container_name, data_container_name]
+            'VolumesFrom' => [chef_container_name, data_container_name],
+            'Binds' => Array(config[:binds]),
+            'Links' => Array(config[:links]),
+            'CapAdd' => Array(config[:cap_add]),
+            'CapDrop' => Array(config[:cap_drop]),
+            'SecurityOpts' => Array(config[:security_opt]),
+            'NetworkMode' => config[:network_mode],
           }
         )
         state[:runner_container] = runner_container.json
