@@ -41,6 +41,7 @@ module Kitchen
       default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
+      default_config :host_ip_override, false
 
       # (see Base#connection)
       def connection(state, &block)
@@ -83,7 +84,10 @@ module Kitchen
         end
 
         def upload(locals, remote)
-          if options[:docker_host_url] =~ /unix:/
+          if options[:host_ip_override]
+            # Allow connecting to any ip/hostname to support sibling containers
+            ip = options[:host_ip_override]
+          elsif options[:docker_host_url] =~ /unix:/
             # we should read the proper mapped ip, since this allows us to upload the files
             ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
           elsif options[:docker_host_url] =~ /tcp:/
@@ -162,6 +166,7 @@ module Kitchen
       # @api private
       def connection_options(data) # rubocop:disable Metrics/MethodLength
         opts = {}
+        opts[:host_ip_override] = config[:host_ip_override]
         opts[:docker_host_url] = config[:docker_host_url]
         opts[:docker_host_options] = ::Docker.options
         opts[:data_container] = data[:data_container]
