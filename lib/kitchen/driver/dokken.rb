@@ -96,7 +96,12 @@ module Kitchen
       def delete_work_image
         return unless ::Docker::Image.exist?(work_image, docker_connection)
         with_retries { @work_image = ::Docker::Image.get(work_image, docker_connection) }
-        with_retries { @work_image.remove(force: true) }
+
+        begin
+          with_retries { @work_image.remove(force: true) }
+        rescue ::Docker::Error::ConflictError
+          debug "driver - #{work_image} cannot be removed"
+        end
       end
 
       def build_work_image(state)
@@ -244,7 +249,7 @@ module Kitchen
           )
           state[:chef_container] = chef_container.json
         rescue
-          debug "driver - #{chef_container_name} alreay exists"
+          debug "driver - #{chef_container_name} already exists"
         end
       end
 
