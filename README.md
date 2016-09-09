@@ -353,6 +353,7 @@ platforms:
 - name: centos-7
   driver:
     image: centos:7
+    privileged: true
     pid_one_command: /usr/lib/systemd/systemd
 ```
 
