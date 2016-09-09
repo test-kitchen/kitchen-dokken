@@ -146,7 +146,8 @@ module Kitchen
       end
 
       def instance_name
-        instance.name
+        prefix = File.basename(FileUtils.pwd)
+        "#{prefix}-#{instance.name}"
       end
 
       def delete_chef_container
@@ -348,7 +349,7 @@ module Kitchen
       end
 
       def data_container_name
-        "#{instance.name}-data"
+        "#{instance_name}-data"
       end
 
       def data_image
@@ -371,7 +372,7 @@ module Kitchen
       end
 
       def runner_container_name
-        "#{instance.name}"
+        "#{instance_name}"
       end
 
       def with_retries(&block)
