@@ -65,13 +65,13 @@ module Kitchen
 
           with_retries { @runner = ::Docker::Container.get(instance_name, {}, docker_connection) }
           with_retries do
-            o = @runner.exec(Shellwords.shellwords(command)) { |_stream, chunk| print "#{chunk}" }
+            o = @runner.exec(Shellwords.shellwords(command)) { |_stream, chunk| print chunk.to_s }
             @exit_code = o[2]
           end
 
           if @exit_code != 0
-            fail Transport::DockerExecFailed,
-                 "Docker Exec (#{@exit_code}) for command: [#{command}]"
+            raise Transport::DockerExecFailed,
+                  "Docker Exec (#{@exit_code}) for command: [#{command}]"
           end
 
           # Disabling this for now.. the Docker ZFS driver won't let us
@@ -93,7 +93,7 @@ module Kitchen
           elsif options[:docker_host_url] =~ /tcp:/
             ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
           else
-            fail Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
+            raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
           port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
@@ -120,7 +120,7 @@ module Kitchen
         end
 
         def login_command
-          @runner = "#{options[:instance_name]}"
+          @runner = options[:instance_name].to_s
           args = ['exec', '-it', @runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
@@ -140,10 +140,10 @@ module Kitchen
           options[:image_prefix]
         end
 
-        def with_retries(&block)
+        def with_retries
           tries = 20
           begin
-            block.call
+            yield
             # Only catch errors that can be fixed with retries.
           rescue ::Docker::Error::ServerError, # 404
                  ::Docker::Error::UnexpectedResponseError, # 400

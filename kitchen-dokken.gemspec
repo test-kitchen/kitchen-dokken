@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'A Test Kitchen Driver for Dokken'
   spec.summary       = 'A Test Kitchen Driver that talks to the Docker Remote API and uses Volumes to produce sparse container images'
   spec.homepage      = 'https://github.com/someara/kitchen-dokken'
-  spec.license       = 'Apache 2.0'
+  spec.license       = 'Apache-2.0'
 
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(/LICENSE|^CHANGELOG|^lib/)
   spec.executables   = []

@@ -59,7 +59,7 @@ module Kitchen
       end
 
       def runner_container_name
-        "#{instance.name}"
+        instance.name.to_s
       end
     end
   end

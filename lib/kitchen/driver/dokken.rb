@@ -110,31 +110,26 @@ module Kitchen
 
         return if ::Docker::Image.exist?(work_image, docker_connection)
 
-        FileUtils.mkdir_p context_root
-        File.write("#{context_root}/Dockerfile", work_image_dockerfile)
-
-        begin
-          with_retries do
-            @intermediate_image = ::Docker::Image.build_from_dir(
-              context_root,
-              {
-                # 'nocache' => true,
-                # 'forcerm' => true,
-                # 'q' => true,
-                't' => work_image
-              },
-              docker_connection
-            )
+        Dir.mktmpdir do |context_root|
+          File.write("#{context_root}/Dockerfile", work_image_dockerfile)
+          begin
+            with_retries do
+              @intermediate_image = ::Docker::Image.build_from_dir(
+                context_root,
+                {
+                  # 'nocache' => true,
+                  # 'forcerm' => true,
+                  # 'q' => true,
+                  't' => work_image
+                },
+                docker_connection
+              )
+            end
+          rescue Exception => e
+            raise "work_image build failed: #{e}"
           end
-        rescue Exception => e
-          fail  "work_image build failed: #{e}"
+          state[:work_image] = work_image
         end
-        state[:work_image] = work_image
-      end
-
-      def context_root
-        tmpdir = Dir.tmpdir
-        "#{tmpdir}/dokken/#{instance_name}"
       end
 
       def work_image_dockerfile
@@ -211,7 +206,7 @@ module Kitchen
             'CapDrop' => Array(config[:cap_drop]),
             'SecurityOpt' => Array(config[:security_opt]),
             'NetworkMode' => config[:network_mode],
-            'PortBindings' => port_forwards({}, config[:forward]),
+            'PortBindings' => port_forwards({}, config[:forward])
           }
         )
         state[:runner_container] = runner_container.json
@@ -222,7 +217,7 @@ module Kitchen
         data_container = run_container(
           'name' => data_container_name,
           'Image' => "#{repo(data_image)}:#{tag(data_image)}",
-          'PortBindings' => port_forwards({}, "22"),
+          'PortBindings' => port_forwards({}, '22'),
           'PublishAllPorts' => true
         )
         # require 'pry' ; binding.pry
@@ -304,24 +299,20 @@ module Kitchen
       end
 
       def stop_container(name)
-        begin
-          with_retries { @container = ::Docker::Container.get(name, docker_connection) }
-          with_retries do
-            @container.stop(force: true)
-            wait_running_state(name, false)
-          end
-        rescue ::Docker::Error::NotFoundError
-          debug "Container #{name} not found. Nothing to stop."
+        with_retries { @container = ::Docker::Container.get(name, docker_connection) }
+        with_retries do
+          @container.stop(force: true)
+          wait_running_state(name, false)
         end
+      rescue ::Docker::Error::NotFoundError
+        debug "Container #{name} not found. Nothing to stop."
       end
 
       def delete_container(name)
-        begin
-          with_retries { @container = ::Docker::Container.get(name, docker_connection) }
-          with_retries { @container.delete(force: true, v: true) }
-        rescue ::Docker::Error::NotFoundError
-          debug "Container #{name} not found. Nothing to delete."
-        end
+        with_retries { @container = ::Docker::Container.get(name, docker_connection) }
+        with_retries { @container.delete(force: true, v: true) }
+      rescue ::Docker::Error::NotFoundError
+        debug "Container #{name} not found. Nothing to delete."
       end
 
       def wait_running_state(name, v)
@@ -366,7 +357,7 @@ module Kitchen
 
       def exposed_ports(config, rules)
         Array(rules).each do |prt_string|
-          guest, host = prt_string.to_s.split(":").reverse
+          guest, host = prt_string.to_s.split(':').reverse
           config["#{guest}/tcp"] = {}
         end
         config
@@ -374,9 +365,9 @@ module Kitchen
 
       def port_forwards(config, rules)
         Array(rules).each do |prt_string|
-          guest, host = prt_string.to_s.split(":").reverse
+          guest, host = prt_string.to_s.split(':').reverse
           config["#{guest}/tcp"] = [{
-            :HostPort => host || ''
+            HostPort: host || ''
           }]
         end
         config
@@ -388,20 +379,20 @@ module Kitchen
       end
 
       def pull_image(image)
-        with_retries {
+        with_retries do
           ::Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
-        }
+        end
       end
 
       def runner_container_name
-        "#{instance_name}"
+        instance_name.to_s
       end
 
-      def with_retries(&block)
+      def with_retries
         tries = api_retries
         begin
-          block.call
-          # Only catch errors that can be fixed with retries.
+          yield
+        # Only catch errors that can be fixed with retries.
         rescue ::Docker::Error::ServerError, # 404
                ::Docker::Error::UnexpectedResponseError, # 400
                ::Docker::Error::TimeoutError,

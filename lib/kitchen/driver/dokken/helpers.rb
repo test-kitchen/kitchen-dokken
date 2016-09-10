@@ -54,7 +54,7 @@ EOF
         File.write("#{tmpdir}/dokken/Dockerfile", data_dockerfile)
         File.write("#{tmpdir}/dokken/authorized_keys", insecure_ssh_public_key)
 
-        i = ::Docker::Image.build_from_dir("#{tmpdir}/dokken", { 'nocache' => true, 'rm' => true })
+        i = ::Docker::Image.build_from_dir("#{tmpdir}/dokken", 'nocache' => true, 'rm' => true)
         i.tag('repo' => repo(data_image), 'tag' => tag(data_image), 'force' => true)
       end
     end
