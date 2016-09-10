@@ -33,7 +33,8 @@ module Kitchen
     class Dokken < Kitchen::Driver::Base
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       default_config :image_prefix, nil
-      default_config :chef_version, '12.5.1'
+      default_config :chef_image, 'chef/chef'
+      default_config :chef_version, 'latest'
       default_config :data_image, 'someara/kitchen-cache:latest'
       default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :read_timeout, 3600
@@ -336,7 +337,7 @@ module Kitchen
       end
 
       def chef_image
-        "chef/chef:#{chef_version}"
+        "#{config[:chef_image]}:#{chef_version}"
       end
 
       def chef_version
