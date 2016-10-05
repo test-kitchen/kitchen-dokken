@@ -27,7 +27,7 @@ EOF
       def data_dockerfile
         <<-EOF
 FROM centos:7
-MAINTAINER Sean OMeara \"sean@chef.io\"
+MAINTAINER Sean OMeara \"sean@sean.io\"
 
 ENV LANG en_US.UTF-8
 
