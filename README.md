@@ -11,12 +11,12 @@ for rapid cookbook testing and container development using Docker and Chef.
 
 - Behold `.kitchen.yml`
 
-```
+```yaml
 laptop:~/src/chef-cookbooks/hello_dokken$ cat .kitchen.yml
 ---
 driver:
   name: dokken
-  chef_version: 12.5.1
+  chef_version: latest
 
 transport:
   name: dokken
