@@ -54,7 +54,7 @@ module Kitchen
         cmd << ' -z'
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
-        cmd << ' -l warn'
+        cmd << " -l #{Util.from_logger_level(logger.level)}"
         cmd << ' -F doc'
       end
 
