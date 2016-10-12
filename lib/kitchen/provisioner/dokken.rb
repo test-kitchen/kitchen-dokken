@@ -56,6 +56,7 @@ module Kitchen
         cmd << ' -j /opt/kitchen/dna.json'
         cmd << ' -l warn'
         cmd << ' -F doc'
+        cmd << ' --profile-ruby' if config[:profile_ruby]
       end
 
       def runner_container_name
