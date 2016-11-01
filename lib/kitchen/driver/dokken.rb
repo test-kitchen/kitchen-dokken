@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'digest'
 require 'kitchen'
 require 'tmpdir'
 require 'docker'
@@ -148,7 +149,7 @@ module Kitchen
       end
 
       def instance_name
-        prefix = File.basename(FileUtils.pwd)
+        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0,10]
         "#{prefix}-#{instance.name}"
       end
 
