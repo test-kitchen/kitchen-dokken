@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
 
-gemspec
-
+gem 'kitchen-dokken'
+gem 'test-kitchen'
 gem 'librarian-chef-nochef', '~> 0.2'

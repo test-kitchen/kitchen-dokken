@@ -1,7 +1,7 @@
 ---
 driver:
   name: dokken
-  chef_version: 12.5.1
+  chef_version: latest
   privileged: true # because Docker and SystemD/Upstart
 
 transport:
@@ -57,20 +57,25 @@ platforms:
     image: ubuntu-upstart:14.04
     pid_one_command: /sbin/init
 
-- name: ubuntu-15.10
+- name: ubuntu-16.04
   driver:
-    image: ubuntu:15.10
+    image: ubuntu:16.04
     pid_one_command: /bin/systemd
 
+- name: amazonlinux
+  driver:
+    image: amazonlinux:latest
+    pid_one_command: /sbin/init
+    
 suites:
-  - name: dokken_test-12.4.3
-    driver:
-      chef_version: 12.4.3
-    run_list:
-    - recipe[dokken_test]
-
   - name: dokken_test-12.5.1
     driver:
       chef_version: 12.5.1
+    run_list:
+    - recipe[dokken_test]
+
+  - name: dokken_test-latest
+    driver:
+      chef_version: latest
     run_list:
     - recipe[dokken_test]
