@@ -38,6 +38,8 @@ module Kitchen
       default_config :chef_version, 'latest'
       default_config :data_image, 'someara/kitchen-cache:latest'
       default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
+      default_config :dns, nil
+      default_config :dns_search, nil
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
       default_config :api_retries, 20
@@ -203,6 +205,8 @@ module Kitchen
             'Privileged' => config[:privileged],
             'VolumesFrom' => [chef_container_name, data_container_name],
             'Binds' => Array(config[:binds]),
+            'Dns' => config[:dns],
+            'DnsSearch'=> config[:dns_search],
             'Links' => Array(config[:links]),
             'CapAdd' => Array(config[:cap_add]),
             'CapDrop' => Array(config[:cap_drop]),
