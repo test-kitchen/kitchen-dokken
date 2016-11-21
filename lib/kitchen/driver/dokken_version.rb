@@ -19,6 +19,6 @@
 module Kitchen
   module Driver
     # Version string for Dokken Kitchen driver
-    DOKKEN_VERSION = '1.0.4'.freeze
+    DOKKEN_VERSION = '1.0.5'.freeze
   end
 end
