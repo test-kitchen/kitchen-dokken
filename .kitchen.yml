@@ -65,6 +65,8 @@ platforms:
 - name: amazonlinux
   driver:
     image: amazonlinux:latest
+    intermediate_instructions:
+      - RUN yum -y install upstart
     pid_one_command: /sbin/init
     
 suites:
