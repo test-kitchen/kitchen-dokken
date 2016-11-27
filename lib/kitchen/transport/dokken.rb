@@ -84,24 +84,19 @@ module Kitchen
         end
 
         def upload(locals, remote)
-          port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
-
           if options[:host_ip_override]
             # Allow connecting to any ip/hostname to support sibling containers
             ip = options[:host_ip_override]
           elsif options[:docker_host_url] =~ /unix:/
-            if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] = '0.0.0.0'
-              ip = options[:data_container][:NetworkSettings][:IPAddress]
-              port = '22'
-            else
-              # we should read the proper mapped ip, since this allows us to upload the files
-              ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
-            end
+            # we should read the proper mapped ip, since this allows us to upload the files
+            ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
           elsif options[:docker_host_url] =~ /tcp:/
             ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
           else
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
+
+          port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
           tmpdir = Dir.tmpdir
           FileUtils.mkdir_p "#{tmpdir}/dokken"
