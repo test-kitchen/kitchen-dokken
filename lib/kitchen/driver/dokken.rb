@@ -151,8 +151,12 @@ module Kitchen
       end
 
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0,10]
-        "#{prefix}-#{instance.name}"
+        if config[:hostname]
+          config[:hostname]
+        else
+          prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0,10]
+          "#{prefix}-#{instance.name}"
+        end
       end
 
       def delete_chef_container
