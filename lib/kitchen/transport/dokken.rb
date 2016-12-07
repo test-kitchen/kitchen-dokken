@@ -41,7 +41,9 @@ module Kitchen
       default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
-      default_config :host_ip_override, false
+      default_config :host_ip_override do |transport|
+        transport.docker_for_mac? ? "localhost" : false
+      end
 
       # (see Base#connection)
       def connection(state, &block)
@@ -159,6 +161,13 @@ module Kitchen
             raise e
           end
         end
+      end
+
+      # Detect whether or not we are running in Docker for Mac
+      #
+      # @return [TrueClass,FalseClass]
+      def docker_for_mac?
+        Docker.info["Name"] == "moby"
       end
 
       private
