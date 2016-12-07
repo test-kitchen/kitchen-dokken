@@ -72,7 +72,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ kitchen create
 ```
 
 The `kitchen create` phase of the kitchen run pulls (if missing)
-the `someara/chef` image from the Docker hub, then creates a volume
+the `chef/chef` image from the Docker hub, then creates a volume
 container named `chef-<version>`. This makes `/opt/chef` available for
 mounting by other containers.
 
@@ -100,7 +100,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
 04f4b6908031        default-centos-7:latest        "sh -c 'trap exit 0 S"   3 minutes ago       Up 3 minutes                                default-centos-7
 01b3c47bd7b8        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   3 minutes ago       Up 3 minutes        0.0.0.0:32845->22/tcp   default-centos-7-data
-7e327add6bf2        someara/chef:12.5.1            "true"                   3 minutes ago       Created                                     chef-12.5.1
+7e327add6bf2        chef/chef:12.5.1               "true"                   3 minutes ago       Created                                     chef-12.5.1
 laptop:~/src/chef-cookbooks/hello_dokken$
 ```
 
@@ -110,7 +110,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago         300.8 MB
-someara/chef            12.5.1              86245605bbe3        4 weeks ago         168.1 MB
+chef/chef               12.5.1              86245605bbe3        4 weeks ago         168.1 MB
 centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
 default-centos-7        latest              e9fa5d3a0d0e        6 weeks ago         172.3 MB
 ```
@@ -176,7 +176,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
 c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   9 minutes ago       Up 9 minutes                                default-centos-7
 32c42fba4a8c        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   9 minutes ago       Up 9 minutes        0.0.0.0:32846->22/tcp   default-centos-7-data
-7e327add6bf2        someara/chef:12.5.1            "true"                   17 minutes ago      Created                                     chef-12.5.1
+7e327add6bf2        chef/chef:12.5.1               "true"                   17 minutes ago      Created                                     chef-12.5.1
 ```
 
 - List images
@@ -185,7 +185,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 default-centos-7        latest              ec1d208d77cd        8 minutes ago       172.3 MB
 someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago         300.8 MB
-someara/chef            12.5.1              86245605bbe3        4 weeks ago         168.1 MB
+chef/chef               12.5.1              86245605bbe3        4 weeks ago         168.1 MB
 centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
 ```
 
@@ -253,7 +253,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
 c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   15 minutes ago      Up 15 minutes                               default-centos-7
 32c42fba4a8c        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   15 minutes ago      Up 15 minutes       0.0.0.0:32846->22/tcp   default-centos-7-data
-7e327add6bf2        someara/chef:12.5.1            "true"                   24 minutes ago      Created                                     chef-12.5.1
+7e327add6bf2        chef/chef:12.5.1               "true"                   24 minutes ago      Created                                     chef-12.5.1
 ```
 
 - List images
@@ -262,7 +262,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED              VIRTUAL SIZE
 default-centos-7        latest              bad9650b4d20        About a minute ago   175.3 MB
 someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago          300.8 MB
-someara/chef            12.5.1              86245605bbe3        4 weeks ago          168.1 MB
+chef/chef               12.5.1              86245605bbe3        4 weeks ago          168.1 MB
 centos                  7                   e9fa5d3a0d0e        6 weeks ago          172.3 MB
 ```
 
@@ -281,7 +281,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ kitchen destroy
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                 COMMAND             CREATED             STATUS              PORTS               NAMES
-7e327add6bf2        someara/chef:12.5.1   "true"              26 minutes ago      Created                                 chef-12.5.1
+7e327add6bf2        chef/chef:12.5.1      "true"              26 minutes ago      Created                                 chef-12.5.1
 ```
 
 - List images
@@ -289,7 +289,7 @@ CONTAINER ID        IMAGE                 COMMAND             CREATED           
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago         300.8 MB
-someara/chef            12.5.1              86245605bbe3        4 weeks ago         168.1 MB
+chef/chef               12.5.1              86245605bbe3        4 weeks ago         168.1 MB
 centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
 ```
 
@@ -385,6 +385,12 @@ verifier:
   sudo: false
 ```
 
+### Install Chef from current channel
+
+Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
+including those from the "current" channel. If you wish to use pre-release versions of Chef, set
+your `chef_version` value to "current".
+
 FAQ
 ===
 
@@ -397,8 +403,8 @@ and a Provisioner that blur the traditional duties of each. The current Docker d
 can be used with Puppet, Ansible, CFEngine provisioners. This (for the time being) requires
 Chef.
 
-It also relies on two images from the Docker Hub that currently live in my personal namespace.
-The `someara/chef` and `someara/kitchen-cache` images are probably not suitable for many of the
+It also relies on an image from the Docker Hub that currently lives in my personal namespace.
+The `someara/kitchen-cache` image is probably not suitable for many of the
 environments where kitchen-docker is currently in use.
 
 ### Who is this `someara` person on Docker Hub?
@@ -406,11 +412,7 @@ Why should I trust him? I don't want to run random images from strangers on my D
 
 You totally shouldn't trust him.
 
-Here is the code used to generate the Chef image - https://github.com/someara/chef-docker-images/blob/1eca7eb16573b87865dfa6d8accfd78bb48607f5/recipes/default.rb#L35-L44
-
 Here is the code used to generate the kitchen-cache image - https://github.com/someara/kitchen-dokken/blob/b98b44f98bc71f64ba1893c27efdb5d0a9b364cb/lib/kichen/driver/dokken/helpers.rb
-
-In the future, these may be published by Chef Software, whom you can trust. Until then, remain vigilant.
 
 ### How can I use kitchen to automatically test and publish containers?
 
