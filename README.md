@@ -412,7 +412,7 @@ Why should I trust him? I don't want to run random images from strangers on my D
 
 You totally shouldn't trust him.
 
-Here is the code used to generate the kitchen-cache image - https://github.com/someara/kitchen-dokken/blob/b98b44f98bc71f64ba1893c27efdb5d0a9b364cb/lib/kichen/driver/dokken/helpers.rb
+Here is the code used to generate the kitchen-cache image - https://github.com/someara/kitchen-dokken/blob/b98b44f98bc71f64ba1893c27efdb5d0a9b364cb/lib/kitchen/driver/dokken/helpers.rb
 
 ### How can I use kitchen to automatically test and publish containers?
 
