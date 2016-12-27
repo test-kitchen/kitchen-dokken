@@ -37,7 +37,7 @@ module Kitchen
       default_config :chef_image, 'chef/chef'
       default_config :chef_version, 'latest'
       default_config :data_image, 'someara/kitchen-cache:latest'
-      default_config :docker_host_url, ENV['DOCKER_HOST'] || 'unix:///var/run/docker.sock'
+      default_config :docker_host_url, default_docker_host
       default_config :dns, nil
       default_config :dns_search, nil
       default_config :read_timeout, 3600
@@ -99,8 +99,8 @@ module Kitchen
       end
 
       def delete_work_image
-        return unless ::Docker::Image.exist?(work_image, docker_connection)
-        with_retries { @work_image = ::Docker::Image.get(work_image, docker_connection) }
+        return unless ::Docker::Image.exist?(work_image, {}, docker_connection)
+        with_retries { @work_image = ::Docker::Image.get(work_image, {}, docker_connection) }
 
         begin
           with_retries { @work_image.remove(force: true) }
@@ -112,28 +112,24 @@ module Kitchen
       def build_work_image(state)
         # require 'pry' ; binding.pry
 
-        return if ::Docker::Image.exist?(work_image, docker_connection)
+        return if ::Docker::Image.exist?(work_image, {}, docker_connection)
 
-        Dir.mktmpdir do |context_root|
-          File.write("#{context_root}/Dockerfile", work_image_dockerfile)
-          begin
-            with_retries do
-              @intermediate_image = ::Docker::Image.build_from_dir(
-                context_root,
-                {
-                  # 'nocache' => true,
-                  # 'forcerm' => true,
-                  # 'q' => true,
-                  't' => work_image
-                },
-                docker_connection
-              )
-            end
-          rescue Exception => e
-            raise "work_image build failed: #{e}"
-          end
-          state[:work_image] = work_image
+        begin
+          @intermediate_image = ::Docker::Image.build(
+            work_image_dockerfile,
+            {
+              # 'nocache' => true,
+              # 'forcerm' => true,
+              # 'q' => true,
+              't' => work_image
+            },
+            docker_connection
+          )
+        rescue Exception => e
+          raise "work_image build failed: #{e}"
         end
+
+        state[:work_image] = work_image
       end
 
       def work_image_dockerfile
@@ -223,8 +219,10 @@ module Kitchen
         data_container = run_container(
           'name' => data_container_name,
           'Image' => "#{repo(data_image)}:#{tag(data_image)}",
-          'PortBindings' => port_forwards({}, '22'),
-          'PublishAllPorts' => true
+          'HostConfig' => {
+            'PortBindings' => port_forwards({}, '22'),
+            'PublishAllPorts' => true
+          }
         )
         # require 'pry' ; binding.pry
         state[:data_container] = data_container.json
@@ -239,7 +237,7 @@ module Kitchen
       end
 
       def create_chef_container(state)
-        c = ::Docker::Container.get(chef_container_name)
+        c = ::Docker::Container.get(chef_container_name, {}, docker_connection)
       rescue ::Docker::Error::NotFoundError
         begin
           debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
@@ -265,14 +263,14 @@ module Kitchen
       end
 
       def delete_image(name)
-        with_retries { @image = ::Docker::Image.get(name, docker_connection) }
+        with_retries { @image = ::Docker::Image.get(name, {}, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error => e
         puts "Image #{name} not found. Nothing to delete."
       end
 
       def container_exist?(name)
-        return true if ::Docker::Container.get(name)
+        return true if ::Docker::Container.get(name, {}, docker_connection)
       rescue
         false
       end
@@ -284,17 +282,17 @@ module Kitchen
       def create_container(args)
         with_retries do
           @container = ::Docker::Container.create(args.clone, docker_connection)
-          @container = ::Docker::Container.get(args['name'])
+          @container = ::Docker::Container.get(args['name'], {}, docker_connection)
         end
       rescue ::Docker::Error::ConflictError
-        with_retries { @container = ::Docker::Container.get(args['name']) }
+        with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
       end
 
       def run_container(args)
         create_container(args)
         with_retries do
           @container.start
-          @container = ::Docker::Container.get(args['name'])
+          @container = ::Docker::Container.get(args['name'], {}, docker_connection)
           wait_running_state(args['name'], true)
         end
         @container
@@ -305,7 +303,7 @@ module Kitchen
       end
 
       def stop_container(name)
-        with_retries { @container = ::Docker::Container.get(name, docker_connection) }
+        with_retries { @container = ::Docker::Container.get(name, {}, docker_connection) }
         with_retries do
           @container.stop(force: true)
           wait_running_state(name, false)
@@ -315,21 +313,21 @@ module Kitchen
       end
 
       def delete_container(name)
-        with_retries { @container = ::Docker::Container.get(name, docker_connection) }
+        with_retries { @container = ::Docker::Container.get(name, {}, docker_connection) }
         with_retries { @container.delete(force: true, v: true) }
       rescue ::Docker::Error::NotFoundError
         debug "Container #{name} not found. Nothing to delete."
       end
 
       def wait_running_state(name, v)
-        @container = ::Docker::Container.get(name)
+        @container = ::Docker::Container.get(name, {}, docker_connection)
         i = 0
         tries = 20
         until container_state['Running'] == v || container_state['FinishedAt'] != '0001-01-01T00:00:00Z'
           i += 1
           break if i == tries
           sleep 0.1
-          @container = ::Docker::Container.get(name)
+          @container = ::Docker::Container.get(name, {}, docker_connection)
         end
       end
 
@@ -380,13 +378,13 @@ module Kitchen
       end
 
       def pull_if_missing(image)
-        return if ::Docker::Image.exist?("#{repo(image)}:#{tag(image)}", docker_connection)
+        return if ::Docker::Image.exist?("#{repo(image)}:#{tag(image)}", {}, docker_connection)
         pull_image image
       end
 
       def pull_image(image)
         with_retries do
-          ::Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
+          ::Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, nil, docker_connection)
         end
       end
 
