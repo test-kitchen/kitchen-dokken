@@ -57,6 +57,19 @@ EOF
         i = ::Docker::Image.build_from_dir("#{tmpdir}/dokken", 'nocache' => true, 'rm' => true)
         i.tag('repo' => repo(data_image), 'tag' => tag(data_image), 'force' => true)
       end
+
+      def default_docker_host
+        if ENV['DOCKER_HOST']
+          ENV['DOCKER_HOST']
+        elsif File.exist?('/var/run/docker.sock')
+          'unix:///var/run/docker.sock'
+        # TODO: Docker for Windows also operates over a named pipe at
+        # //./pipe/docker_engine that can be used if named pipe support is
+        # added to the docker-api gem.
+        else
+          'tcp://127.0.0.1:2375'
+        end
+      end
     end
   end
 end
