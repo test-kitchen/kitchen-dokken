@@ -34,19 +34,18 @@ transport:
 provisioner:
   name: dokken
 
+verifier:
+  name: inspec
+
 platforms:
 - name: centos-7
   driver:
     image: centos:7
 
-verifier:
-  root_path: '/opt/verifier'
-  sudo: false
-
 suites:
   - name: default
     run_list:
-      - recipe[hello_dokken::default]
+    - recipe[hello_dokken::default]
 ```
 
 How it works
@@ -108,7 +107,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
 04f4b6908031        default-centos-7:latest        "sh -c 'trap exit 0 S"   3 minutes ago       Up 3 minutes                                default-centos-7
 01b3c47bd7b8        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   3 minutes ago       Up 3 minutes        0.0.0.0:32845->22/tcp   default-centos-7-data
-7e327add6bf2        chef/chef:12.5.1               "true"                   3 minutes ago       Created                                     chef-12.5.1
+7e327add6bf2        chef/chef:latest               "true"                   3 minutes ago       Created                                     chef-12.5.1
 laptop:~/src/chef-cookbooks/hello_dokken$
 ```
 
@@ -139,9 +138,8 @@ laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
        Preparing validation.pem
        Preparing client.rb
        Transferring files to <default-centos-7>
-Starting Chef Client, version 12.5.1
-[2015-12-18T05:35:03+00:00] WARN: unable to detect ipaddress
-[2015-12-18T05:35:03+00:00] WARN: unable to detect macaddress
+Starting Chef Client, version 12.17.44
+[2016-12-29T05:35:03+00:00] WARN: unable to detect ipaddress
 Creating a new client identity for default-centos-7 using the validator key.
 resolving cookbooks for run list: ["hello_dokken::default"]
 Synchronizing Cookbooks:
@@ -213,43 +211,24 @@ A /run/mount/utab
 ```
 
 ### Verify phase
-
 - Verify suite
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$  kitchen verify
------> Starting Kitchen (v1.4.2)
------> Setting up <default-centos-7>...
-       Finished setting up <default-centos-7> (0m0.00s).
+-----> Starting Kitchen (v1.14.2) 
 -----> Verifying <default-centos-7>...
-       Preparing files for transfer
------> Installing Busser (busser)
-Successfully installed thor-0.19.0
-Successfully installed busser-0.7.1
-2 gems installed
------> Setting up Busser
-       Creating BUSSER_ROOT in /opt/verifier
-       Creating busser binstub
-       Installing Busser plugins: busser-serverspec
-       Plugin serverspec installed (version 0.5.7)
------> Running postinstall for serverspec plugin
-       Suite path directory /opt/verifier/suites does not exist, skipping.
-       Transferring files to <default-centos-7>
------> Running serverspec test suite
------> Installing Serverspec..
------> serverspec installed (version 2.24.3)
-/opt/chef/embedded/bin/ruby -I/opt/verifier/suites/serverspec -I/opt/verifier/gems/gems/rspec-support-3.4.1/lib:/opt/verifier/gems/gems/rspec-core-3.4.1/lib /opt/chef/embedded/bin/rspec --pattern /opt/verifier/suites/serverspec/\*\*/\*_spec.rb --color --format documentation --default-path /opt/verifier/suites/serverspec
+       Loaded
 
-File "/hello"
-  should be file
-  should be mode 644
-  should be owned by "root"
-  should be grouped into "root"
+Target:  docker://d5b23dc56d7dbd2604840fe43ebb0e1ae6b596bf3ffe94673e6fedfa67ff5f68
 
-Finished in 0.04909 seconds (files took 0.31393 seconds to load)
-4 examples, 0 failures
-stdout:
-       Finished verifying <default-centos-7> (0m24.53s).
------> Kitchen is finished. (0m24.74s)
+  File /hello
+     ✔  should be file
+     ✔  should be mode 420
+     ✔  should be owned by "root"
+     ✔  should be grouped into "root"
+
+Test Summary: 4 successful, 0 failures, 0 skipped
+       Finished verifying <default-centos-7> (0m0.91s).
+-----> Kitchen is finished. (0m1.66s)
 laptop:~/src/chef-cookbooks/hello_dokken$
 ```
 
