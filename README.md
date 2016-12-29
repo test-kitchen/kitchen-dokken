@@ -11,6 +11,14 @@ for rapid cookbook testing and container development using Docker and Chef.
 
 ![Rokken.](http://i.onionstatic.com/onion/5507/4/16x9/1600.jpg)
 
+Usage
+--------
+Add the following to your ~/.bash_profile
+```
+export KITCHEN_YAML=.kitchen.yml
+export KITCHEN_LOCAL_YAML=.kitchen.dokken.yml
+```
+
 - Behold `.kitchen.yml`
 
 ```yaml
