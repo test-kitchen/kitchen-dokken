@@ -50,7 +50,9 @@ module Kitchen
 
       # magic method name because we're subclassing ChefZero
       def run_command
-        cmd = '/opt/chef/embedded/bin/chef-client'
+        cmd = 'TEST_KITCHEN=1'
+        cmd << ' CI=1' if ENV['CI']
+        cmd << ' /opt/chef/embedded/bin/chef-client'
         cmd << ' -z'
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
