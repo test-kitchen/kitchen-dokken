@@ -181,6 +181,12 @@ module Kitchen
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
         ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))['Name'] == "moby"
+      rescue
+        # looks like with recent docker versions the request above throws
+        # Excon::Error::Socket: end of file reached (EOFError)
+        # when connection is made over tcp/https using Excon.
+        #
+        false
       end
 
       private
