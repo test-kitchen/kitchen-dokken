@@ -2,24 +2,39 @@ module Dokken
   module Helpers
     def insecure_ssh_public_key
       <<-EOF
-ssh-dss AAAAB3NzaC1kc3MAAACBANmw8lqXnnGoQ0LusVNr/716mQhEgxb8RYQbg+HP0w//XXVZki2iSC7/LhQEdYgUZaBYJKpBNQ3FSIvyfM5RksicEF10jv/QQ+gsQKHf/jyWTLSiiaSJiwhDrkNW94V/T2pczXlK2j5UiyGKA6UDmSeiS6Ve969nqLJLb77xWOlXAAAAFQCsaq9PvaFa+SXUfWYV9JrDskPtywAAAIBmTuJyTAqdy+xPiI7AFI+BCuWpjrczBs/aw3R5ArNaRf3/PBUumpAUCePJ6UPcw5vU74AloCYvcUnwU8IbZ/Oj6A5NGTo6HvIajP2Y8E17cjsMTXzTPbuT1SqkrlVcsQtJpHU/+WBGoUJeWg66/CjUp/Nx2YK+6QJzoALBLyJW+AAAAIEAyi7XX3Ev12AXgpwRPPbfVltJ9H5Hpll34gc2ORhmCSL6RE42BpAXuzI7lbGun2dXFsCdDm0DQz3h4JHtTHePd6xXqyPpUda4ktLVtEWMm0XIQNE8P5zP0gcfqVe4prOYeBLwrvAkyeNY5wosgzGHrQ+/hFwW3s8liEjZaFDhCWY= test-kitchen
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoJwyW7qNhw+NTuOjC4+RVpESl+JBXebXzB7JqxRgKAbymq6B39azEAiNx5NzHkWcQmOyQNhFpKFSAufegcXRS4ctS1LcElEoXe9brDAqKEBSkmnXYfZXMNIG0Enw4+5W/rZxHFCAlsUSAHYtYZEs+3CgbIWuHhZ95C8UC6nGLWHNZOjcbsYZFrnFfO0qg0ene2w8LKhxqj5X0MRSdCIn1IwyxIbl5NND5Yk1Hx8JKsJtTiNTdxssiMgmM5bvTbYQUSf8pbGrRI30VQKBgQ8/UkidZbaTfvzWXYpwcDUERSbzEYCvkUytTemZIv6uhpPxqkfjl6KEOOml/iGqquPEr test-kitchen-rsa
 EOF
     end
 
     def insecure_ssh_private_key
       <<-EOF
------BEGIN DSA PRIVATE KEY-----
-MIIBuwIBAAKBgQDZsPJal55xqENC7rFTa/+9epkIRIMW/EWEG4Phz9MP/111WZIt
-okgu/y4UBHWIFGWgWCSqQTUNxUiL8nzOUZLInBBddI7/0EPoLECh3/48lky0oomk
-iYsIQ65DVveFf09qXM15Sto+VIshigOlA5knokulXvevZ6iyS2++8VjpVwIVAKxq
-r0+9oVr5JdR9ZhX0msOyQ+3LAoGAZk7ickwKncvsT4iOwBSPgQrlqY63MwbP2sN0
-eQKzWkX9/zwVLpqQFAnjyelD3MOb1O+AJaAmL3FJ8FPCG2fzo+gOTRk6Oh7yGoz9
-mPBNe3I7DE180z27k9UqpK5VXLELSaR1P/lgRqFCXloOuvwo1KfzcdmCvukCc6AC
-wS8iVvgCgYEAyi7XX3Ev12AXgpwRPPbfVltJ9H5Hpll34gc2ORhmCSL6RE42BpAX
-uzI7lbGun2dXFsCdDm0DQz3h4JHtTHePd6xXqyPpUda4ktLVtEWMm0XIQNE8P5zP
-0gcfqVe4prOYeBLwrvAkyeNY5wosgzGHrQ+/hFwW3s8liEjZaFDhCWYCFASgG6eP
-vVnsIrCx2rI5/KEQZ+oG
------END DSA PRIVATE KEY-----
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAqCcMlu6jYcPjU7jowuPkVaREpfiQV3m18weyasUYCgG8pqug
+d/WsxAIjceTcx5FnEJjskDYRaShUgLn3oHF0UuHLUtS3BJRKF3vW6wwKihAUpJp1
+2H2VzDSBtBJ8OPuVv62cRxQgJbFEgB2LWGRLPtwoGyFrh4WfeQvFAupxi1hzWTo3
+G7GGRa5xXztKoNHp3tsPCyocao+V9DEUnQiJ9SMMsSG5eTTQ+WJNR8fCSrCbU4jU
+3cbLIjIJjOW7022EFEn/KWxq0SN9FUCgYEPP1JInWW2k3781l2KcHA1BEUm8xGAr
+5FMrU3pmSL+roaT8apH45eihDjppf4hqqrjxKwIDAQABAoIBAEj7Cb/IOykHd/ay
+XnOXrVZuQU03oI4WyR19zbYBbPmK33IHM1JdUmqP8wpPpnMHbJALj0DX9p6JXoOw
+MwVzuGTwkuqUYAqgwbeHjDPfugNKD2uRjmwztXw3ncOl8jxZFRloJFfFKF6znWNt
+bzkh7naN3upHiv/6wsgqj4tAbZ9oRC1crO6bsNr3P6YooiG5RRNpHepiyXphyhN6
+We1p5ZOQ/pUSE0Ca4wTlUhJHTUPMz7VFs/8CH0loRIsGPBROarPkoLVF+/UNyX8e
++BGMhoUtQH2XvjEzWUl5jKJOnvKRIV+0j/upWXsPQKF5glVPmPrTVUAxThfu6rAa
+4Z3JveECgYEA0Pz3Hl0SlPR79r2qofh1ZNa8zvQDL+iLopULwDiil5qlUxJ+DgOl
+1kWXLhjdg/NfoTBHvBjdJu274YJgaGQOfCy5747YDVsakKOm4bI9+Jr2agshPyE6
+f1RNmGL8K8fNtpGq4G14o+pSQOPNrEfcFKgm3sosZWJAWaA64hmtiXcCgYEAzfp6
+FbodfUypAV5Zd6PCO2eJMjLdvGaNuH/Umo80WNV7XZ6iJ6MUeQe+YwxFJigjC3ii
+ifLUj3kL7+wu7sEtkzS3zNd34KfhQ5fLADttfFgjjfm7IxlDD4ABaUgjwZM2gfXi
+xCwRhwwNgilF6qABJ1CLt8JSqKubkqvO1P1gQu0CgYEA0GA6AcNpYK344Eey1/bF
+DntyHKN+fglPGReldM7Dh4gBabgZid2nP+N5XtQaIpPKeQyLqgfckhEecTau68dA
+Dh4Gcs6pq394GFmkbotrcPMJ2SgpySlXi1fCWrvvlbON8IiDqWxdiop74wmArFOm
+I86ZmzBYXeo+IV869vAFcPcCgYBrvvyh5OuMIc++YYZXaRgvTueblLQc22CDBItI
+FmUBmxqfTF3ycgJBlWVoFoENhq1eUMplctrx+hXeeSPLzM10VX1X79ZLdEYHv513
+D58kDk7684mKwKotr34NfqkFl2ZJ8T+f8pVwmUNvtPtX0j8IO7/6bfIjPTFyNeFJ
+1QjHuQKBgQC/LE05M4eeWXihZ7c7fyWHLyddcPdH48LRF9UH9yjKF84jXRT91uMv
+XuIb2Qt4MLHABySsk653LDw/jTIGV26c068nZryq5OUPxk67Xgod54jKgOwjgjZS
+X8N2N9ZNnORJqK374yGj1jWUU66mQhPvn49QpG8P2HEoh2RQjNvyHA==
+-----END RSA PRIVATE KEY-----
 EOF
     end
 
@@ -32,13 +47,12 @@ ENV LANG en_US.UTF-8
 
 RUN yum -y install tar rsync openssh-server passwd git
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
-RUN ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''
 
 RUN mkdir -p /root/.ssh/
 COPY authorized_keys /root/.ssh/authorized_keys
 
 EXPOSE 22
-CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "UsePrivilegeSeparation=no" ]
+CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "UsePrivilegeSeparation=no", "-o", "MaxAuthTries=60" ]
 
 VOLUME /opt/kitchen
 VOLUME /opt/verifier
