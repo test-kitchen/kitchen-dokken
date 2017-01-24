@@ -13,7 +13,7 @@ env:
   matrix:
   - INSTANCE=dokken-test-1251-centos-6
   - INSTANCE=dokken-test-1251-centos-7
-  - INSTANCE=dokken-test-1251-fedora-21
+  - INSTANCE=dokken-test-1251-fedora-latest
   - INSTANCE=dokken-test-1251-debian-7
   - INSTANCE=dokken-test-1251-debian-8
   - INSTANCE=dokken-test-1251-ubuntu-1204
@@ -22,7 +22,7 @@ env:
   - INSTANCE=dokken-test-1251-amazonlinux
   - INSTANCE=dokken-test-latest-centos-6
   - INSTANCE=dokken-test-latest-centos-7
-  - INSTANCE=dokken-test-latest-fedora-21
+  - INSTANCE=dokken-test-latest-fedora-latest
   - INSTANCE=dokken-test-latest-debian-7
   - INSTANCE=dokken-test-latest-debian-8
   - INSTANCE=dokken-test-latest-ubuntu-1204
