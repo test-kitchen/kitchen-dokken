@@ -19,9 +19,9 @@ require 'digest'
 require 'kitchen'
 require 'tmpdir'
 require 'docker'
-require_relative 'dokken/helpers'
+require_relative '../helpers'
 
-include Dokken::Driver::Helpers
+include Dokken::Helpers
 
 # FIXME: - make true
 Excon.defaults[:ssl_verify_peer] = false
@@ -35,8 +35,8 @@ module Kitchen
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       default_config :image_prefix, nil
       default_config :chef_image, 'chef/chef'
-      default_config :chef_version, 'latest'
-      default_config :data_image, 'someara/kitchen-cache:latest'
+      default_config :chef_version, 'current'
+      default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :docker_host_url, default_docker_host
       default_config :dns, nil
       default_config :dns_search, nil
@@ -64,8 +64,12 @@ module Kitchen
         create_chef_container state
 
         # data
-        make_data_image
-        start_data_container state
+        dokken_create_sandbox
+
+        if remote_docker_host?
+          make_data_image
+          start_data_container state
+        end
 
         # work image
         build_work_image state
@@ -78,14 +82,22 @@ module Kitchen
       end
 
       def destroy(_state)
-        stop_data_container
-        delete_data_container
+        if remote_docker_host?
+          stop_data_container
+          delete_data_container
+        end
+        
         stop_runner_container
         delete_runner_container
         delete_work_image
       end
 
       private
+
+      def remote_docker_host?
+        return true if config[:docker_host_url] =~ /^tcp:/
+        false
+      end
 
       def api_retries
         config[:api_retries]
@@ -110,22 +122,18 @@ module Kitchen
       end
 
       def build_work_image(state)
-        # require 'pry' ; binding.pry
-
+        info('Building work image..')
         return if ::Docker::Image.exist?(work_image, {}, docker_connection)
 
         begin
           @intermediate_image = ::Docker::Image.build(
             work_image_dockerfile,
             {
-              # 'nocache' => true,
-              # 'forcerm' => true,
-              # 'q' => true,
-              't' => work_image
+              't' => work_image,
             },
             docker_connection
           )
-        rescue Exception => e
+        rescue
           raise "work_image build failed: #{e}"
         end
 
@@ -144,11 +152,6 @@ module Kitchen
         state[:instance_name] = instance_name
         state[:instance_platform_name] = instance_platform_name
         state[:image_prefix] = image_prefix
-      end
-
-      def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0,10]
-        "#{prefix}-#{instance.name}"
       end
 
       def delete_chef_container
@@ -189,6 +192,13 @@ module Kitchen
         instance_name
       end
 
+      def dokken_binds
+        ret = []
+        ret << "#{dokken_sandbox_path}:/opt/kitchen" unless dokken_sandbox_path.nil?
+        ret << config[:binds] unless config[:binds].nil?
+        ret
+      end
+
       def start_runner_container(state)
         debug "driver - starting #{runner_container_name}"
         runner_container = run_container(
@@ -199,16 +209,19 @@ module Kitchen
           'ExposedPorts' => exposed_ports({}, config[:forward]),
           'HostConfig' => {
             'Privileged' => config[:privileged],
-            'VolumesFrom' => [chef_container_name, data_container_name],
-            'Binds' => Array(config[:binds]),
+            'VolumesFrom' => [
+              chef_container_name,
+              # data_container_name
+            ],
+            'Binds' => dokken_binds,
             'Dns' => config[:dns],
-            'DnsSearch'=> config[:dns_search],
+            'DnsSearch' => config[:dns_search],
             'Links' => Array(config[:links]),
             'CapAdd' => Array(config[:cap_add]),
             'CapDrop' => Array(config[:cap_drop]),
             'SecurityOpt' => Array(config[:security_opt]),
             'NetworkMode' => config[:network_mode],
-            'PortBindings' => port_forwards({}, config[:forward])
+            'PortBindings' => port_forwards({}, config[:forward]),
           }
         )
         state[:runner_container] = runner_container.json
@@ -221,23 +234,19 @@ module Kitchen
           'Image' => "#{repo(data_image)}:#{tag(data_image)}",
           'HostConfig' => {
             'PortBindings' => port_forwards({}, '22'),
-            'PublishAllPorts' => true
+            'PublishAllPorts' => true,
           }
         )
-        # require 'pry' ; binding.pry
         state[:data_container] = data_container.json
       end
 
       def make_data_image
-        debug "driver - pulling #{data_image}"
-        pull_if_missing data_image
-        # -- or --
-        # debug 'driver - calling create_data_image'
-        # create_data_image
+        debug 'driver - calling create_data_image'
+        create_data_image
       end
 
       def create_chef_container(state)
-        c = ::Docker::Container.get(chef_container_name, {}, docker_connection)
+        ::Docker::Container.get(chef_container_name, {}, docker_connection)
       rescue ::Docker::Error::NotFoundError
         begin
           debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
@@ -265,7 +274,7 @@ module Kitchen
       def delete_image(name)
         with_retries { @image = ::Docker::Image.get(name, {}, docker_connection) }
         with_retries { @image.remove(force: true) }
-      rescue ::Docker::Error => e
+      rescue ::Docker::Error
         puts "Image #{name} not found. Nothing to delete."
       end
 
@@ -305,7 +314,7 @@ module Kitchen
       def stop_container(name)
         with_retries { @container = ::Docker::Container.get(name, {}, docker_connection) }
         with_retries do
-          @container.stop(force: true)
+          @container.stop(force: false)
           wait_running_state(name, false)
         end
       rescue ::Docker::Error::NotFoundError
@@ -344,6 +353,7 @@ module Kitchen
       end
 
       def chef_version
+        return 'current' if config[:chef_version] == 'latest'
         config[:chef_version]
       end
 
@@ -361,7 +371,7 @@ module Kitchen
 
       def exposed_ports(config, rules)
         Array(rules).each do |prt_string|
-          guest, host = prt_string.to_s.split(':').reverse
+          guest, _host = prt_string.to_s.split(':').reverse
           config["#{guest}/tcp"] = {}
         end
         config
@@ -371,7 +381,7 @@ module Kitchen
         Array(rules).each do |prt_string|
           guest, host = prt_string.to_s.split(':').reverse
           config["#{guest}/tcp"] = [{
-            HostPort: host || ''
+            HostPort: host || '',
           }]
         end
         config

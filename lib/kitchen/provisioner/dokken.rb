@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# Author:: Sean OMeara (<sean@chef.io>)
+# Author:: Sean OMeara (<sean@sean.io>)
 #
 # Copyright (C) 2015, Sean OMeara
 #
@@ -18,10 +18,13 @@
 
 require 'kitchen'
 require 'kitchen/provisioner/chef_zero'
+require_relative '../helpers'
+
+include Dokken::Helpers
 
 module Kitchen
   module Provisioner
-    # @author Sean OMeara <sean@chef.io>
+    # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Provisioner::ChefZero
       kitchen_provisioner_api_version 2
 
@@ -32,23 +35,18 @@ module Kitchen
       # (see Base#call)
       def call(state)
         create_sandbox
-        sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
-
         instance.transport.connection(state) do |conn|
-          info("Transferring files to #{instance.to_str}")
-          conn.upload(sandbox_dirs, config[:root_path])
-          debug('Transfer complete')
           conn.execute(run_command)
         end
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
-      ensure
-        cleanup_sandbox
+        # ensure
+        #   cleanup_sandbox
       end
 
       private
 
-      # magic method name because we're subclassing ChefZero
+      # patching Kitchen::Provisioner::ChefZero#run_command
       def run_command
         cmd = '/opt/chef/embedded/bin/chef-client'
         cmd << ' -z'

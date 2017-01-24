@@ -25,9 +25,9 @@ platforms:
     image: centos:7
     pid_one_command: /usr/lib/systemd/systemd
 
-- name: fedora-21
+- name: fedora-latest
   driver:
-    image: fedora:21
+    image: fedora:latest
     intermediate_instructions:
     - RUN yum clean all
     pid_one_command: /usr/lib/systemd/systemd
