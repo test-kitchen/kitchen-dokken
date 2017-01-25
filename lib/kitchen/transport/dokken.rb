@@ -64,7 +64,7 @@ module Kitchen
         end
 
         def execute(command)
-          require 'pry'; return if command.nil?
+          return if command.nil?
 
           with_retries { @runner = ::Docker::Container.get(instance_name, {}, docker_connection) }
           with_retries do
@@ -169,7 +169,6 @@ module Kitchen
       #
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
-        # require 'pry' ; binding.pry
         ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))['Name'] == 'moby'
       rescue
         false
