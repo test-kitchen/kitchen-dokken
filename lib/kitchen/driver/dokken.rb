@@ -86,7 +86,7 @@ module Kitchen
           stop_data_container
           delete_data_container
         end
-        
+
         stop_runner_container
         delete_runner_container
         delete_work_image
