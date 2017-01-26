@@ -134,7 +134,7 @@ module Kitchen
             docker_connection
           )
         rescue
-          raise "work_image build failed: #{e}"
+          raise "work_image build failed"
         end
 
         state[:work_image] = work_image
