@@ -195,7 +195,7 @@ module Kitchen
       def dokken_binds
         ret = []
         ret << "#{dokken_sandbox_path}:/opt/kitchen" unless dokken_sandbox_path.nil?
-        ret << config[:binds] unless config[:binds].nil?
+        ret + Array(config[:binds]) unless config[:binds].nil?
         ret
       end
 
