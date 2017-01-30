@@ -32,27 +32,27 @@ module Kitchen
     #
     # @author Sean OMeara <sean@chef.io>
     class Dokken < Kitchen::Driver::Base
-      default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
-      default_config :image_prefix, nil
+      default_config :api_retries, 20
+      default_config :binds, []
+      default_config :cap_add, nil
+      default_config :cap_drop, nil
       default_config :chef_image, 'chef/chef'
       default_config :chef_version, 'current'
       default_config :data_image, 'dokken/kitchen-cache:latest'
-      default_config :docker_host_url, default_docker_host
       default_config :dns, nil
       default_config :dns_search, nil
-      default_config :read_timeout, 3600
-      default_config :write_timeout, 3600
-      default_config :api_retries, 20
-      # docker run args
-      default_config :privileged, false
-      default_config :hostname, nil
-      default_config :binds, nil # volumes to mount
-      default_config :links, nil
-      default_config :cap_add, nil
-      default_config :cap_drop, nil
-      default_config :security_opt, nil
+      default_config :docker_host_url, default_docker_host
       default_config :forward, nil
+      default_config :hostname, nil
+      default_config :image_prefix, nil
+      default_config :links, nil
       default_config :network_mode, 'bridge'
+      default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
+      default_config :privileged, false
+      default_config :read_timeout, 3600
+      default_config :security_opt, nil
+      default_config :volumes, nil
+      default_config :write_timeout, 3600
 
       # (see Base#create)
       def create(state)
@@ -134,7 +134,7 @@ module Kitchen
             docker_connection
           )
         rescue
-          raise "work_image build failed"
+          raise 'work_image build failed'
         end
 
         state[:work_image] = work_image
@@ -192,11 +192,47 @@ module Kitchen
         instance_name
       end
 
+      class PartialHash < Hash
+        def ==(other)
+          other.is_a?(Hash) && all? { |key, val| other.key?(key) && other[key] == val }
+        end
+      end
+
       def dokken_binds
         ret = []
         ret << "#{dokken_sandbox_path}:/opt/kitchen" unless dokken_sandbox_path.nil?
-        ret + Array(config[:binds]) unless config[:binds].nil?
-        ret
+        ret << Array(config[:binds]) unless config[:binds].nil?
+        ret.flatten
+      end
+
+      def dokken_volumes
+        coerce_volumes(config[:volumes])
+      end
+
+      def coerce_volumes(v)
+        case v
+        when PartialHash, nil
+          v
+        when Hash
+          PartialHash[v]
+        else
+          b = []
+          v = Array(v).to_a # in case v.is_A?(Chef::Node::ImmutableArray)
+          v.delete_if do |x|
+            parts = x.split(':')
+            b << x if parts.length > 1
+          end
+          b = nil if b.empty?
+          config[:binds] << b unless b.nil?
+          return PartialHash.new if v.empty?
+          v.each_with_object(PartialHash.new) { |volume, h| h[volume] = {} }
+        end
+      end
+
+      def dokken_volumes_from
+        ret = []
+        ret << chef_container_name
+        ret << data_container_name if remote_docker_host?
       end
 
       def start_runner_container(state)
@@ -207,12 +243,10 @@ module Kitchen
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'Hostname' => config[:hostname],
           'ExposedPorts' => exposed_ports({}, config[:forward]),
+          'Volumes' => dokken_volumes,
           'HostConfig' => {
             'Privileged' => config[:privileged],
-            'VolumesFrom' => [
-              chef_container_name,
-              # data_container_name
-            ],
+            'VolumesFrom' => dokken_volumes_from,
             'Binds' => dokken_binds,
             'Dns' => config[:dns],
             'DnsSearch' => config[:dns_search],
