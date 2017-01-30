@@ -233,6 +233,7 @@ module Kitchen
         ret = []
         ret << chef_container_name
         ret << data_container_name if remote_docker_host?
+        ret
       end
 
       def start_runner_container(state)
