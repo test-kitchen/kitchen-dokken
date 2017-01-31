@@ -390,10 +390,6 @@ and a Provisioner that blur the traditional duties of each. The current Docker d
 can be used with Puppet, Ansible, CFEngine provisioners. This (for the time being) requires
 Chef.
 
-It also relies on an image from the Docker Hub that currently lives in my personal namespace.
-The `someara/kitchen-cache` image is probably not suitable for many of the
-environments where kitchen-docker is currently in use.
-
 ### How can I use kitchen to automatically test and publish containers?
 
 Right now there is no `kitchen publish` mechanism. [See this issue](https://github.com/test-kitchen/test-kitchen/issues/329).
