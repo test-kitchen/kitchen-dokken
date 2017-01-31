@@ -90,6 +90,7 @@ module Kitchen
         stop_runner_container
         delete_runner_container
         delete_work_image
+        dokken_delete_sandbox
       end
 
       private

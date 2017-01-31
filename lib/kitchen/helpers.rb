@@ -89,9 +89,14 @@ EOF
     end
 
     def dokken_create_sandbox
-      info("Creating local sandbox in #{dokken_sandbox_path}")
+      info("Creating local sandbox at #{dokken_sandbox_path}")
       FileUtils.mkdir_p(dokken_sandbox_path)
       File.chmod(0755, dokken_sandbox_path)
+    end
+
+    def dokken_delete_sandbox
+      info("Deleting local sandbox at #{dokken_sandbox_path}")
+      FileUtils.rm_r(dokken_sandbox_path)
     end
 
     def dokken_sandbox_path
