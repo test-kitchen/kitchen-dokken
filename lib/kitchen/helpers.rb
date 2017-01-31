@@ -96,7 +96,11 @@ EOF
 
     def dokken_delete_sandbox
       info("Deleting local sandbox at #{dokken_sandbox_path}")
-      FileUtils.rm_r(dokken_sandbox_path)
+      begin
+        FileUtils.rm_r(dokken_sandbox_path)
+      rescue Errno::ENOENT
+        debug("Cannot delete #{dokken_sandbox_path}. Does not exist")
+      end
     end
 
     def dokken_sandbox_path
