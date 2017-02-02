@@ -319,9 +319,23 @@ module Kitchen
       rescue
         false
       end
+      
+      def parse_image_name(image)
+        parts = image.split(':')
+
+        if parts.size > 2
+          tag = parts.pop
+          repo = parts.join(':')
+        else
+          tag = parts[1] || 'latest'
+          repo = parts[0]
+        end
+        
+        [repo, tag]
+      end
 
       def repo(image)
-        image.split(':')[0]
+        parse_image_name(image)[0]
       end
 
       def create_container(args)
@@ -377,7 +391,7 @@ module Kitchen
       end
 
       def tag(image)
-        image.split(':')[1] || 'latest'
+        parse_image_name(image)[1]
       end
 
       def chef_container_name
