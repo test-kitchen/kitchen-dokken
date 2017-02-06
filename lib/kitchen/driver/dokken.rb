@@ -224,7 +224,7 @@ module Kitchen
             b << x if parts.length > 1
           end
           b = nil if b.empty?
-          config[:binds] << b unless b.nil?
+          config[:binds].push(b) unless config[:binds].include?(b) || b.nil?
           return PartialHash.new if v.empty?
           v.each_with_object(PartialHash.new) { |volume, h| h[volume] = {} }
         end
@@ -239,6 +239,7 @@ module Kitchen
 
       def start_runner_container(state)
         debug "driver - starting #{runner_container_name}"
+
         runner_container = run_container(
           'name' => runner_container_name,
           'Cmd' => Shellwords.shellwords(config[:pid_one_command]),
@@ -319,7 +320,7 @@ module Kitchen
       rescue
         false
       end
-      
+
       def parse_image_name(image)
         parts = image.split(':')
 
@@ -330,7 +331,7 @@ module Kitchen
           tag = parts[1] || 'latest'
           repo = parts[0]
         end
-        
+
         [repo, tag]
       end
 
