@@ -1,0 +1,5 @@
+AllCops:
+  Exclude:
+    - files/default/vendor/**/*
+    - vendor/**/*
+    - tmp/**/*
