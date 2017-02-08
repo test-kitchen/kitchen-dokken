@@ -2,8 +2,9 @@
 driver:
   name: dokken
   chef_version: latest
-  privileged: true # because Docker and SystemD/Upstart
-
+  privileged: true
+  volumes: '/var/lib/docker'
+  
 transport:
   name: dokken
 
@@ -23,14 +24,21 @@ platforms:
     pid_one_command: /sbin/init
     
 suites:
-  - name: setup
+  - name: default
     driver:
       chef_version: latest
     run_list:
-    - recipe[dokken_test::setup]
+    - recipe[dokken_test::default]
 
-  - name: blank
+  - name: hello
     driver:
       chef_version: latest
     run_list:
-    - recipe[dokken_test::blank]
+    - recipe[dokken_test::hello]
+
+  - name: helloagain
+    driver:
+      chef_version: latest
+    run_list:
+    - recipe[dokken_test::helloagain]
+    
