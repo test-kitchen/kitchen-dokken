@@ -88,7 +88,7 @@ the `chef/chef` image from the Docker hub, then creates a volume
 container named `chef-<version>`. This makes `/opt/chef` available for
 mounting by other containers.
 
-When talking to a local Docker host (over a socket), The driver then
+When talking to a local Docker host (over a socket), The driver
 creates and bind mounts a sandbox directory to `/opt/kitchen`. This
 prevents of from having to "upload" the test data.
 
