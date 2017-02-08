@@ -55,8 +55,9 @@ How it works
 - List kitchen suites
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen list
-Instance          Driver  Provisioner  Verifier  Transport  Last Action
-default-centos-7  Dokken  Dokken       Busser    Dokken     <Not Created>
+Instance          Driver  Provisioner  Verifier  Transport  Last Action    Last Error
+default-centos-7  Dokken  Dokken       Inspec    Dokken     <Not Created>  <None>
+
 ```
 - List containers
 ```
@@ -72,10 +73,14 @@ REPOSITORY          TAG                 IMAGE ID            CREATED             
 ### Create phase
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen create
------> Starting Kitchen (v1.4.2)
+-----> Starting Kitchen (v1.15.0)
 -----> Creating <default-centos-7>...
-       Finished creating <default-centos-7> (0m35.33s).
------> Kitchen is finished. (0m35.45s)
+       Creating local sandbox at /Users/someara/.dokken/sandbox/6e1b03ab46-default-centos-7
+       Building work image..
+       Finished creating <default-centos-7> (0m21.04s).
+-----> Kitchen is finished. (0m21.95s)
+
+
 ```
 
 The `kitchen create` phase of the kitchen run pulls (if missing)
@@ -83,43 +88,46 @@ the `chef/chef` image from the Docker hub, then creates a volume
 container named `chef-<version>`. This makes `/opt/chef` available for
 mounting by other containers.
 
-The driver then pulls the `someara/kitchen-cache` image and starts a
-volume container named `<suite-name>-data`. This makes `/opt/kitchen`
-and `/opt/verifier` available for mounting. This data container is the
-"trick" to the whole thing. It comes with rsync, runs an openssh
-daemon, and uses an, insecure, authorized_key ala Vagrant. This is
-later used to upload cookbook test data. The venerable `/tmp`
-directory is avoided, due to the popularity of `tmpfs` clobbering by
-inits.
+When talking to a local Docker host (over a socket), The driver then
+creates and bind mounts a sandbox directory to `/opt/kitchen`. This
+prevents of from having to "upload" the test data.
+
+When talking to a *remote* Docker host (tcp://somewhere.else), dokken
+will starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and
+`/opt/verifier` available for mounting by the runner.. The data
+container is the "trick" to the whole thing. It comes with rsync, runs
+an openssh daemon, and uses an, insecure, authorized_key ala
+Vagrant. This is later used to upload cookbook test data. 
+
+The venerable `/tmp` directory is avoided, due to the popularity of
+`tmpfs` clobbering by inits.
 
 Finally, the driver pulls the image specified by the suite's platform
-section and creates a runner container named `<suitename>`. This
-container bind-mounts the volumes from `chef-<version>` and
-`<suite-name>-data`, giving access to Chef and the test data. By
-default, the `pid_one_command` of the runner container is a script
-that sleeps in a loop, letting us `exec` our provisioner in the next
-phase. It can be overridden with init systems like Upstart and
-Systemd, for testing recipes with service resources as needed.
+section and creates a runner container named
+`<unique_prefix>-<suitename>`. This container bind-mounts the volumes
+from `chef-<version>` and `<suite-name>-data`, giving access to Chef
+and the test data. By default, the `pid_one_command` of the runner
+container is a script that sleeps in a loop, letting us `exec` our
+provisioner in the next phase. It can be overridden with init systems
+like Upstart and Systemd, for testing recipes with service resources
+as needed.
 
 - List containers
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
-CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
-04f4b6908031        default-centos-7:latest        "sh -c 'trap exit 0 S"   3 minutes ago       Up 3 minutes                                default-centos-7
-01b3c47bd7b8        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   3 minutes ago       Up 3 minutes        0.0.0.0:32845->22/tcp   default-centos-7-data
-7e327add6bf2        chef/chef:latest               "true"                   3 minutes ago       Created                                     chef-12.5.1
-laptop:~/src/chef-cookbooks/hello_dokken$
+CONTAINER ID        IMAGE                                COMMAND                  CREATED              STATUS              PORTS               NAMES
+3489588d4470        6e1b03ab46-default-centos-7:latest   "sh -c 'trap exit ..."   About a minute ago   Up About a minute                       6e1b03ab46-default-centos-7
+f678882b1575        chef/chef:current                    "true"                   About a minute ago   Created                                 chef-current
 ```
 
 - List images
 
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
-REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
-someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago         300.8 MB
-chef/chef               12.5.1              86245605bbe3        4 weeks ago         168.1 MB
-centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
-default-centos-7        latest              e9fa5d3a0d0e        6 weeks ago         172.3 MB
+REPOSITORY                    TAG                 IMAGE ID            CREATED              SIZE
+6e1b03ab46-default-centos-7   latest              2ea1040b9c10        About a minute ago   192 MB
+chef/chef                     current             01ec788610e2        6 days ago           124 MB
+centos                        7                   67591570dd29        7 weeks ago          192 MB
 ```
 
 ### Converge phase
@@ -127,31 +135,29 @@ default-centos-7        latest              e9fa5d3a0d0e        6 weeks ago     
 - Converge suite
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
------> Starting Kitchen (v1.4.2)
------> Creating <default-centos-7>...
-       Finished creating <default-centos-7> (0m1.82s).
+-----> Starting Kitchen (v1.15.0)
 -----> Converging <default-centos-7>...
-       Preparing files for transfer
+       Creating local sandbox in /Users/someara/.dokken/sandbox/6e1b03ab46-default-centos-7
        Preparing dna.json
        Preparing current project directory as a cookbook
        Removing non-cookbook files before transfer
        Preparing validation.pem
        Preparing client.rb
-       Transferring files to <default-centos-7>
-Starting Chef Client, version 12.17.44
-[2016-12-29T05:35:03+00:00] WARN: unable to detect ipaddress
+Starting Chef Client, version 12.19.5
+[2017-02-08T04:23:00+00:00] WARN: unable to detect ipaddress
 Creating a new client identity for default-centos-7 using the validator key.
 resolving cookbooks for run list: ["hello_dokken::default"]
 Synchronizing Cookbooks:
   - hello_dokken (0.1.0)
+Installing Cookbook Gems:
 Compiling Cookbooks...
 Converging 1 resources
 Recipe: hello_dokken::default
   * file[/hello] action create
     - create new file /hello
     - update content in file /hello from none to 2d6944
-    --- /hello	2015-12-18 05:35:04.220069059 +0000
-    +++ /.hello20151218-27-1qrtph8	2015-12-18 05:35:04.220069059 +0000
+    --- /hello    2017-02-08 04:23:01.780659287 +0000
+    +++ /.chef-hello20170208-41-105f1ha    2017-02-08 04:23:01.780659287 +0000
     @@ -1 +1,2 @@
     +hello\n
     - change mode from '' to '0644'
@@ -160,13 +166,13 @@ Recipe: hello_dokken::default
 
 Running handlers:
 Running handlers complete
-Chef Client finished, 1/1 resources updated in 02 seconds
-       Finished converging <default-centos-7> (0m10.98s).
------> Kitchen is finished. (0m13.04s)
+Chef Client finished, 1/1 resources updated in 01 seconds
+       Finished converging <default-centos-7> (0m2.61s).
+-----> Kitchen is finished. (0m3.46s)
 
-real	0m7.123s
-user	0m1.128s
-sys	0m0.246s
+real    0m3.887s
+user    0m1.080s
+sys    0m0.210s
 ```
 
 The `kitchen-converge` phase of the kitchen run uses the provisioner
@@ -198,27 +204,32 @@ centos                  7                   e9fa5d3a0d0e        6 weeks ago     
 - Diff container
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker diff default-centos-7
-A /]
-A /[
 A /hello
 C /opt
 A /opt/chef
 A /opt/kitchen
-A /opt/verifier
 C /run
 A /run/mount
 A /run/mount/utab
+C /tmp
+C /var/lib/rpm/.dbenv.lock
+C /var/lib/rpm/__db.001
+C /var/lib/rpm/__db.002
+C /var/lib/rpm/__db.003
 ```
 
 ### Verify phase
 - Verify suite
 ```
-laptop:~/src/chef-cookbooks/hello_dokken$  kitchen verify
------> Starting Kitchen (v1.14.2) 
+laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen verify
+-----> Starting Kitchen (v1.15.0)
+-----> Setting up <default-centos-7>...
+       Finished setting up <default-centos-7> (0m0.00s).
 -----> Verifying <default-centos-7>...
        Loaded
 
-Target:  docker://d5b23dc56d7dbd2604840fe43ebb0e1ae6b596bf3ffe94673e6fedfa67ff5f68
+Target:  docker://84def4c49ce3703e42ac2be8a95c672d561c052520ca90788d42bbdb94e7cc6f
+
 
   File /hello
      ✔  should be file
@@ -227,9 +238,12 @@ Target:  docker://d5b23dc56d7dbd2604840fe43ebb0e1ae6b596bf3ffe94673e6fedfa67ff5f
      ✔  should be grouped into "root"
 
 Test Summary: 4 successful, 0 failures, 0 skipped
-       Finished verifying <default-centos-7> (0m0.91s).
------> Kitchen is finished. (0m1.66s)
-laptop:~/src/chef-cookbooks/hello_dokken$
+       Finished verifying <default-centos-7> (0m0.80s).
+-----> Kitchen is finished. (0m1.99s)
+
+real    0m2.695s
+user    0m1.310s
+sys    0m0.365s
 ```
 
 The `kitchen-verify` phase uses the transport to run acceptance tests, verifying image state.
@@ -237,47 +251,44 @@ The `kitchen-verify` phase uses the transport to run acceptance tests, verifying
 - List containers
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
-CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
-c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   15 minutes ago      Up 15 minutes                               default-centos-7
-32c42fba4a8c        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   15 minutes ago      Up 15 minutes       0.0.0.0:32846->22/tcp   default-centos-7-data
-7e327add6bf2        chef/chef:12.5.1               "true"                   24 minutes ago      Created                                     chef-12.5.1
+CONTAINER ID        IMAGE                                COMMAND                  CREATED             STATUS              PORTS               NAMES
+84def4c49ce3        6e1b03ab46-default-centos-7:latest   "sh -c 'trap exit ..."   6 minutes ago       Up 6 minutes                            6e1b03ab46-default-centos-7
+f678882b1575        chef/chef:current                    "true"                   9 minutes ago       Created                                 chef-current
 ```
 
 - List images
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
-REPOSITORY              TAG                 IMAGE ID            CREATED              VIRTUAL SIZE
-default-centos-7        latest              bad9650b4d20        About a minute ago   175.3 MB
-someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago          300.8 MB
-chef/chef               12.5.1              86245605bbe3        4 weeks ago          168.1 MB
-centos                  7                   e9fa5d3a0d0e        6 weeks ago          172.3 MB
+REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+6e1b03ab46-default-centos-7   latest              fec1a50470ed        6 minutes ago       192 MB
+chef/chef                     current             01ec788610e2        6 days ago          124 MB
+centos                        7                   67591570dd29        7 weeks ago         192 MB
 ```
 
 ### Destroy phase
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen destroy
------> Starting Kitchen (v1.4.2)
+-----> Starting Kitchen (v1.15.0)
 -----> Destroying <default-centos-7>...
-       Destroying container default-centos-7-data.
-       Destroying container default-centos-7.
-       Finished destroying <default-centos-7> (0m11.05s).
------> Kitchen is finished. (0m11.22s)
+       Deleting local sandbox at /Users/someara/.dokken/sandbox/6e1b03ab46-default-centos-7
+       Finished destroying <default-centos-7> (0m0.83s).
+-----> Kitchen is finished. (0m1.81s)
 ```
 
 - List containers
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
-CONTAINER ID        IMAGE                 COMMAND             CREATED             STATUS              PORTS               NAMES
-7e327add6bf2        chef/chef:12.5.1      "true"              26 minutes ago      Created                                 chef-12.5.1
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+f678882b1575        chef/chef:current   "true"              10 minutes ago      Created                                 chef-current
+
 ```
 
 - List images
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
-REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
-someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago         300.8 MB
-chef/chef               12.5.1              86245605bbe3        4 weeks ago         168.1 MB
-centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+chef/chef           current             01ec788610e2        6 days ago          124 MB
+centos              7                   67591570dd29        7 weeks ago         192 MB
 ```
 
 Advanced Configuration
