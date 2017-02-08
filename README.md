@@ -285,8 +285,8 @@ Advanced Configuration
 
 Due to the nature of Docker, a handful of considerations need to be addressed.
 
-A complete example of a non-trivial `kitchen.yml` is found in the `httpd` cookbook, at
-https://github.com/chef-cookbooks/httpd/blob/master/.kitchen.yml
+A complete example of a non-trivial `kitchen.yml` is found in the `docker` cookbook, at
+https://github.com/chef-cookbooks/docker/blob/master/.kitchen.dokken.yml
 
 ### Minimalist images
 The Distros (debian, centos, etc) will typically manage an official image on the
