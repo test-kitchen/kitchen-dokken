@@ -54,8 +54,8 @@ execute 'install gem bundle' do
   action :run
 end
 
-execute 'converge blank suite' do
-  command 'bundle exec kitchen converge blank'
+execute 'converge hello with -c' do
+  command 'bundle exec kitchen converge hello -c'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
@@ -65,8 +65,8 @@ execute 'converge blank suite' do
   action :run
 end
 
-execute 'destroy suites' do
-  command 'bundle exec kitchen destroy blank'
+execute 'destroy hello again suite' do
+  command 'bundle exec kitchen destroy helloagain'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
