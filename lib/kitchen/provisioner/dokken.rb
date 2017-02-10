@@ -48,7 +48,7 @@ module Kitchen
 
       # patching Kitchen::Provisioner::ChefZero#run_command
       def run_command
-        cmd = '/opt/chef/embedded/bin/chef-client'
+        cmd = '/opt/chef/bin/chef-client'
         cmd << ' -z'
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
