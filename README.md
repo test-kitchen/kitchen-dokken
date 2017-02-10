@@ -389,6 +389,20 @@ Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com
 including those from the "current" channel. If you wish to use pre-release versions of Chef, set
 your `chef_version` value to "current".
 
+
+### Chef options
+
+It is possible to pass several extra configs to configure the chef binary and options, for example
+ to use older versions that do not have the "-z" switch or to get some debug logging.
+
+```
+provisioner:
+  chef_binary: /opt/chef/bin/chef-solo
+  chef_options: ""
+  chef_log_level: debug
+  chef_output_format: minimal
+```
+
 FAQ
 ===
 
