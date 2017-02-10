@@ -31,6 +31,10 @@ module Kitchen
       plugin_version Kitchen::VERSION
 
       default_config :root_path, '/opt/kitchen'
+      default_config :chef_binary, '/opt/chef/embedded/bin/chef-client'
+      default_config :chef_options, ' -z'
+      default_config :chef_log_level, 'warn'
+      default_config :chef_output_format, 'doc'
 
       # (see Base#call)
       def call(state)
@@ -44,16 +48,39 @@ module Kitchen
         #   cleanup_sandbox
       end
 
+      def validate_config
+        # check if we have an space for the user provided options
+        # or add it if not to avoid issues
+        unless config[:chef_options].start_with? ' '
+          config[:chef_options].prepend(' ')
+        end
+
+        # strip spaces from all other options
+        config[:chef_binary] = config[:chef_binary].strip
+        config[:chef_log_level] = config[:chef_log_level].strip
+        config[:chef_output_format] = config[:chef_output_format].strip
+
+        # if the user wants to be funny and pass empty strings
+        # just use the defaults
+        if config[:chef_log_level].empty?
+          config[:chef_log_level] = 'warn'
+        end
+        if config[:chef_output_format].empty?
+          config[:chef_output_format] = 'doc'
+        end
+      end
+
       private
 
       # patching Kitchen::Provisioner::ChefZero#run_command
       def run_command
-        cmd = '/opt/chef/bin/chef-client'
-        cmd << ' -z'
+        validate_config
+        cmd = config[:chef_binary]
+        cmd << config[:chef_options].to_s
+        cmd << " -l #{config[:chef_log_level]}"
+        cmd << " -F #{config[:chef_output_format]}"
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
-        cmd << ' -l warn'
-        cmd << ' -F doc'
       end
 
       def runner_container_name
