@@ -18,6 +18,7 @@
 require 'kitchen'
 require 'net/scp'
 require 'tmpdir'
+require 'etc'
 require 'digest/sha1'
 require_relative '../helpers'
 
@@ -95,16 +96,16 @@ module Kitchen
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
-          tmpdir = Dir.tmpdir
-          FileUtils.mkdir_p "#{tmpdir}/dokken"
-          File.write("#{tmpdir}/dokken/id_rsa", insecure_ssh_private_key)
-          FileUtils.chmod(0600, "#{tmpdir}/dokken/id_rsa")
+          tmpdir = Dir.tmpdir + "/dokken/" + Etc.getlogin
+          FileUtils.mkdir_p "#{tmpdir}"
+          File.write("#{tmpdir}/id_rsa", insecure_ssh_private_key)
+          FileUtils.chmod(0600, "#{tmpdir}/id_rsa")
 
           begin
             rsync_cmd = '/usr/bin/rsync -a -e'
             rsync_cmd << ' \''
             rsync_cmd << 'ssh -2'
-            rsync_cmd << " -i #{tmpdir}/dokken/id_rsa"
+            rsync_cmd << " -i #{tmpdir}/id_rsa"
             rsync_cmd << ' -o CheckHostIP=no'
             rsync_cmd << ' -o Compression=no'
             rsync_cmd << ' -o PasswordAuthentication=no'
