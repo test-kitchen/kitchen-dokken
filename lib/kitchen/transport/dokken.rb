@@ -18,7 +18,6 @@
 require 'kitchen'
 require 'net/scp'
 require 'tmpdir'
-require 'etc'
 require 'digest/sha1'
 require_relative '../helpers'
 
@@ -96,7 +95,9 @@ module Kitchen
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
-          tmpdir = Dir.tmpdir + "/dokken/" + Etc.getlogin
+          tmpdir = Dir.tmpdir + '/dokken/'
+          FileUtils.mkdir_p "#{tmpdir}", :mode => 0777
+          tmpdir += %x{whoami}.strip
           FileUtils.mkdir_p "#{tmpdir}"
           File.write("#{tmpdir}/id_rsa", insecure_ssh_private_key)
           FileUtils.chmod(0600, "#{tmpdir}/id_rsa")
