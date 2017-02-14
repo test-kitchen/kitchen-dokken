@@ -97,7 +97,7 @@ module Kitchen
 
           tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p "#{tmpdir}", :mode => 0777
-          tmpdir += %x{whoami}.strip
+          tmpdir += Process.uid.to_s
           FileUtils.mkdir_p "#{tmpdir}"
           File.write("#{tmpdir}/id_rsa", insecure_ssh_private_key)
           FileUtils.chmod(0600, "#{tmpdir}/id_rsa")
@@ -125,7 +125,7 @@ module Kitchen
                                local,
                                remote,
                                recursive: true,
-                               ssh: { port: port, keys: ["#{tmpdir}/dokken/id_rsa"] })
+                               ssh: { port: port, keys: ["#{tmpdir}/id_rsa"] })
             end
           end
         end
