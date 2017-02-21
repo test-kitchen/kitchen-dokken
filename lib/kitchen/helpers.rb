@@ -161,8 +161,10 @@ module Kitchen
     class Base
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
-        FileUtils.mkdir_p(sandbox_path)
-        File.chmod(0755, sandbox_path)
+        unless ::Dir.exist?(sandbox_path)
+          FileUtils.mkdir_p(sandbox_path)
+          File.chmod(0755, sandbox_path)
+        end
       end
 
       def sandbox_path
@@ -175,15 +177,24 @@ module Kitchen
       end
 
       def call(state)
-        instance.transport.connection(state) do |conn|
-          conn.execute(install_command)
+        create_sandbox
+        sandbox_dirs = Dir.glob(File.join(sandbox_path, "*"))
+        
+        instance.transport.connection(state) do |conn|          
+          conn.execute(install_command)          
+          
+          unless state[:data_container].nil?
+            conn.execute(init_command)
+            info("Transferring files to #{instance.to_str}")
+            conn.upload(sandbox_dirs, config[:root_path])
+            debug("Transfer complete")
+          end
+          
           conn.execute(prepare_command)
           conn.execute(run_command)
         end
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
-      ensure
-        cleanup_sandbox
       end
     end
   end
