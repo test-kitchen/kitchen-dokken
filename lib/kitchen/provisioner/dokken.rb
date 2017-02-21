@@ -62,12 +62,8 @@ module Kitchen
 
         # if the user wants to be funny and pass empty strings
         # just use the defaults
-        if config[:chef_log_level].empty?
-          config[:chef_log_level] = 'warn'
-        end
-        if config[:chef_output_format].empty?
-          config[:chef_output_format] = 'doc'
-        end
+        config[:chef_log_level] = 'warn' if config[:chef_log_level].empty?
+        config[:chef_output_format] = 'doc' if config[:chef_output_format].empty?
       end
 
       private

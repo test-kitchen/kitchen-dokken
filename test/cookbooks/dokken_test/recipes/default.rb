@@ -59,7 +59,7 @@ execute 'converge hello with -c' do
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
-  environment 'PATH' =>'/usr/bin:/usr/local/bin:/home/notroot/bin',
+  environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
               'DOCKER_HOST' => 'tcp://127.0.0.1:2375'
   action :run
@@ -70,7 +70,7 @@ execute 'destroy hello again suite' do
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
-  environment 'PATH' =>'/usr/bin:/usr/local/bin:/home/notroot/bin',
+  environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
               'DOCKER_HOST' => 'tcp://127.0.0.1:2375'
   action :run

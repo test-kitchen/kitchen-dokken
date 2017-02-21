@@ -1,1 +1,1 @@
-file "/hello"
+file '/hello'

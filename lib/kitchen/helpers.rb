@@ -89,27 +89,47 @@ EOF
     end
 
     def dokken_create_sandbox
-      info("Creating local sandbox at #{dokken_sandbox_path}")
-      FileUtils.mkdir_p(dokken_sandbox_path)
-      File.chmod(0755, dokken_sandbox_path)
+      info("Creating kitchen sandbox at #{dokken_kitchen_sandbox}")
+      FileUtils.mkdir_p(dokken_kitchen_sandbox)
+      File.chmod(0755, dokken_kitchen_sandbox)
+
+      info("Creating verifier sandbox at #{dokken_verifier_sandbox}")
+      FileUtils.mkdir_p(dokken_verifier_sandbox)
+      File.chmod(0755, dokken_verifier_sandbox)
     end
 
     def dokken_delete_sandbox
-      info("Deleting local sandbox at #{dokken_sandbox_path}")
+      info("Deleting kitchen sandbox at #{dokken_kitchen_sandbox}")
       begin
-        FileUtils.rm_rf(dokken_sandbox_path)
+        FileUtils.rm_rf(dokken_kitchen_sandbox)
       rescue Errno::ENOENT
-        debug("Cannot delete #{dokken_sandbox_path}. Does not exist")
+        debug("Cannot delete #{dokken_kitchen_sandbox}. Does not exist")
+      end
+
+      info("Deleting verifier sandbox at #{dokken_verifier_sandbox}")
+      begin
+        FileUtils.rm_rf(dokken_verifier_sandbox)
+      rescue Errno::ENOENT
+        debug("Cannot delete #{dokken_verifier_sandbox}. Does not exist")
       end
     end
 
-    def dokken_sandbox_path
-      "#{Dir.home}/.dokken/sandbox/#{instance_name}"
+    def dokken_kitchen_sandbox
+      "#{Dir.home}/.dokken/kitchen_sandbox/#{instance_name}"
+    end
+
+    def dokken_verifier_sandbox
+      "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
     def instance_name
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
       "#{prefix}-#{instance.name}"
+    end
+
+    def remote_docker_host?
+      return true if config[:docker_host_url] =~ /^tcp:/
+      false
     end
   end
 end
@@ -118,18 +138,52 @@ module Kitchen
   module Provisioner
     class Base
       def create_sandbox
-        info("Creating local sandbox in #{sandbox_path}")
+        info("Creating kitchen sandbox in #{sandbox_path}")
         FileUtils.mkdir_p(sandbox_path)
         File.chmod(0755, sandbox_path)
       end
 
+      # this MUST be named 'sandbox_path' because ruby.
       def sandbox_path
-        "#{Dir.home}/.dokken/sandbox/#{instance_name}"
+        "#{Dir.home}/.dokken/kitchen_sandbox/#{instance_name}"
       end
 
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
         "#{prefix}-#{instance.name}"
+      end
+    end
+  end
+end
+
+module Kitchen
+  module Verifier
+    class Base
+      def create_sandbox
+        info("Creating kitchen sandbox in #{sandbox_path}")
+        FileUtils.mkdir_p(sandbox_path)
+        File.chmod(0755, sandbox_path)
+      end
+
+      def sandbox_path
+        "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
+      end
+
+      def instance_name
+        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
+        "#{prefix}-#{instance.name}"
+      end
+
+      def call(state)
+        instance.transport.connection(state) do |conn|
+          conn.execute(install_command)
+          conn.execute(prepare_command)
+          conn.execute(run_command)
+        end
+      rescue Kitchen::Transport::TransportFailed => ex
+        raise ActionFailed, ex.message
+      ensure
+        cleanup_sandbox
       end
     end
   end

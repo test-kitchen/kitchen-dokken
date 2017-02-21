@@ -96,9 +96,9 @@ module Kitchen
           end
 
           tmpdir = Dir.tmpdir + '/dokken/'
-          FileUtils.mkdir_p "#{tmpdir}", :mode => 0777
+          FileUtils.mkdir_p tmpdir.to_s, mode: 0777
           tmpdir += Process.uid.to_s
-          FileUtils.mkdir_p "#{tmpdir}"
+          FileUtils.mkdir_p tmpdir.to_s
           File.write("#{tmpdir}/id_rsa", insecure_ssh_private_key)
           FileUtils.chmod(0600, "#{tmpdir}/id_rsa")
 
