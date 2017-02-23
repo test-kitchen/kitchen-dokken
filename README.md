@@ -56,7 +56,6 @@ How it works
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen list
 Instance          Driver  Provisioner  Verifier  Transport  Last Action    Last Error
-default-centos-7  Dokken  Dokken       Inspec    Dokken     <Not Created>  <None>
 
 ```
 - List containers
@@ -90,14 +89,14 @@ mounting by other containers.
 
 When talking to a local Docker host (over a socket), The driver
 creates and bind mounts a sandbox directory to `/opt/kitchen`. This
-prevents of from having to "upload" the test data.
+prevents us from having to "upload" the test data.
 
 When talking to a *remote* Docker host (tcp://somewhere.else), dokken
-will starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and
-`/opt/verifier` available for mounting by the runner.. The data
+starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and
+`/opt/verifier` available for mounting by the runner. The data
 container is the "trick" to the whole thing. It comes with rsync, runs
-an openssh daemon, and uses an, insecure, authorized_key ala
-Vagrant. This is later used to upload cookbook test data. 
+an openssh daemon, and uses an insecure, authorized_key ala
+Vagrant. This is later used to upload cookbook test data.
 
 The venerable `/tmp` directory is avoided, due to the popularity of
 `tmpfs` clobbering by inits.
@@ -429,3 +428,4 @@ docker tag suite_name:latest my.computers.biz:5043/something/whatever
 docker push my.computers.biz:5043/something/whatever
 kitchen destroy
 ```
+
