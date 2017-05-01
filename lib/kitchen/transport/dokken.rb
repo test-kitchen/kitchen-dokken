@@ -1,5 +1,5 @@
 #
-# Author:: Sean OMeara (<sean@chef.io>)
+# Author:: Sean OMeara (<sean@sean.io>)
 #
 # Copyright (C) 2015, Sean OMeara
 #
@@ -27,13 +27,13 @@ module Kitchen
   module Transport
     # Wrapped exception for any internally raised errors.
     #
-    # @author Sean OMeara <sean@chef.io>
+    # @author Sean OMeara <sean@sean.io>
     class DockerExecFailed < TransportFailed; end
 
     # A Transport which uses Docker tricks to execute commands and
     # transfer files.
     #
-    # @author Sean OMeara <sean@chef.io>
+    # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Transport::Base
       kitchen_transport_api_version 2
 
@@ -57,7 +57,7 @@ module Kitchen
         end
       end
 
-      # @author Sean OMeara <sean@chef.io>
+      # @author Sean OMeara <sean@sean.io>
       class Connection < Kitchen::Transport::Dokken::Connection
         def docker_connection
           @docker_connection ||= ::Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])

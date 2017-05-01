@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'kitchen-dokken'
   spec.version       = Kitchen::Driver::DOKKEN_VERSION
   spec.authors       = ['Sean OMeara']
-  spec.email         = ['sean@chef.io']
+  spec.email         = ['sean@sean.io']
   spec.description   = 'A Test Kitchen Driver for Dokken'
   spec.summary       = 'A Test Kitchen Driver that talks to the Docker Remote API and uses Volumes to produce sparse container images'
   spec.homepage      = 'https://github.com/someara/kitchen-dokken'
