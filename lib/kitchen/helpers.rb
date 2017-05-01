@@ -114,12 +114,22 @@ EOF
       end
     end
 
+    def home_dir
+      # while dokken_binds avoid invalid bind mount spec "C:/Users/..." error by
+      # remote docker host virtual box shared folder on boot2docker created by docker-machine in Windows
+      # refs:
+      # https://github.com/docker/machine/issues/1814
+      # https://github.com/docker/toolbox/issues/607
+      return Dir.home.sub 'C:/Users', '/c/Users' if (Dir.home =~ /^C:/ and remote_docker_host?)
+      Dir.home
+    end
+
     def dokken_kitchen_sandbox
-      "#{Dir.home}/.dokken/kitchen_sandbox/#{instance_name}"
+      "#{home_dir}/.dokken/kitchen_sandbox/#{instance_name}"
     end
 
     def dokken_verifier_sandbox
-      "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
+      "#{home_dir}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
     def instance_name
