@@ -45,7 +45,7 @@ package 'gcc' do
 end
 
 execute 'install gem bundle' do
-  command 'bundle install'
+  command '/usr/local/bin/bundle install'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream false
@@ -55,7 +55,7 @@ execute 'install gem bundle' do
 end
 
 execute 'converge hello with -c' do
-  command 'bundle exec kitchen converge hello -c'
+  command '/usr/local/bin/bundle exec kitchen converge hello -c'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
@@ -66,7 +66,7 @@ execute 'converge hello with -c' do
 end
 
 execute 'destroy hello again suite' do
-  command 'bundle exec kitchen destroy helloagain'
+  command '/usr/local/bin/bundle exec kitchen destroy helloagain'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
