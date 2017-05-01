@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.1.4
+- Fixing up current/stable/latest nomenclature to match Chef release pipeline
+
 # 2.1.3
 - Merged a bunch of PRs
 - #85 - mount default boot2docker shared folder in Windows
