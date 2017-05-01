@@ -108,7 +108,7 @@ from `chef-<version>` and `<suite-name>-data`, giving access to Chef
 and the test data. By default, the `pid_one_command` of the runner
 container is a script that sleeps in a loop, letting us `exec` our
 provisioner in the next phase. It can be overridden with init systems
-like Upstart and Systemd, for testing recipes with service resources
+like Upstart and systemd, for testing recipes with service resources
 as needed.
 
 - List containers
@@ -343,10 +343,10 @@ testing recipes that use the `service` resource.
 
 The default `pid_one_command` is `'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'`
 
-If you need to use the service resource to drive Upstart or Systemd, you'll need to
+If you need to use the service resource to drive Upstart or systemd, you'll need to
 specify the path to init. Here are more examples from `httpd`
 
-- Systemd for RHEL-7 based platforms
+- systemd for RHEL-7 based platforms
 ```
 platforms:
 - name: centos-7
@@ -354,6 +354,9 @@ platforms:
     image: centos:7
     privileged: true
     pid_one_command: /usr/lib/systemd/systemd
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro # required by systemd
+
 ```
 
 You can combine `intermediate_instructions` and `pid_one_command` as needed.
@@ -428,4 +431,3 @@ docker tag suite_name:latest my.computers.biz:5043/something/whatever
 docker push my.computers.biz:5043/something/whatever
 kitchen destroy
 ```
-
