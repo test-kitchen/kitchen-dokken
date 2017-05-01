@@ -1,5 +1,5 @@
 #
-# Author:: Sean OMeara (<sean@chef.io>)
+# Author:: Sean OMeara (<sean@sean.io>)
 #
 # Copyright (C) 2015, Sean OMeara
 #
@@ -30,7 +30,7 @@ module Kitchen
   module Driver
     # Dokken driver for Kitchen.
     #
-    # @author Sean OMeara <sean@chef.io>
+    # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Driver::Base
       default_config :api_retries, 20
       default_config :binds, []
