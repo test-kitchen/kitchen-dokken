@@ -1,5 +1,11 @@
 # Dokken Changelog
 
+# 2.1.3
+- Merged a bunch of PRs
+- #85 - mount default boot2docker shared folder in Windows
+- #93 - fix bundler path issue, should fix issue #92
+- #97 - readme: systemd requires specific mount
+
 ## 2.1.2
 - Making a CHANGELOG.md
 - Updated gem spec to depend on test-kitchen ~> 1.5
