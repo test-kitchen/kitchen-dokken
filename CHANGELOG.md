@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.1.5
+- Fixing (again) latest/current logic (thanks @tas50)
+
 # 2.1.4
 - Fixing up current/stable/latest nomenclature to match Chef release pipeline
 
