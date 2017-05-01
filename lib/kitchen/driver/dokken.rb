@@ -37,7 +37,7 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :chef_image, 'chef/chef'
-      default_config :chef_version, 'current'
+      default_config :chef_version, 'latest'
       default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
