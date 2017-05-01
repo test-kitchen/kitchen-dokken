@@ -405,7 +405,7 @@ module Kitchen
       end
 
       def chef_version
-        return 'current' if config[:chef_version] == 'latest'
+        return 'latest' if config[:chef_version] == 'stable'
         config[:chef_version]
       end
 
