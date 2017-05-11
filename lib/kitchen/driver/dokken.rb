@@ -418,7 +418,12 @@ module Kitchen
       end
 
       def platform_image
-        config[:image]
+        config[:image] || platform_image_from_name
+      end
+
+      def platform_image_from_name
+        platform, release = instance.platform.name.split('-')
+        release ? [platform, release].join(':') : platform
       end
 
       def exposed_ports(config, rules)
