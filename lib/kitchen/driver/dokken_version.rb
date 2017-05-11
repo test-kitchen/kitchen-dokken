@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# Author:: Sean OMeara (<sean@chef.io>)
+# Author:: Sean OMeara (<sean@sean.io>)
 #
 # Copyright (C) 2015, Sean OMeara
 #
