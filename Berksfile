@@ -1,4 +1,4 @@
-site 'https://supermarket.chef.io/api/v1'
+source 'https://supermarket.chef.io'
 
 cookbook 'dokken_test', path: 'test/cookbooks/dokken_test'
 cookbook 'docker'
