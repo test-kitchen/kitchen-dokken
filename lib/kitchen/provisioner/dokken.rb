@@ -40,8 +40,14 @@ module Kitchen
       def call(state)
         create_sandbox
         instance.transport.connection(state) do |conn|
-          conn.execute(run_command)
-        end
+          conn.execute(prepare_command)
+          conn.execute_with_retry(
+            run_command,
+            config[:retry_on_exit_code],
+            config[:max_retries],
+            config[:wait_for_retry]
+          )
+				end
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
         # ensure
