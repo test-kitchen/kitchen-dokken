@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.1.8
+- Using user specified image_prefix in instance_name
+
 # 2.1.7
 - bumping version. must have accidentally pushed a 2.1.6
 
