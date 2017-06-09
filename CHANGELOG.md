@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.1.7
+- bumping version. must have accidentally pushed a 2.1.6
+
 # 2.1.6
 - PR #107 - pass write_timeout to runner exec
 - PR #110 - (fix issue #109) - Add retry feature
