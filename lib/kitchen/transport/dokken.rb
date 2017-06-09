@@ -72,7 +72,7 @@ module Kitchen
             @exit_code = o[2]
           end
 
-          raise Transport::DockerExecFailed, "Docker Exec (#{@exit_code}) for command: [#{command}]" if @exit_code != 0
+          raise Transport::DockerExecFailed.new("Docker Exec (#{@exit_code}) for command: [#{command}]", @exit_code) if @exit_code != 0
         end
 
         def upload(locals, remote)
