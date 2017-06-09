@@ -133,7 +133,11 @@ EOF
     end
 
     def instance_name
-      prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
+      prefix = if config[:image_prefix].nil?
+                 (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
+               else
+                 config[:image_prefix]
+               end
       "#{prefix}-#{instance.name}"
     end
 

@@ -3,7 +3,7 @@ driver:
   name: dokken
   chef_version: latest
   privileged: true
-  volumes: '/var/lib/docker'
+  volumes: [ '/var/lib/docker' ]
   
 transport:
   name: dokken
