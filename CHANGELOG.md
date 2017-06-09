@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.1.6
+- PR #107 - pass write_timeout to runner exec
+- PR #110 - (fix issue #109) - Add retry feature
+
 # 2.1.5
 - Fixing (again) latest/current logic (thanks @tas50)
 
