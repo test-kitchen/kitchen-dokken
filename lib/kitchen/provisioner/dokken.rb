@@ -47,7 +47,7 @@ module Kitchen
             config[:max_retries],
             config[:wait_for_retry]
           )
-				end
+        end
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
         # ensure

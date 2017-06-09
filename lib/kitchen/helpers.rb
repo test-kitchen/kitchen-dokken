@@ -120,7 +120,7 @@ EOF
       # refs:
       # https://github.com/docker/machine/issues/1814
       # https://github.com/docker/toolbox/issues/607
-      return Dir.home.sub 'C:/Users', '/c/Users' if (Dir.home =~ /^C:/ and remote_docker_host?)
+      return Dir.home.sub 'C:/Users', '/c/Users' if Dir.home =~ /^C:/ && remote_docker_host?
       Dir.home
     end
 
@@ -188,18 +188,18 @@ module Kitchen
 
       def call(state)
         create_sandbox
-        sandbox_dirs = Dir.glob(File.join(sandbox_path, "*"))
-        
-        instance.transport.connection(state) do |conn|          
-          conn.execute(install_command)          
-          
+        sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
+
+        instance.transport.connection(state) do |conn|
+          conn.execute(install_command)
+
           unless state[:data_container].nil?
             conn.execute(init_command)
             info("Transferring files to #{instance.to_str}")
             conn.upload(sandbox_dirs, config[:root_path])
-            debug("Transfer complete")
+            debug('Transfer complete')
           end
-          
+
           conn.execute(prepare_command)
           conn.execute(run_command)
         end
