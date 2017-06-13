@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.1.9
+- Various fixes around remote docker host usage
+
 # 2.1.8
 - Using user specified image_prefix in instance_name
 
