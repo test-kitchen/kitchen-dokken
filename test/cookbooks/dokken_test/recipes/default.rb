@@ -20,23 +20,23 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
-package 'ruby23' do
+package 'ruby' do
   action :install
 end
 
-package 'ruby23-devel' do
+package 'ruby-devel' do
   action :install
 end
 
-gem_package 'io-console' do
+package 'rubygem-io-console' do
   action :install
 end
 
-gem_package 'bundler' do
+package 'rubygem-bundler' do
   action :install
 end
 
-gem_package 'rake' do
+package 'rubygem-rake' do
   action :install
 end
 
@@ -44,8 +44,20 @@ package 'gcc' do
   action :install
 end
 
+package 'redhat-rpm-config' do
+  action :install
+end
+
+package 'libffi' do
+  action :install
+end
+
+package 'libffi-devel' do
+  action :install
+end
+
 execute 'install gem bundle' do
-  command '/usr/local/bin/bundle install'
+  command '/usr/bin/bundle install'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream false
@@ -55,7 +67,7 @@ execute 'install gem bundle' do
 end
 
 execute 'converge hello with -c' do
-  command '/usr/local/bin/bundle exec kitchen converge hello -c'
+  command '/usr/bin/bundle exec kitchen converge hello -c'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
@@ -66,7 +78,7 @@ execute 'converge hello with -c' do
 end
 
 execute 'destroy hello again suite' do
-  command '/usr/local/bin/bundle exec kitchen destroy helloagain'
+  command '/usr/bin/bundle exec kitchen destroy helloagain'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true

@@ -95,11 +95,6 @@ module Kitchen
 
       private
 
-      def remote_docker_host?
-        return true if config[:docker_host_url] =~ /^tcp:/
-        false
-      end
-
       def api_retries
         config[:api_retries]
       end
@@ -201,8 +196,8 @@ module Kitchen
 
       def dokken_binds
         ret = []
-        ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil?
-        ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil?
+        ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host?
+        ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host?
         ret << Array(config[:binds]) unless config[:binds].nil?
         ret.flatten
       end

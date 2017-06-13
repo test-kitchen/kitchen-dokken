@@ -11,17 +11,19 @@ bundler_args: "--binstubs=$PWD/bin --jobs 3 --retry 3"
 
 env:
   matrix:
-  - INSTANCE=default-amazonlinux
+  - INSTANCE=default-fedora
 
 before_script:
  - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
 
 script:
-  - KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE}
+  - KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE} -l debug
 
-after_script:
-  - docker --version
-  - docker images
-  - docker ps -a
-  - cat .kitchen/logs/kitchen.log
-  - cat Gemfile.lock
+after_script: |
+  docker --version ;
+  docker images ;
+  docker ps -a ;
+  /bin/bash -c "docker inspect `docker ps -a | grep default-fedora-latest: | awk '{ print $1 }'`" ;
+  ls -laR ~/.dokken
+  cat .kitchen/logs/kitchen.log ;
+  cat Gemfile.lock ;

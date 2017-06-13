@@ -35,11 +35,17 @@ module Kitchen
       default_config :chef_options, ' -z'
       default_config :chef_log_level, 'warn'
       default_config :chef_output_format, 'doc'
+      default_config :docker_host_url, default_docker_host
 
       # (see Base#call)
       def call(state)
         create_sandbox
         instance.transport.connection(state) do |conn|
+          if remote_docker_host?
+            info("Transferring files to #{instance.to_str}")
+            conn.upload(sandbox_dirs, config[:root_path])
+          end
+
           conn.execute(prepare_command)
           conn.execute_with_retry(
             run_command,
@@ -50,8 +56,8 @@ module Kitchen
         end
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
-        # ensure
-        #   cleanup_sandbox
+      ensure
+        cleanup_sandbox if remote_docker_host?
       end
 
       def validate_config

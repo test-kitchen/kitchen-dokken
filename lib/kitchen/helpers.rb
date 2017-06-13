@@ -145,6 +145,22 @@ EOF
       return true if config[:docker_host_url] =~ /^tcp:/
       false
     end
+
+    def sandbox_path
+      "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
+    end
+
+    def sandbox_dirs
+      Dir.glob(File.join(sandbox_path, '*'))
+    end
+
+    def create_sandbox
+      info("Creating kitchen sandbox in #{sandbox_path}")
+      unless ::Dir.exist?(sandbox_path)
+        FileUtils.mkdir_p(sandbox_path)
+        File.chmod(0755, sandbox_path)
+      end
+    end
   end
 end
 
@@ -192,8 +208,6 @@ module Kitchen
 
       def call(state)
         create_sandbox
-        sandbox_dirs = Dir.glob(File.join(sandbox_path, '*'))
-
         instance.transport.connection(state) do |conn|
           conn.execute(install_command)
 
