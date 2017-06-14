@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.1.10
+- Adding boot2docker detection
+
 # 2.1.9
 - Various fixes around remote docker host usage
 
