@@ -35,6 +35,7 @@ module Kitchen
       default_config :chef_options, ' -z'
       default_config :chef_log_level, 'warn'
       default_config :chef_output_format, 'doc'
+      default_config :docker_info, docker_info
       default_config :docker_host_url, default_docker_host
 
       # (see Base#call)

@@ -88,6 +88,10 @@ EOF
       end
     end
 
+    def docker_info
+      @docker_info ||= ::Docker.info
+    end
+
     def dokken_create_sandbox
       info("Creating kitchen sandbox at #{dokken_kitchen_sandbox}")
       FileUtils.mkdir_p(dokken_kitchen_sandbox)
@@ -142,6 +146,7 @@ EOF
     end
 
     def remote_docker_host?
+      return false if config[:docker_info]['OperatingSystem'].include?('Boot2Docker')
       return true if config[:docker_host_url] =~ /^tcp:/
       false
     end
