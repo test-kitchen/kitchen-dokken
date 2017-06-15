@@ -1,5 +1,14 @@
 # Dokken Changelog
 
+# 2.2.0
+- Initial support for clusters / inter-suite name resolution
+- Dokken now creates a user-defined network named "dokken" and
+  connects containers to it. This allows us to take advantage of the
+  built in DNS server that in Docker 1.10 and later.
+
+  driver:
+    hostname: www.computers.biz
+
 # 2.1.10
 - Adding boot2docker detection
 
