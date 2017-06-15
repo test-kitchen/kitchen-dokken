@@ -64,6 +64,9 @@ module Kitchen
         pull_chef_image
         create_chef_container state
 
+        # network
+        make_dokken_network
+
         # data
         dokken_create_sandbox
 
@@ -272,6 +275,13 @@ module Kitchen
           }
         )
         state[:data_container] = data_container.json
+      end
+
+      def make_dokken_network
+        debug 'driver - creating dokken network'
+        Docker::Network.create('dokken', {})
+      rescue
+        debug 'driver - dokken network already exists'
       end
 
       def make_data_image
