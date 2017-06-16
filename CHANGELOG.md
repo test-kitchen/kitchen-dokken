@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.3.1
+- Actually doing the things in 2.3.0
+
 # 2.3.0
 - Reverting 2.2.x bits to 2.1.x. to restore stability to users.
 - That'll teach me to push gems at odd hours.
