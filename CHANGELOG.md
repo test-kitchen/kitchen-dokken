@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.2.1
+- Putting chef-client container in dokken network
+- casting aliases to Array
+
 # 2.2.0
 - Initial support for clusters / inter-suite name resolution
 - Dokken now creates a user-defined network named "dokken" and
