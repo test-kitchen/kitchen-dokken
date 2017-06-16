@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.2.4
+- bugfix: Only placing runner containers in user defined network
+
 # 2.2.3
 - bugfix: Adding gaurd logic for already existing dokken network
 
