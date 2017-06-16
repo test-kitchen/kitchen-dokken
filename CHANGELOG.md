@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.2.2
+- bugfix: Creating dokken network before chef container
+
 # 2.2.1
 - Putting chef-client container in dokken network
 - casting aliases to Array
