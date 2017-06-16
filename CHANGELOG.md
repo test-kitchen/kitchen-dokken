@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.2.3
+- bugfix: Adding gaurd logic for already existing dokken network
+
 # 2.2.2
 - bugfix: Creating dokken network before chef container
 
