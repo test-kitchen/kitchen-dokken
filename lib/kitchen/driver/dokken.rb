@@ -282,26 +282,20 @@ module Kitchen
             'PublishAllPorts' => true,
             'NetworkMode' => self[:network_mode],
           },
-          'NetworkingConfig' => {
-            'EndpointsConfig' => {
-              self[:network_mode] => {
-                'Aliases' => Array(self[:hostname]),
-              },
-            },
-          },
         }
         data_container = run_container(config)
         state[:data_container] = data_container.json
       end
 
       def make_dokken_network
-        debug 'driver - creating dokken network'
+        info 'driver - checking for dokken network'
         ::Docker::Network.get('dokken', {}, docker_connection)
       rescue
         begin
-          Docker::Network.create('dokken', {})
+          info 'driver - creating dokken network'
+          ::Docker::Network.create('dokken', {})
         rescue ::Docker::Error => e
-          debug "driver - :#{e}:"
+          info "driver - :#{e}:"
         end
       end
 
@@ -321,13 +315,6 @@ module Kitchen
             'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
             'HostConfig' => {
               'NetworkMode' => self[:network_mode],
-            },
-            'NetworkingConfig' => {
-              'EndpointsConfig' => {
-                self[:network_mode] => {
-                  'Aliases' => Array(self[:hostname]),
-                },
-              },
             },
           }
           chef_container = create_container(config)

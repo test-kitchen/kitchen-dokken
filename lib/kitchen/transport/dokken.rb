@@ -96,7 +96,7 @@ module Kitchen
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
-          tmpdir = Dir.tmpdir + '/dokken/'
+          require 'pry'; tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
           FileUtils.mkdir_p tmpdir.to_s
@@ -117,6 +117,7 @@ module Kitchen
             rsync_cmd << " -p #{port}"
             rsync_cmd << '\''
             rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
+            debug "rsync_cmd :#{rsync_cmd}:"
             `#{rsync_cmd}`
           rescue Errno::ENOENT
             debug 'Rsync is not installed. Falling back to SCP.'

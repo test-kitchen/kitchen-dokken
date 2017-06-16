@@ -17,7 +17,7 @@ end
 
 git '/home/notroot/kitchen-dokken' do
   repository 'https://github.com/someara/kitchen-dokken'
-  revision 'master'
+  revision 'someara/greentravis'
   user 'notroot'
   action :sync
 end
@@ -32,16 +32,16 @@ execute 'install gem bundle' do
   action :run
 end
 
-execute 'converge hello with -c' do
-  command '/usr/bin/bundle exec kitchen converge hello -c'
-  cwd '/home/notroot/kitchen-dokken'
-  user 'notroot'
-  live_stream true
-  environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
-              'HOME' => '/home/notroot',
-              'DOCKER_HOST' => 'tcp://127.0.0.1:2375'
-  action :run
-end
+# execute 'converge hello with -c' do
+#   command '/usr/bin/bundle exec kitchen converge hello -c'
+#   cwd '/home/notroot/kitchen-dokken'
+#   user 'notroot'
+#   live_stream true
+#   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
+#               'HOME' => '/home/notroot',
+#               'DOCKER_HOST' => 'tcp://127.0.0.1:2375'
+#   action :run
+# end
 
 # execute 'destroy hello again suite' do
 #   command '/usr/bin/bundle exec kitchen destroy helloagain'
