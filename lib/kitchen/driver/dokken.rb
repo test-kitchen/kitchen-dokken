@@ -60,12 +60,12 @@ module Kitchen
         # image to config
         pull_platform_image
 
+        # network
+        make_dokken_network
+        
         # chef
         pull_chef_image
         create_chef_container state
-
-        # network
-        make_dokken_network
 
         # data
         dokken_create_sandbox
@@ -297,8 +297,8 @@ module Kitchen
       def make_dokken_network
         debug 'driver - creating dokken network'
         Docker::Network.create('dokken', {})
-      rescue
-        debug 'driver - dokken network already exists'
+      rescue ::Docker::Error => e
+        debug "driver - :#{e}:"
       end
 
       def make_data_image
@@ -328,8 +328,8 @@ module Kitchen
           }
           chef_container = create_container(config)
           state[:chef_container] = chef_container.json
-        rescue
-          debug "driver - #{chef_container_name} already exists"
+        rescue ::Docker::Error => e
+          raise "driver - #{chef_container_name} failed to create #{e}"
         end
       end
 

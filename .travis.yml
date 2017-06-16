@@ -21,8 +21,9 @@ script:
 
 after_script: |
   docker --version ;
-  docker images ;
   docker ps -a ;
+  docker network ls ;
+  docker images ;
   /bin/bash -c "docker inspect `docker ps -a | grep default-fedora-latest: | awk '{ print $1 }'`" ;
   ls -laR ~/.dokken
   cat .kitchen/logs/kitchen.log ;
