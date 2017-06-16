@@ -1,5 +1,31 @@
 # Dokken Changelog
 
+# 2.3.0
+- Reverting 2.2.x bits to 2.1.x. to restore stability to users.
+- That'll teach me to push gems at odd hours.
+
+# 2.2.4
+- bugfix: Only placing runner containers in user defined network
+
+# 2.2.3
+- bugfix: Adding gaurd logic for already existing dokken network
+
+# 2.2.2
+- bugfix: Creating dokken network before chef container
+
+# 2.2.1
+- Putting chef-client container in dokken network
+- casting aliases to Array
+
+# 2.2.0
+- Initial support for clusters / inter-suite name resolution
+- Dokken now creates a user-defined network named "dokken" and
+  connects containers to it. This allows us to take advantage of the
+  built in DNS server that in Docker 1.10 and later.
+
+  driver:
+    hostname: www.computers.biz
+
 # 2.1.10
 - Adding boot2docker detection
 
