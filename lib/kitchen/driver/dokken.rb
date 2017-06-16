@@ -285,7 +285,7 @@ module Kitchen
           'NetworkingConfig' => {
             'EndpointsConfig' => {
               self[:network_mode] => {
-                'Aliases' => self[:hostname],
+                'Aliases' => Array(self[:hostname]),
               },
             },
           },
@@ -315,7 +315,16 @@ module Kitchen
             'name' => chef_container_name,
             'Cmd' => 'true',
             'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
-            'NetworkMode' => config[:network_mode]
+            'HostConfig' => {
+              'NetworkMode' => config[:network_mode],
+            },
+            'NetworkingConfig' => {
+              'EndpointsConfig' => {
+                self[:network_mode] => {
+                  'Aliases' => Array(config[:hostname]),
+                },
+              },
+            }
           )
           state[:chef_container] = chef_container.json
         rescue
