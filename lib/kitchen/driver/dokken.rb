@@ -311,21 +311,22 @@ module Kitchen
       rescue ::Docker::Error::NotFoundError
         begin
           debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
-          chef_container = create_container(
+          config = {
             'name' => chef_container_name,
             'Cmd' => 'true',
             'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
             'HostConfig' => {
-              'NetworkMode' => config[:network_mode],
+              'NetworkMode' => self[:network_mode],
             },
             'NetworkingConfig' => {
               'EndpointsConfig' => {
                 self[:network_mode] => {
-                  'Aliases' => Array(config[:hostname]),
+                  'Aliases' => Array(self[:hostname]),
                 },
               },
-            }
-          )
+            },
+          }
+          chef_container = create_container(config)
           state[:chef_container] = chef_container.json
         rescue
           debug "driver - #{chef_container_name} already exists"
