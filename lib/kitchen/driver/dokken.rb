@@ -62,7 +62,7 @@ module Kitchen
 
         # network
         make_dokken_network
-        
+
         # chef
         pull_chef_image
         create_chef_container state
@@ -296,9 +296,13 @@ module Kitchen
 
       def make_dokken_network
         debug 'driver - creating dokken network'
-        Docker::Network.create('dokken', {})
-      rescue ::Docker::Error => e
-        debug "driver - :#{e}:"
+        ::Docker::Network.get('dokken', {}, docker_connection)
+      rescue
+        begin
+          Docker::Network.create('dokken', {})
+        rescue ::Docker::Error => e
+          debug "driver - :#{e}:"
+        end
       end
 
       def make_data_image

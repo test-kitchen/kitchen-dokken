@@ -97,11 +97,11 @@ module Kitchen
           end
 
           tmpdir = Dir.tmpdir + '/dokken/'
-          FileUtils.mkdir_p tmpdir.to_s, mode: 0777
+          FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
           FileUtils.mkdir_p tmpdir.to_s
           File.write("#{tmpdir}/id_rsa", insecure_ssh_private_key)
-          FileUtils.chmod(0600, "#{tmpdir}/id_rsa")
+          FileUtils.chmod(0o600, "#{tmpdir}/id_rsa")
 
           begin
             rsync_cmd = '/usr/bin/rsync -a -e'
