@@ -96,7 +96,10 @@ module Kitchen
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
-          require 'pry'; tmpdir = Dir.tmpdir + '/dokken/'
+                    
+          require 'pry'; binding.pry
+
+          tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
           FileUtils.mkdir_p tmpdir.to_s
