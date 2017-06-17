@@ -95,7 +95,9 @@ module Kitchen
           else
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
-          
+
+          debug "options[:host_ip_override] :#{options[:host_ip_override]}:"
+          debug "options[:docker_host_url] :#{options[:docker_host_url]}:"
           debug "ip calculation: #{ip}"
           
           tmpdir = Dir.tmpdir + '/dokken/'
