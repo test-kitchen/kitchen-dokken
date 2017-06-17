@@ -81,20 +81,15 @@ module Kitchen
 
           if options[:host_ip_override]
             ip = options[:host_ip_override]
+          elsif options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == '0.0.0.0'
+            ip = options[:data_container][:NetworkSettings][:IPAddress]
+            port = '22'
           else
-            if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == '0.0.0.0'
-              ip = options[:data_container][:NetworkSettings][:IPAddress]
-              port = '22'
-            else
-              # we should read the proper mapped ip, since this allows us to upload the files
-              ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
-            end
+            ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
           end
-          # ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
-          # raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
 
-          # require 'pry' ; binding.pry
-
+          debug "ip calculation: #{ip}"
+          
           tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
