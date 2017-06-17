@@ -81,8 +81,9 @@ module Kitchen
 
           if options[:host_ip_override]
             # Allow connecting to any ip/hostname to support sibling containers
-            ip = options[:host_ip_override]
+            ip = options[:host_ip_override]            
           elsif options[:docker_host_url] =~ /unix:/
+            # ^ wrong as of 2.x??
             if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == '0.0.0.0'
               ip = options[:data_container][:NetworkSettings][:IPAddress]
               port = '22'
@@ -96,9 +97,8 @@ module Kitchen
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
-                    
-          require 'pry'; binding.pry
-
+          # require 'pry' ; binding.pry
+          
           tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s

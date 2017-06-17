@@ -280,16 +280,8 @@ module Kitchen
           'HostConfig' => {
             'PortBindings' => port_forwards({}, '22'),
             'PublishAllPorts' => true,
-            # 'NetworkMode' => self[:network_mode],
             'NetworkMode' => 'bridge',
           },
-          # 'NetworkingConfig' => {
-          #   'EndpointsConfig' => {
-          #     self[:network_mode] => {
-          #       'Aliases' => Array(self[:hostname]),
-          #     },
-          #   },
-          # },
         }
         data_container = run_container(config)
         state[:data_container] = data_container.json
