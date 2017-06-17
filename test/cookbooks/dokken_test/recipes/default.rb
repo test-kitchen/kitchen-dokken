@@ -22,15 +22,15 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
-# execute 'install gem bundle' do
-#   command '/usr/bin/bundle install'
-#   cwd '/home/notroot/kitchen-dokken'
-#   user 'notroot'
-#   live_stream false
-#   creates '/home/notroot/kitchen-dokken/Gemfile.lock'
-#   environment 'HOME' => '/home/notroot'
-#   action :run
-# end
+execute 'install gem bundle' do
+  command '/usr/bin/bundle install'
+  cwd '/home/notroot/kitchen-dokken'
+  user 'notroot'
+  live_stream false
+  creates '/home/notroot/kitchen-dokken/Gemfile.lock'
+  environment 'HOME' => '/home/notroot'
+  action :run
+end
 
 # execute 'converge hello with -c' do
 #   command '/usr/bin/bundle exec kitchen converge hello -c'
