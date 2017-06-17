@@ -280,7 +280,8 @@ module Kitchen
           'HostConfig' => {
             'PortBindings' => port_forwards({}, '22'),
             'PublishAllPorts' => true,
-            'NetworkMode' => self[:network_mode],
+            # 'NetworkMode' => self[:network_mode],
+            'NetworkMode' => 'bridge',
           },
           # 'NetworkingConfig' => {
           #   'EndpointsConfig' => {
