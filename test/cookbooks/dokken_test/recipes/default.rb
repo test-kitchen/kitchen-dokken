@@ -1,7 +1,7 @@
-# docker_service 'default' do
-#   host ['tcp://127.0.0.1']
-#   action [:create, :start]
-# end
+docker_service 'default' do
+  host ['tcp://127.0.0.1']
+  action [:create, :start]
+end
 
 user 'notroot' do
   home '/home/notroot'
@@ -9,18 +9,18 @@ user 'notroot' do
   action :create
 end
 
-# package_list = %w(git ruby ruby-devel rubygem-io-console rubygem-bundler rubygem-rake gcc redhat-rpm-config libffi libffi-devel)
+package_list = %w(git ruby ruby-devel rubygem-io-console rubygem-bundler rubygem-rake gcc redhat-rpm-config libffi libffi-devel)
 
-# package package_list do
-#   action :install
-# end
+package package_list do
+  action :install
+end
 
-# git '/home/notroot/kitchen-dokken' do
-#   repository 'https://github.com/someara/kitchen-dokken'
-#   revision 'someara/greentravis'
-#   user 'notroot'
-#   action :sync
-# end
+git '/home/notroot/kitchen-dokken' do
+  repository 'https://github.com/someara/kitchen-dokken'
+  revision 'someara/greentravis'
+  user 'notroot'
+  action :sync
+end
 
 # execute 'install gem bundle' do
 #   command '/usr/bin/bundle install'
