@@ -106,7 +106,7 @@ module Kitchen
 
           debug "options[:host_ip_override] :#{options[:host_ip_override]}:"
           debug "options[:docker_host_url] :#{options[:docker_host_url]}:"
-          debug "ssh_ip calculation: #{ssh_}"
+          debug "ssh_ip calculation: #{ssh_ip}"
           
           tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
