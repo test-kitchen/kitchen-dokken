@@ -126,9 +126,9 @@ module Kitchen
             rsync_cmd << ' -o StrictHostKeyChecking=no'
             rsync_cmd << ' -o UserKnownHostsFile=/dev/null'
             rsync_cmd << ' -o LogLevel=ERROR'
-            rsync_cmd << " -p #{port}"
+            rsync_cmd << " -p #{ssh_port}"
             rsync_cmd << '\''
-            rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
+            rsync_cmd << " #{locals.join(' ')} root@#{ssh_ip}:#{remote}"
             debug "rsync_cmd :#{rsync_cmd}:"
             `#{rsync_cmd}`
           rescue Errno::ENOENT
