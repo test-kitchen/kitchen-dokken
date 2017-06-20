@@ -114,10 +114,12 @@ module Kitchen
         return unless ::Docker::Image.exist?(work_image, {}, docker_connection)
         with_retries { @work_image = ::Docker::Image.get(work_image, {}, docker_connection) }
 
-        begin
-          with_retries { @work_image.remove(force: true) }
-        rescue ::Docker::Error::ConflictError
-          debug "driver - #{work_image} cannot be removed"
+        with_retries do
+          begin
+            with_retries { @work_image.remove(force: true) }
+          rescue ::Docker::Error::ConflictError
+            debug "driver - #{work_image} cannot be removed"
+          end
         end
       end
 
@@ -378,10 +380,8 @@ module Kitchen
       end
 
       def create_container(args)
-        with_retries do
-          @container = ::Docker::Container.create(args.clone, docker_connection)
-          @container = ::Docker::Container.get(args['name'], {}, docker_connection)
-        end
+        with_retries { @container = ::Docker::Container.create(args.clone, docker_connection) }
+        with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
       rescue ::Docker::Error::ConflictError
         with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
       end
