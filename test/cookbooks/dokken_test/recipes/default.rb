@@ -17,7 +17,7 @@ end
 
 git '/home/notroot/kitchen-dokken' do
   repository 'https://github.com/someara/kitchen-dokken'
-  revision 'someara/greentravis'
+  revision 'master'
   user 'notroot'
   action :sync
 end
