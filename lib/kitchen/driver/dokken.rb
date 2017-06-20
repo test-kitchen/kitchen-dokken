@@ -41,7 +41,7 @@ module Kitchen
       default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
-      default_config :docker_info, docker_info
+      # default_config :docker_info, docker_info
       default_config :docker_host_url, default_docker_host
       default_config :forward, nil
       default_config :hostname, 'dokken'
@@ -280,7 +280,14 @@ module Kitchen
           'HostConfig' => {
             'PortBindings' => port_forwards({}, '22'),
             'PublishAllPorts' => true,
-            'NetworkMode' => self[:network_mode],
+            'NetworkMode' => 'bridge',
+          },
+          'NetworkingConfig' => {
+            'EndpointsConfig' => {
+              self[:network_mode] => {
+                'Aliases' => Array(self[:hostname]),
+              },
+            },
           },
         }
         data_container = run_container(config)
@@ -289,13 +296,16 @@ module Kitchen
 
       def make_dokken_network
         info 'driver - checking for dokken network'
-        ::Docker::Network.get('dokken', {}, docker_connection)
+        with_retries { ::Docker::Network.get('dokken', {}, docker_connection) }
       rescue
-        begin
-          info 'driver - creating dokken network'
-          ::Docker::Network.create('dokken', {})
-        rescue ::Docker::Error => e
-          info "driver - :#{e}:"
+        with_retries do
+          begin
+            info 'driver - creating dokken network'
+            n = ::Docker::Network.create('dokken', {})
+            debug "n - #{n}"
+          rescue ::Docker::Error => e
+            info "driver - :#{e}:"
+          end
         end
       end
 
@@ -305,22 +315,24 @@ module Kitchen
       end
 
       def create_chef_container(state)
-        ::Docker::Container.get(chef_container_name, {}, docker_connection)
+        with_retries { ::Docker::Container.get(chef_container_name, {}, docker_connection) }
       rescue ::Docker::Error::NotFoundError
-        begin
-          debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
-          config = {
-            'name' => chef_container_name,
-            'Cmd' => 'true',
-            'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
-            'HostConfig' => {
-              'NetworkMode' => self[:network_mode],
-            },
-          }
-          chef_container = create_container(config)
-          state[:chef_container] = chef_container.json
-        rescue ::Docker::Error => e
-          raise "driver - #{chef_container_name} failed to create #{e}"
+        with_retries do
+          begin
+            debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
+            config = {
+              'name' => chef_container_name,
+              'Cmd' => 'true',
+              'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
+              'HostConfig' => {
+                'NetworkMode' => self[:network_mode],
+              },
+            }
+            chef_container = create_container(config)
+            state[:chef_container] = chef_container.json
+          rescue ::Docker::Error => e
+            raise "driver - #{chef_container_name} failed to create #{e}"
+          end
         end
       end
 

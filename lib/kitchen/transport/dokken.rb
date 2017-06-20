@@ -77,26 +77,42 @@ module Kitchen
         end
 
         def upload(locals, remote)
-          port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
-
           if options[:host_ip_override]
             # Allow connecting to any ip/hostname to support sibling containers
-            ip = options[:host_ip_override]
+            ssh_ip = options[:host_ip_override]
+            ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+
           elsif options[:docker_host_url] =~ /unix:/
             if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == '0.0.0.0'
-              ip = options[:data_container][:NetworkSettings][:IPAddress]
-              port = '22'
+              ssh_ip = options[:data_container][:NetworkSettings][:IPAddress]
+              ssh_port = '22'
             else
               # we should read the proper mapped ip, since this allows us to upload the files
-              ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
+              ssh_ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
+              ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
             end
+
           elsif options[:docker_host_url] =~ /tcp:/
-            ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
+            name = options[:data_container][:Name]
+            candidate_ip = ::Docker::Container.all.select do |x|
+              x.info['Names'][0].eql?(name)
+            end.first.info['NetworkSettings']['Networks']['dokken']['IPAddress']
+
+            if port_open?(candidate_ip, '22')
+              ssh_ip = candidate_ip
+              ssh_port = '22'
+            else
+              ssh_ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
+              ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+            end
           else
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
           end
 
-          require 'pry'; tmpdir = Dir.tmpdir + '/dokken/'
+          debug "ssh_ip : #{ssh_ip}"
+          debug "ssh_port : #{ssh_port}"
+
+          tmpdir = Dir.tmpdir + '/dokken/'
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
           FileUtils.mkdir_p tmpdir.to_s
@@ -114,20 +130,20 @@ module Kitchen
             rsync_cmd << ' -o StrictHostKeyChecking=no'
             rsync_cmd << ' -o UserKnownHostsFile=/dev/null'
             rsync_cmd << ' -o LogLevel=ERROR'
-            rsync_cmd << " -p #{port}"
+            rsync_cmd << " -p #{ssh_port}"
             rsync_cmd << '\''
-            rsync_cmd << " #{locals.join(' ')} root@#{ip}:#{remote}"
+            rsync_cmd << " #{locals.join(' ')} root@#{ssh_ip}:#{remote}"
             debug "rsync_cmd :#{rsync_cmd}:"
             `#{rsync_cmd}`
           rescue Errno::ENOENT
             debug 'Rsync is not installed. Falling back to SCP.'
             locals.each do |local|
-              Net::SCP.upload!(ip,
+              Net::SCP.upload!(ssh_ip,
                                'root',
                                local,
                                remote,
                                recursive: true,
-                               ssh: { port: port, keys: ["#{tmpdir}/id_rsa"] })
+                               ssh: { port: ssh_port, keys: ["#{tmpdir}/id_rsa"] })
             end
           end
         end
