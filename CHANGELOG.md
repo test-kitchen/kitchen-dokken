@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.4.1
+- Adding NotFoundError to with_retries and beefing up rescues
+
 # 2.4.0
 - Features meant for 2.2.0, but tested properly this time.
 - Initial support for clusters / inter-suite name resolution
