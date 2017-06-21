@@ -297,16 +297,16 @@ module Kitchen
       end
 
       def make_dokken_network
-        info 'driver - checking for dokken network'
+        debug 'driver - checking for dokken network'
         with_retries { ::Docker::Network.get('dokken', {}, docker_connection) }
       rescue
         with_retries do
           begin
-            info 'driver - creating dokken network'
+            info 'Creating dokken network'
             n = ::Docker::Network.create('dokken', {})
             debug "n - #{n}"
           rescue ::Docker::Error => e
-            info "driver - :#{e}:"
+            debug "driver - :#{e}:"
           end
         end
       end
@@ -380,10 +380,25 @@ module Kitchen
       end
 
       def create_container(args)
-        with_retries { @container = ::Docker::Container.create(args.clone, docker_connection) }
         with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
-      rescue ::Docker::Error::ConflictError
-        with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
+      rescue
+        with_retries do
+          begin
+            info "Creating container #{args['name']}"
+            debug "driver - create_container args #{args}"
+            with_retries do
+              begin
+                @container = ::Docker::Container.create(args.clone, docker_connection)
+              rescue ::Docker::Error::ConflictError
+                debug "driver - rescue ConflictError: #{args['name']}"
+                with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
+
+              end
+            end
+          rescue ::Docker::Error => e
+            raise "driver - failed to create_container #{args['name']}"
+          end
+        end
       end
 
       def run_container(args)
@@ -504,9 +519,12 @@ module Kitchen
         rescue ::Docker::Error::ServerError, # 404
                ::Docker::Error::UnexpectedResponseError, # 400
                ::Docker::Error::TimeoutError,
-               ::Docker::Error::IOError => e
+               ::Docker::Error::IOError,
+               ::Docker::Error::NotFoundError => e
           tries -= 1
+          sleep 0.1
           retry if tries > 0
+          debug "tries: #{tries} e: #{e}"
           raise e
         end
       end
