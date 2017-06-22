@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.4.3
+- Using better paths for lockfiles
+
 # 2.4.2
 - Using lockfile gem around chef-client container and dokken network creation
 
