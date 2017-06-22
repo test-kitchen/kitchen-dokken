@@ -19,6 +19,7 @@ require 'digest'
 require 'kitchen'
 require 'tmpdir'
 require 'docker'
+require 'lockfile'
 require_relative '../helpers'
 
 include Dokken::Helpers
@@ -297,17 +298,18 @@ module Kitchen
       end
 
       def make_dokken_network
-        debug 'driver - checking for dokken network'
-        with_retries { ::Docker::Network.get('dokken', {}, docker_connection) }
-      rescue
-        with_retries do
+        lockfile = Lockfile.new "#{home_dir}/.dokken/dokken-network.lock"
+        begin
+          lockfile.lock
+          with_retries { ::Docker::Network.get('dokken', {}, docker_connection) }
+        rescue
           begin
-            info 'Creating dokken network'
-            n = ::Docker::Network.create('dokken', {})
-            debug "n - #{n}"
+            with_retries { ::Docker::Network.create('dokken', {}) }
           rescue ::Docker::Error => e
-            debug "driver - :#{e}:"
+            debug "driver - error :#{e}:"
           end
+        ensure
+          lockfile.unlock
         end
       end
 
@@ -317,24 +319,30 @@ module Kitchen
       end
 
       def create_chef_container(state)
-        with_retries { ::Docker::Container.get(chef_container_name, {}, docker_connection) }
-      rescue ::Docker::Error::NotFoundError
-        with_retries do
-          begin
-            debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
-            config = {
-              'name' => chef_container_name,
-              'Cmd' => 'true',
-              'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
-              'HostConfig' => {
-                'NetworkMode' => self[:network_mode],
-              },
-            }
-            chef_container = create_container(config)
-            state[:chef_container] = chef_container.json
-          rescue ::Docker::Error => e
-            raise "driver - #{chef_container_name} failed to create #{e}"
+        lockfile = Lockfile.new "#{home_dir}/.dokken/#{chef_container_name}.lock"
+        begin
+          lockfile.lock
+          with_retries { ::Docker::Container.get(chef_container_name, {}, docker_connection) }
+        rescue ::Docker::Error::NotFoundError
+          with_retries do
+            begin
+              debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
+              config = {
+                'name' => chef_container_name,
+                'Cmd' => 'true',
+                'Image' => "#{repo(chef_image)}:#{tag(chef_image)}",
+                'HostConfig' => {
+                  'NetworkMode' => self[:network_mode],
+                },
+              }
+              chef_container = create_container(config)
+              state[:chef_container] = chef_container.json
+            rescue ::Docker::Error => e
+              raise "driver - #{chef_container_name} failed to create #{e}"
+            end
           end
+        ensure
+          lockfile.unlock
         end
       end
 
@@ -396,6 +404,7 @@ module Kitchen
               end
             end
           rescue ::Docker::Error => e
+            debug "driver - error :#{e}:"
             raise "driver - failed to create_container #{args['name']}"
           end
         end
@@ -524,7 +533,7 @@ module Kitchen
           tries -= 1
           sleep 0.1
           retry if tries > 0
-          debug "tries: #{tries} e: #{e}"
+          debug "tries: #{tries} error: #{e}"
           raise e
         end
       end
