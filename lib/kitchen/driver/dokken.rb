@@ -298,7 +298,7 @@ module Kitchen
       end
 
       def make_dokken_network
-        lockfile = Lockfile.new "#{home_dir}/.dokken/dokken-network.lock"
+        lockfile = Lockfile.new "#{home_dir}/.dokken-network.lock"
         begin
           lockfile.lock
           with_retries { ::Docker::Network.get('dokken', {}, docker_connection) }
@@ -319,7 +319,7 @@ module Kitchen
       end
 
       def create_chef_container(state)
-        lockfile = Lockfile.new "#{home_dir}/.dokken/#{chef_container_name}.lock"
+        lockfile = Lockfile.new "#{home_dir}/.dokken-#{chef_container_name}.lock"
         begin
           lockfile.lock
           with_retries { ::Docker::Container.get(chef_container_name, {}, docker_connection) }
