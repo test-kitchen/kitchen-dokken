@@ -33,7 +33,7 @@ execute 'install gem bundle' do
 end
 
 execute 'converge hello with -c' do
-  command '/usr/bin/bundle exec kitchen converge hello -c'
+  command '/usr/bin/bundle exec kitchen verify hello -c'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
