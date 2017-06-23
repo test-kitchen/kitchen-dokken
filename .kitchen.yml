@@ -4,7 +4,7 @@ driver:
   chef_version: latest
   privileged: true
   volumes: [ '/var/lib/docker' ]
-  
+
 transport:
   name: dokken
 
@@ -34,12 +34,18 @@ suites:
   - name: hello
     driver:
       chef_version: latest
+      hostname: hello.computers.biz
+      ports: "1234"
     run_list:
     - recipe[dokken_test::hello]
 
   - name: helloagain
     driver:
       chef_version: latest
+      hostname: helloagain.computers.biz
+      ports:
+        - '8301'
+        - '8301:8301/udp'
+        - '127.0.0.1:8500:8500'
     run_list:
     - recipe[dokken_test::helloagain]
-    
