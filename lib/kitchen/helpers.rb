@@ -168,6 +168,78 @@ EOF
       "#{prefix}-#{instance.name}"
     end
 
+    def exposed_ports
+      coerce_exposed_ports(config[:ports])
+    end
+
+    def port_bindings
+      coerce_port_bindings(config[:ports])
+    end
+
+    def coerce_exposed_ports(v)
+      case v
+      when Hash, nil
+        v
+      else
+        x = Array(v).map { |a| parse_port(a) }
+        x.flatten!
+        x.each_with_object({}) do |y, h|
+          h[y['container_port']] = {}
+        end
+      end
+    end
+
+    def coerce_port_bindings(v)
+      case v
+      when Hash, nil
+        v
+      else
+        x = Array(v).map { |a| parse_port(a) }
+        x.flatten!
+        x.each_with_object({}) do |y, h|
+          h[y['container_port']] = [] unless h[y['container_port']]
+          h[y['container_port']] << {
+            'HostIp' => y['host_ip'],
+            'HostPort' => y['host_port'],
+          }
+        end
+      end
+    end
+
+    def parse_port(v)
+      parts = v.split(':')
+      case parts.length
+      when 3
+        host_ip = parts[0]
+        host_port = parts[1]
+        container_port = parts[2]
+      when 2
+        host_ip = '0.0.0.0'
+        host_port = parts[0]
+        container_port = parts[1]
+      when 1
+        host_ip = ''
+        host_port = ''
+        container_port = parts[0]
+      end
+      port_range, protocol = container_port.split('/')
+      if port_range.include?('-')
+        port_range = container_port.split('-')
+        port_range.map!(&:to_i)
+        Chef::Log.fatal("FATAL: Invalid port range! #{container_port}") if port_range[0] > port_range[1]
+        port_range = (port_range[0]..port_range[1]).to_a
+      end
+      # qualify the port-binding protocol even when it is implicitly tcp #427.
+      protocol = 'tcp' if protocol.nil?
+      Array(port_range).map do |port|
+        {
+          'host_ip' => host_ip,
+          'host_port' => host_port,
+          'container_port' => "#{port}/#{protocol}",
+        }
+      end
+    end
+
     def remote_docker_host?
       # return false if config[:docker_info]['OperatingSystem'].include?('Boot2Docker')
       return true if config[:docker_host_url] =~ /^tcp:/

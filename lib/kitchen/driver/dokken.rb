@@ -42,9 +42,8 @@ module Kitchen
       default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
-      # default_config :docker_info, docker_info
+      default_config :ports, nil
       default_config :docker_host_url, default_docker_host
-      default_config :forward, nil
       default_config :hostname, 'dokken'
       default_config :image_prefix, nil
       default_config :links, nil
@@ -99,6 +98,12 @@ module Kitchen
       end
 
       private
+
+      class PartialHash < Hash
+        def ==(other)
+          other.is_a?(Hash) && all? { |key, val| other.key?(key) && other[key] == val }
+        end
+      end
 
       def api_retries
         config[:api_retries]
@@ -195,12 +200,6 @@ module Kitchen
         instance_name
       end
 
-      class PartialHash < Hash
-        def ==(other)
-          other.is_a?(Hash) && all? { |key, val| other.key?(key) && other[key] == val }
-        end
-      end
-
       def dokken_binds
         ret = []
         ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host?
@@ -248,7 +247,7 @@ module Kitchen
           'Cmd' => Shellwords.shellwords(self[:pid_one_command]),
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'Hostname' => self[:hostname],
-          'ExposedPorts' => exposed_ports({}, self[:forward]),
+          'ExposedPorts' => exposed_ports,
           'Volumes' => dokken_volumes,
           'HostConfig' => {
             'Privileged' => self[:privileged],
@@ -261,7 +260,7 @@ module Kitchen
             'CapDrop' => Array(self[:cap_drop]),
             'SecurityOpt' => Array(self[:security_opt]),
             'NetworkMode' => self[:network_mode],
-            'PortBindings' => port_forwards({}, self[:forward]),
+            'PortBindings' => port_bindings,
           },
           'NetworkingConfig' => {
             'EndpointsConfig' => {
@@ -281,7 +280,7 @@ module Kitchen
           'name' => data_container_name,
           'Image' => "#{repo(data_image)}:#{tag(data_image)}",
           'HostConfig' => {
-            'PortBindings' => port_forwards({}, '22'),
+            'PortBindings' => port_bindings,
             'PublishAllPorts' => true,
             'NetworkMode' => 'bridge',
           },
@@ -485,24 +484,6 @@ module Kitchen
       def platform_image_from_name
         platform, release = instance.platform.name.split('-')
         release ? [platform, release].join(':') : platform
-      end
-
-      def exposed_ports(config, rules)
-        Array(rules).each do |prt_string|
-          guest, _host = prt_string.to_s.split(':').reverse
-          config["#{guest}/tcp"] = {}
-        end
-        config
-      end
-
-      def port_forwards(config, rules)
-        Array(rules).each do |prt_string|
-          guest, host = prt_string.to_s.split(':').reverse
-          config["#{guest}/tcp"] = [{
-            HostPort: host || '',
-          }]
-        end
-        config
       end
 
       def pull_if_missing(image)
