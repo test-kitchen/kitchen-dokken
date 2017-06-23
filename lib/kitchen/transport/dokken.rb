@@ -94,16 +94,33 @@ module Kitchen
 
           elsif options[:docker_host_url] =~ /tcp:/
             name = options[:data_container][:Name]
+
+            # DOCKER_HOST
+            docker_host_url_ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
+
+            # mapped IP of data container
             candidate_ip = ::Docker::Container.all.select do |x|
               x.info['Names'][0].eql?(name)
             end.first.info['NetworkSettings']['Networks']['dokken']['IPAddress']
 
-            if port_open?(candidate_ip, '22')
+            # mapped port
+            candidate_ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+
+            debug "candidate_ip - #{candidate_ip}"
+            debug "candidate_ssh_port - #{candidate_ssh_port}"
+
+            if port_open?(candidate_ip, candidate_ssh_port)
+              debug "candidate_ip - #{candidate_ip}/#{candidate_ssh_port} open"
+              ssh_ip = candidate_ip
+              ssh_port = candidate_ssh_port
+
+            elsif port_open?(candidate_ip, '22')
               ssh_ip = candidate_ip
               ssh_port = '22'
+              debug "candidate_ip - #{candidate_ip}/22 open"
             else
-              ssh_ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
-              ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
+              ssh_ip = docker_host_url_ip
+              ssh_port = candidate_ssh_port
             end
           else
             raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
