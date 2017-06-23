@@ -1,5 +1,24 @@
 # Dokken Changelog
 
+# 2.5.0
+- Adding support for exposing ports.
+- Port systax matches docker-compose
+
+   ```
+   driver:
+     hostname: www.computers.biz
+     port "1234"
+   ```
+...or something like
+
+   ```
+   driver:
+     hostname: www.computers.biz
+     ports:
+       - '1234'
+       - '4321:4321/udp'
+   ```
+
 # 2.4.3
 - Using better paths for lockfiles
 
