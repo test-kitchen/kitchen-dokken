@@ -12,8 +12,9 @@ install: bundle install
 bundler_args: "--binstubs=$PWD/bin --jobs 3 --retry 3"
 
 env:
-  matrix:
-  - INSTANCE=default-fedora
+  global:
+    - KITCHEN_YAML=.kitchen.yml
+    - INSTANCE=default-fedora
 
 before_install:
   - sudo apt-get -qq update
@@ -27,7 +28,7 @@ before_script:
 
 script:
 #  - DOCKER_HOST="tcp://localhost:4444" KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE} -l debug
-  - travis_wait 20 KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE} -l debug
+  - travis_wait 20 time bundle exec kitchen test ${INSTANCE} -l debug
 
 after_script: |
   sudo nmap -p- localhost
