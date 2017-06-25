@@ -28,7 +28,7 @@ before_script:
 
 script:
 #  - DOCKER_HOST="tcp://localhost:4444" KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE} -l debug
-  - travis_wait 20 time bundle exec kitchen test ${INSTANCE} -l debug
+  - time bundle exec kitchen test ${INSTANCE} -l debug
 
 after_script: |
   sudo nmap -p- localhost
