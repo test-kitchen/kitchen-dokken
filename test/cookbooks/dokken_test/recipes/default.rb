@@ -47,8 +47,12 @@ execute 'install gem bundle' do
   action :run
 end
 
-execute 'converge hello with -c' do
-  command '/usr/bin/bundle exec kitchen verify hello -c'
+execute 'Test Kitchen verify hello' do
+  command <<-EOH.gsub(/^\s{4}/, '').chomp
+    /usr/bin/bundle exec kitchen create hello -l debug
+    /usr/bin/bundle exec kitchen converge hello -l debug
+    /usr/bin/bundle exec kitchen verify hello -l debug
+  EOH
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
