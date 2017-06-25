@@ -15,35 +15,51 @@ verifier:
   name: inspec
 
 platforms:
-- name: fedora-latest
-  driver:
-    image: dokken/fedora-latest
-    pid_one_command: /usr/lib/systemd/systemd
-  run_list:
-    - recipe[chef-yum-docker]
+  - name: hello
+    driver:
+      image: alpine:latest
+      env:
+        - FOO=BAR
+    provisioner:
+      chef_binary: /bin/true
+
+  - name: fedora-latest
+    driver:
+      image: fedora:latest
+      pid_one_command: /usr/lib/systemd/systemd
+      volumes:
+        - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
 
 suites:
   - name: default
-    driver:
-      chef_version: latest
+    excludes:
+      - hello
     run_list:
-    - recipe[dokken_test::default]
+      - recipe[dokken_test::default]
+    attributes:
+      dokken_test:
+        revision: <%= `git rev-parse HEAD` %>
 
   - name: hello
     driver:
-      chef_version: latest
+      entrypoint:
+        - /bin/sh
+        - -c
+        - while :; do nc -lvp 1234 -e /bin/sh -c 'echo hello'; done
       hostname: hello.computers.biz
-      ports: "1234"
-    run_list:
-    - recipe[dokken_test::hello]
+      ports: '1234'
+      pid_one_command: ''
+    excludes:
+      - fedora-latest
 
   - name: helloagain
     driver:
-      chef_version: latest
       hostname: helloagain.computers.biz
+      intermediate_instructions:
+        - RUN apk update && apk add curl
       ports:
         - '8301'
         - '8301:8301/udp'
         - '127.0.0.1:8500:8500'
-    run_list:
-    - recipe[dokken_test::helloagain]
+    excludes:
+      - fedora-latest

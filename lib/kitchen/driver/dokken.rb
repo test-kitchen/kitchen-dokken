@@ -43,6 +43,8 @@ module Kitchen
       default_config :dns, nil
       default_config :dns_search, nil
       default_config :docker_info, docker_info
+      default_config :entrypoint, nil
+      default_config :env, nil
       default_config :ports, nil
       default_config :docker_host_url, default_docker_host
       default_config :hostname, 'dokken'
@@ -150,10 +152,14 @@ module Kitchen
       end
 
       def work_image_dockerfile
-        from = "FROM #{platform_image}"
-        custom = ['RUN /bin/sh -c "echo Built with Test Kitchen"']
-        Array(config[:intermediate_instructions]).each { |c| custom << c }
-        [from, custom].join("\n")
+        dockerfile_contents = [
+          "FROM #{platform_image}",
+          'LABEL X-Built-By=kitchen-dokken'
+        ]
+        Array(config[:intermediate_instructions]).each { |c|
+          dockerfile_contents << c
+        }
+        dockerfile_contents.join("\n")
       end
 
       def save_misc_state(state)
@@ -248,6 +254,7 @@ module Kitchen
           'Cmd' => Shellwords.shellwords(self[:pid_one_command]),
           'Image' => "#{repo(work_image)}:#{tag(work_image)}",
           'Hostname' => self[:hostname],
+          'Env' => self[:env],
           'ExposedPorts' => exposed_ports,
           'Volumes' => dokken_volumes,
           'HostConfig' => {
@@ -271,6 +278,9 @@ module Kitchen
             },
           },
         }
+        unless self[:entrypoint].to_s.length == 0
+          config.merge!('Entrypoint' => self[:entrypoint])
+        end
         runner_container = run_container(config)
         state[:runner_container] = runner_container.json
       end
