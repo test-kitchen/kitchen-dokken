@@ -1,23 +1,38 @@
-docker_service 'default' do
-  host ['tcp://127.0.0.1']
-  action [:create, :start]
-end
-
 user 'notroot' do
   home '/home/notroot'
   manage_home true
   action :create
 end
 
-package_list = %w(git ruby ruby-devel rubygem-io-console rubygem-bundler rubygem-rake gcc redhat-rpm-config libffi libffi-devel)
+package_list = %w(
+  gcc
+  git
+  iputils
+  libffi
+  libffi-devel
+  net-tools
+  nmap
+  procps-ng
+  redhat-rpm-config
+  ruby
+  ruby-devel
+  rubygem-bundler
+  rubygem-io-console
+  rubygem-rake
+  telnet
+  which
+)
 
-package package_list do
-  action :install
+package package_list
+
+docker_service 'default' do
+  host ['tcp://127.0.0.1']
+  action [:create, :start]
 end
 
 git '/home/notroot/kitchen-dokken' do
-  repository 'https://github.com/someara/kitchen-dokken'
-  revision 'master'
+  repository '/opt/kitchen-dokken/.git'
+  revision node['dokken_test']['revision']
   user 'notroot'
   action :sync
 end
@@ -32,8 +47,12 @@ execute 'install gem bundle' do
   action :run
 end
 
-execute 'converge hello with -c' do
-  command '/usr/bin/bundle exec kitchen verify hello -c'
+execute 'Test Kitchen verify hello' do
+  command <<-EOH.gsub(/^\s{4}/, '').chomp
+    /usr/bin/bundle exec kitchen create hello -l debug
+    /usr/bin/bundle exec kitchen converge hello -l debug
+    /usr/bin/bundle exec kitchen verify hello -l debug
+  EOH
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
