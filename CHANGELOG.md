@@ -10,7 +10,7 @@
    ```
    driver:
      hostname: www.computers.biz
-     ports "1234"
+     ports: "1234"
    ```
 ...or something like
 
