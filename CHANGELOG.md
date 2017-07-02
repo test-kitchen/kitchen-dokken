@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.5.1
+- re-adding boot2docker detection
+
 # 2.5.0
 - Adding support for exposing ports.
 - Port systax matches docker-compose
@@ -7,7 +10,7 @@
    ```
    driver:
      hostname: www.computers.biz
-     port "1234"
+     ports "1234"
    ```
 ...or something like
 
