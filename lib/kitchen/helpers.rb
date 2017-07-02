@@ -241,7 +241,7 @@ EOF
     end
 
     def remote_docker_host?
-      # return false if config[:docker_info]['OperatingSystem'].include?('Boot2Docker')
+      return false if config[:docker_info]['OperatingSystem'].include?('Boot2Docker')
       return true if config[:docker_host_url] =~ /^tcp:/
       false
     end

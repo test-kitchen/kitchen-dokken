@@ -42,6 +42,7 @@ module Kitchen
       default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
+      default_config :docker_info, docker_info
       default_config :ports, nil
       default_config :docker_host_url, default_docker_host
       default_config :hostname, 'dokken'
