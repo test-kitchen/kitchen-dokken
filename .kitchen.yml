@@ -17,10 +17,8 @@ verifier:
 platforms:
 - name: fedora-latest
   driver:
-    image: fedora:latest
+    image: dokken/fedora-latest
     pid_one_command: /usr/lib/systemd/systemd
-    intermediate_instructions:
-      - RUN dnf -y install yum which net-tools procps-ng telnet iputils nmap
   run_list:
     - recipe[chef-yum-docker]
 
