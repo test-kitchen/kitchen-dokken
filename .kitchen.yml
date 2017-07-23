@@ -23,9 +23,9 @@ platforms:
     provisioner:
       chef_binary: /bin/true
 
-  - name: fedora-latest
+  - name: fedora
     driver:
-      image: fedora:latest
+      image: fedora:25
       pid_one_command: /usr/lib/systemd/systemd
       volumes:
         - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
@@ -50,7 +50,7 @@ suites:
       ports: '1234'
       pid_one_command: ''
     excludes:
-      - fedora-latest
+      - fedora
 
   - name: helloagain
     driver:
@@ -62,4 +62,4 @@ suites:
         - '8301:8301/udp'
         - '127.0.0.1:8500:8500'
     excludes:
-      - fedora-latest
+      - fedora

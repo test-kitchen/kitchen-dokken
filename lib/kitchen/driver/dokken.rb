@@ -154,7 +154,7 @@ module Kitchen
       def work_image_dockerfile
         dockerfile_contents = [
           "FROM #{platform_image}",
-          'LABEL X-Built-By=kitchen-dokken'
+          "LABEL X-Built-By=kitchen-dokken X-Built-From=#{platform_image}"
         ]
         Array(config[:intermediate_instructions]).each { |c|
           dockerfile_contents << c
