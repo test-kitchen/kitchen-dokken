@@ -304,8 +304,8 @@ Docker Hub. They are really pushing the boundaries of minimalist images, well
 beyond what is typically laid to disk as part of a "base installation".
 
 Very often, an image will come with a package manager, GNU coreutils, and
-that's about it. This can differ greatly from what is found typical Vagrant and
-IaaS images.
+that's about it. This can differ greatly from what is found in typical Vagrant
+and IaaS images.
 
 Because of this, it is often necessary to "cheat" and install prerequisites
 into the image before running Chef, Serverspec, or your own programs.
@@ -403,6 +403,23 @@ provisioner:
   chef_options: ""
   chef_log_level: debug
   chef_output_format: minimal
+```
+
+### Testing without Chef
+
+Containers that supply a no-op binary which returns a successful exit status can
+be tested without requiring Chef to actually converge.
+
+```
+verifier:
+  name: inspec
+
+platforms:
+  - name: alpine
+    driver:
+      image: alpine:latest
+    provisioner:
+      chef_binary: /bin/true
 ```
 
 FAQ
