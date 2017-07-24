@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.6.0
+- Support for testing without provisioner converging
+- entrypoint config
+
 # 2.5.1
 - re-adding boot2docker detection
 
