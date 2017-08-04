@@ -58,7 +58,7 @@ module Kitchen
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
       ensure
-        cleanup_sandbox if remote_docker_host?
+        cleanup_sandbox
       end
 
       def validate_config
