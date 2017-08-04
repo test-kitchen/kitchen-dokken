@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.6.1
+- bugfix issue #118 - Ensuring sandbox cleanup on local docker hosts
+
 # 2.6.0
 - Support for testing without provisioner converging
 - entrypoint config
