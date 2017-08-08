@@ -520,8 +520,7 @@ module Kitchen
         rescue ::Docker::Error::ServerError, # 404
                ::Docker::Error::UnexpectedResponseError, # 400
                ::Docker::Error::TimeoutError,
-               ::Docker::Error::IOError,
-               ::Docker::Error::NotFoundError => e
+               ::Docker::Error::IOError => e
           tries -= 1
           sleep 0.1
           retry if tries > 0
