@@ -176,6 +176,10 @@ EOF
       coerce_port_bindings(config[:ports])
     end
 
+    def tmpfs
+      coerce_tmpfs(config[:tmpfs])
+    end
+
     def coerce_exposed_ports(v)
       case v
       when Hash, nil
@@ -202,6 +206,18 @@ EOF
             'HostIp' => y['host_ip'],
             'HostPort' => y['host_port'],
           }
+        end
+      end
+    end
+
+    def coerce_tmpfs(v)
+      case v
+      when Hash, nil
+        v
+      else
+        Array(v).each_with_object({}) do |y, h|
+          name, opts = y.split(':',2)
+          h[name.to_s] = opts.to_s
         end
       end
     end

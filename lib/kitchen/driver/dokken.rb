@@ -55,6 +55,7 @@ module Kitchen
       default_config :privileged, false
       default_config :read_timeout, 3600
       default_config :security_opt, nil
+      default_config :tmpfs, {}
       default_config :volumes, nil
       default_config :write_timeout, 3600
 
@@ -269,6 +270,7 @@ module Kitchen
             'SecurityOpt' => Array(self[:security_opt]),
             'NetworkMode' => self[:network_mode],
             'PortBindings' => port_bindings,
+            'Tmpfs' => tmpfs,
           },
           'NetworkingConfig' => {
             'EndpointsConfig' => {
