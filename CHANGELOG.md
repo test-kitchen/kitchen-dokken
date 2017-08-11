@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.6.2
+- Removing NotFoundError from with_retries method
+
 # 2.6.1
 - bugfix issue #118 - Ensuring sandbox cleanup on local docker hosts
 
