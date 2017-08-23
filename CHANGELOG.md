@@ -1,5 +1,8 @@
 # Dokken Changelog
 
+# 2.6.3
+- tmpfs support
+
 # 2.6.2
 - Removing NotFoundError from with_retries method
 
