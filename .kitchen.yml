@@ -20,6 +20,8 @@ platforms:
       image: alpine:latest
       env:
         - FOO=BAR
+      tmpfs:
+        /tmp: rw,noexec,nosuid,nodev,size=65536k
     provisioner:
       chef_binary: /bin/true
 

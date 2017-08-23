@@ -55,6 +55,7 @@ module Kitchen
       default_config :privileged, false
       default_config :read_timeout, 3600
       default_config :security_opt, nil
+      default_config :tmpfs, {}
       default_config :volumes, nil
       default_config :write_timeout, 3600
 
@@ -215,8 +216,24 @@ module Kitchen
         ret.flatten
       end
 
+      def dokken_tmpfs
+        coerce_tmpfs(config[:tmpfs])
+      end
+
       def dokken_volumes
         coerce_volumes(config[:volumes])
+      end
+
+      def coerce_tmpfs(v)
+        case v
+        when Hash, nil
+          v
+        else
+          Array(v).each_with_object({}) do |y, h|
+            name, opts = y.split(':',2)
+            h[name.to_s] = opts.to_s
+          end
+        end
       end
 
       def coerce_volumes(v)
@@ -269,6 +286,7 @@ module Kitchen
             'SecurityOpt' => Array(self[:security_opt]),
             'NetworkMode' => self[:network_mode],
             'PortBindings' => port_bindings,
+            'Tmpfs' => dokken_tmpfs,
           },
           'NetworkingConfig' => {
             'EndpointsConfig' => {
