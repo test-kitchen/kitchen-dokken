@@ -155,11 +155,11 @@ module Kitchen
       def work_image_dockerfile
         dockerfile_contents = [
           "FROM #{platform_image}",
-          "LABEL X-Built-By=kitchen-dokken X-Built-From=#{platform_image}"
+          "LABEL X-Built-By=kitchen-dokken X-Built-From=#{platform_image}",
         ]
-        Array(config[:intermediate_instructions]).each { |c|
+        Array(config[:intermediate_instructions]).each do |c|
           dockerfile_contents << c
-        }
+        end
         dockerfile_contents.join("\n")
       end
 
@@ -230,7 +230,7 @@ module Kitchen
           v
         else
           Array(v).each_with_object({}) do |y, h|
-            name, opts = y.split(':',2)
+            name, opts = y.split(':', 2)
             h[name.to_s] = opts.to_s
           end
         end
@@ -296,8 +296,8 @@ module Kitchen
             },
           },
         }
-        unless self[:entrypoint].to_s.length == 0
-          config.merge!('Entrypoint' => self[:entrypoint])
+        unless self[:entrypoint].to_s.empty?
+          config['Entrypoint'] = self[:entrypoint]
         end
         runner_container = run_container(config)
         state[:runner_container] = runner_container.json
@@ -376,7 +376,7 @@ module Kitchen
 
       def pull_platform_image
         debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
-        pull_if_missing platform_image
+        pull_image platform_image
       end
 
       def pull_chef_image
@@ -520,9 +520,20 @@ module Kitchen
         pull_image image
       end
 
+      # https://github.com/docker/docker/blob/4fcb9ac40ce33c4d6e08d5669af6be5e076e2574/registry/auth.go#L231
+      def parse_registry_host(val)
+        val.sub(%r{https?://}, '').split('/').first
+      end
+
       def pull_image(image)
         with_retries do
-          ::Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, nil, docker_connection)
+          if Docker::Image.exist?("#{repo(image)}:#{tag(image)}", {}, docker_connection)
+            original_image = Docker::Image.get("#{repo(image)}:#{tag(image)}", {}, docker_connection)
+          end
+
+          new_image = Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
+
+          !(original_image && original_image.id.start_with?(new_image.id))
         end
       end
 
