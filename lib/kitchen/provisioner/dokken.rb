@@ -58,7 +58,7 @@ module Kitchen
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
       ensure
-        cleanup_sandbox
+        cleanup_dokken_sandbox
       end
 
       def validate_config
@@ -94,6 +94,13 @@ module Kitchen
 
       def runner_container_name
         instance.name.to_s
+      end
+
+      def cleanup_dokken_sandbox
+        return if sandbox_path.nil?
+
+        debug("Cleaning up local sandbox in #{sandbox_path}")
+        FileUtils.rmtree(Dir.glob("#{sandbox_path}/*"))
       end
     end
   end
