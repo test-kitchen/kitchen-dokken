@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.6.5
+- Fixing cleanup_sandbox bug. Method from test-kitchen was causing the
+  mount to break. Replaced it with one that globs.
+
 # 2.6.4
 - Fixing pull_image method to check for new id
 
