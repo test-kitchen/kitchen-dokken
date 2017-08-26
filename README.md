@@ -4,7 +4,7 @@ kitchen-dokken
 [![Build Status](https://travis-ci.org/someara/kitchen-dokken.svg?branch=master)](https://travis-ci.org/someara/kitchen-dokken)
 
 Overview
---------
+========
 
 This test-kitchen plugin provides a driver, transport, and provisioner
 for rapid cookbook testing and container development using Docker and Chef.
@@ -12,7 +12,7 @@ for rapid cookbook testing and container development using Docker and Chef.
 ![Rokken.](http://i.onionstatic.com/onion/5507/4/16x9/1600.jpg)
 
 Usage
---------
+=====
 Add the following to your ~/.bash_profile
 ```bash
 export KITCHEN_YAML=.kitchen.yml
@@ -52,7 +52,7 @@ suites:
 ```
 
 How it works
-------------
+============
 
 ### Primordial State
 - List kitchen suites
@@ -376,7 +376,7 @@ You can combine `intermediate_instructions` and `pid_one_command` as needed.
 ```
 
 Using dokken-images
-======================
+===================
 While the `intermediate_instructions` directive is a fine hack around the
 minimalist image issue, it remains exactly that: A hack. If you
 work on a lot of cookbooks you will find yourself copying around
@@ -418,13 +418,15 @@ verifier:
   sudo: false
 ```
 
-### Install Chef from current channel
+Install Chef from current channel
+=================================
 
 Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
 including those from the "current" channel. If you wish to use pre-release versions of Chef, set
 your `chef_version` value to "current".
 
-### Chef options
+Chef options
+============
 
 It is possible to pass several extra configs to configure the chef binary and options, for example
  to use older versions that do not have the "-z" switch or to get some debug logging.
@@ -437,7 +439,8 @@ provisioner:
   chef_output_format: minimal
 ```
 
-### Testing without Chef
+Testing without Chef
+====================
 
 Containers that supply a no-op binary which returns a successful exit status can
 be tested without requiring Chef to actually converge.
