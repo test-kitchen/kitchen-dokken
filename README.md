@@ -377,9 +377,9 @@ Using dokken-images
 While the `intermediate_instructions` directive is a fine hack around the
 minimalist image issue, it remains exactly that: A hack. If you
 work on a lot of cookbooks you will find yourself copying around
-boilerplate to get thing working. Also, it's slow. Running
+boilerplate to get things working. Also, it's slow. Running
 `apt-get update` and
-[installing `iproute2`](https://github.com/someara/dokken-images/pull/13/files)
+[installing iproute2](https://github.com/someara/dokken-images/pull/13/files)
 all the time is a huge bummer.
 
 To solve this, we maintain the
@@ -390,7 +390,7 @@ useful environment for debugging. They're hosted on the Docker cloud
 and are rebuilt every day to keep the package metadata fresh.
 
 To use them, simply prefix a distro with "dokken/" in the `image`
-name. Unfortunately you still have to specify `pid_one_command` (for
+name. Unfortunately you'll still have to specify `pid_one_command` (for
 the time being).
 
 ```
