@@ -14,15 +14,18 @@ for rapid cookbook testing and container development using Docker and Chef.
 Usage
 --------
 Add the following to your ~/.bash_profile
-```
+```bash
 export KITCHEN_YAML=.kitchen.yml
 export KITCHEN_LOCAL_YAML=.kitchen.dokken.yml
 ```
 
 - Behold `.kitchen.yml`
 
+```bash
+ cat .kitchen.yml
+```
+
 ```yaml
-laptop:~/src/chef-cookbooks/hello_dokken$ cat .kitchen.yml
 ---
 driver:
   name: dokken
@@ -313,7 +316,7 @@ into the image before running Chef, Serverspec, or your own programs.
 To help with this, the Dokken driver provides an `intermediate_instructions`
 directive. Here is an example from `httpd`
 
-```
+```yaml
 platforms:
 - name: debian-7
   driver:
@@ -347,7 +350,7 @@ If you need to use the service resource to drive Upstart or systemd, you'll need
 specify the path to init. Here are more examples from `httpd`
 
 - systemd for RHEL-7 based platforms
-```
+```yaml
 platforms:
 - name: centos-7
   driver:
@@ -362,7 +365,7 @@ platforms:
 You can combine `intermediate_instructions` and `pid_one_command` as needed.
 
 - Upstart for Ubuntu 12.04
-```
+```yaml
 - name: ubuntu-12.04
   driver:
     image: ubuntu-upstart:12.04
@@ -409,7 +412,7 @@ When this happens, it is necessary to specify a `root_path` for the verifier if 
 traditional Bats or Serverspec. This is due to Docker bind mounting the kitchen data
 before running init. This is not necessary when using Inspec.
 
-```
+```yaml
 verifier:
   root_path: '/opt/verifier'
   sudo: false
@@ -426,7 +429,7 @@ your `chef_version` value to "current".
 It is possible to pass several extra configs to configure the chef binary and options, for example
  to use older versions that do not have the "-z" switch or to get some debug logging.
 
-```
+```yaml
 provisioner:
   chef_binary: /opt/chef/bin/chef-solo
   chef_options: ""
@@ -439,7 +442,7 @@ provisioner:
 Containers that supply a no-op binary which returns a successful exit status can
 be tested without requiring Chef to actually converge.
 
-```
+```yaml
 verifier:
   name: inspec
 
