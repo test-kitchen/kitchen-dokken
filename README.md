@@ -372,6 +372,36 @@ You can combine `intermediate_instructions` and `pid_one_command` as needed.
       - RUN /usr/bin/apt-get install apt-transport-https
 ```
 
+Using dokken-images
+======================
+While the `intermediate_instructions` directive is a fine hack around the
+minimalist image issue, it remains exactly that: A hack. If you
+work on a lot of cookbooks you will find yourself copying around
+boilerplate to get thing working. Also, it's slow. Running
+`apt-get update` and
+[installing `iproute2`](https://github.com/someara/dokken-images/pull/13/files)
+all the time is a huge bummer.
+
+To solve this, we maintain the
+[dokken-images](https://github.com/someara/dokken-images) collection
+of fat images. The package list aims to make sure things like ohai
+function in a reasonable way and doing a `kitchen login` yields a
+useful environment for debugging. They're hosted on the Docker cloud
+and are rebuilt every day to keep the package metadata fresh.
+
+To use them, simply prefix a distro with "dokken/" in the `image`
+name. Unfortunately you still have to specify `pid_one_command` (for
+the time being).
+
+```
+- name: ubuntu-16.04
+  driver:
+    image: dokken/ubuntu-16.04
+    pid_one_command: /bin/systemd
+  run_list:
+  - recipe[whatever::recipe]
+```
+
 ### Tmpfs on /tmp
 
 When starting a container with an init system, it will often mount a tmpfs into `/tmp`.
@@ -390,7 +420,6 @@ verifier:
 Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
 including those from the "current" channel. If you wish to use pre-release versions of Chef, set
 your `chef_version` value to "current".
-
 
 ### Chef options
 
