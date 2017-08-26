@@ -393,7 +393,7 @@ To use them, simply prefix a distro with "dokken/" in the `image`
 name. Unfortunately you'll still have to specify `pid_one_command` (for
 the time being).
 
-```
+```yaml
 - name: ubuntu-16.04
   driver:
     image: dokken/ubuntu-16.04
