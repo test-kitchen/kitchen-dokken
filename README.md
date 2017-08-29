@@ -43,7 +43,7 @@ verifier:
 platforms:
 - name: centos-7
   driver:
-    image: centos:7
+    image: dokken/centos-7
 
 suites:
   - name: default
