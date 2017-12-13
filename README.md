@@ -423,7 +423,7 @@ Install Chef from current channel
 
 Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
 including those from the "current" channel. If you wish to use pre-release versions of Chef, set
-your `chef_version` value to "current".
+your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `chef/chef`, you can overwrite `chef_image` under the [driver context](https://github.com/someara/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `someara/chef`.
 
 Chef options
 ============
