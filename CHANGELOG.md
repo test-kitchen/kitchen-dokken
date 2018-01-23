@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.6.6
+- Improving the error message handling with intermediate builder
+- README updates
+
 # 2.6.5
 - Fixing cleanup_sandbox bug. Method from test-kitchen was causing the
   mount to break. Replaced it with one that globs.
