@@ -386,7 +386,7 @@ module Kitchen
 
       def pull_platform_image
         debug "driver - pulling #{chef_image} #{repo(platform_image)} #{tag(platform_image)}"
-        pull_image platform_image
+        pull_if_missing platform_image
       end
 
       def pull_chef_image
