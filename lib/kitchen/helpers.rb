@@ -121,12 +121,10 @@ EOF
 
     def dokken_create_sandbox
       info("Creating kitchen sandbox at #{dokken_kitchen_sandbox}")
-      FileUtils.mkdir_p(dokken_kitchen_sandbox)
-      File.chmod(0o755, dokken_kitchen_sandbox)
+      FileUtils.mkdir_p(dokken_kitchen_sandbox, :mode => 0o755)
 
       info("Creating verifier sandbox at #{dokken_verifier_sandbox}")
-      FileUtils.mkdir_p(dokken_verifier_sandbox)
-      File.chmod(0o755, dokken_verifier_sandbox)
+      FileUtils.mkdir_p(dokken_verifier_sandbox, :mode => 0o755)
     end
 
     def dokken_delete_sandbox
@@ -257,8 +255,7 @@ EOF
     def create_sandbox
       info("Creating kitchen sandbox in #{sandbox_path}")
       unless ::Dir.exist?(sandbox_path)
-        FileUtils.mkdir_p(sandbox_path)
-        File.chmod(0o755, sandbox_path)
+        FileUtils.mkdir_p(sandbox_path, :mode => 0o755)
       end
     end
   end
@@ -269,8 +266,7 @@ module Kitchen
     class Base
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
-        FileUtils.mkdir_p(sandbox_path)
-        File.chmod(0o755, sandbox_path)
+        FileUtils.mkdir_p(sandbox_path, :mode => 0o755)
       end
 
       # this MUST be named 'sandbox_path' because ruby.
@@ -292,8 +288,7 @@ module Kitchen
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
         unless ::Dir.exist?(sandbox_path)
-          FileUtils.mkdir_p(sandbox_path)
-          File.chmod(0o755, sandbox_path)
+          FileUtils.mkdir_p(sandbox_path, :mode => 0o755)
         end
       end
 
