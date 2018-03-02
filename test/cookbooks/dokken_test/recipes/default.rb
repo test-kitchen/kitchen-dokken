@@ -10,6 +10,7 @@ package_list = %w(
   iputils
   libffi
   libffi-devel
+  make
   net-tools
   nmap
   procps-ng
