@@ -5,6 +5,7 @@ user 'notroot' do
 end
 
 package_list = %w(
+  gcc-c++
   gcc
   git
   iputils
