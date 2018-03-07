@@ -387,7 +387,7 @@ all the time is a huge bummer.
 
 To solve this, we maintain the
 [dokken-images](https://github.com/someara/dokken-images) collection
-of fat images. The package list aims to make sure things like ohai
+of fat images that you can find pushed to [Docker Hub](https://hub.docker.com/r/dokken/). The package list aims to make sure things like ohai
 function in a reasonable way and doing a `kitchen login` yields a
 useful environment for debugging. They're hosted on the Docker cloud
 and are rebuilt every day to keep the package metadata fresh.
