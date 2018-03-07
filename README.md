@@ -469,6 +469,8 @@ and a Provisioner that blur the traditional duties of each. The current Docker d
 can be used with Puppet, Ansible, CFEngine provisioners. This (for the time being) requires
 Chef.
 
+See ["Kitchen-Docker or Kitchen-Dokken? Using Test Kitchen and Docker for fast cookbook testing"](https://blog.chef.io/2018/03/06/kitchen-docker-or-kitchen-dokken-using-test-kitchen-and-docker-for-fast-cookbook-testing/) for a more detailed comparison.
+
 ### How can I use kitchen to automatically test and publish containers?
 
 Right now there is no `kitchen publish` mechanism. [See this issue](https://github.com/test-kitchen/test-kitchen/issues/329).
