@@ -58,6 +58,7 @@ module Kitchen
       default_config :tmpfs, {}
       default_config :volumes, nil
       default_config :write_timeout, 3600
+      default_config :user_ns_mode, nil
 
       # (see Base#create)
       def create(state)
@@ -309,6 +310,15 @@ module Kitchen
         unless self[:entrypoint].to_s.empty?
           config['Entrypoint'] = self[:entrypoint]
         end
+
+        if self[:privileged]
+          if self[:user_ns_mode] != 'host'
+            debug "driver - privileged mode is not supported with user namespaces enabled"
+            debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
+          end
+          config['HostConfig']['UsernsMode'] = 'host'
+        end
+
         runner_container = run_container(config)
         state[:runner_container] = runner_container.json
       end
