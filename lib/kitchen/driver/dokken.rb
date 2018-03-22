@@ -39,6 +39,7 @@ module Kitchen
       default_config :cap_drop, nil
       default_config :chef_image, 'chef/chef'
       default_config :chef_version, 'latest'
+      default_config :creds_file, nil
       default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
@@ -59,8 +60,18 @@ module Kitchen
       default_config :volumes, nil
       default_config :write_timeout, 3600
 
+      def set_creds
+        if config[:creds_file]
+          @creds = JSON.parse(IO.read('config.json'))
+          ::Docker.authenticate!(@creds) if @creds
+        end
+      end
+
       # (see Base#create)
       def create(state)
+        # credentials to use
+        set_creds
+
         # image to config
         pull_platform_image
 
@@ -117,6 +128,7 @@ module Kitchen
         opts = ::Docker.options
         opts[:read_timeout] = config[:read_timeout]
         opts[:write_timeout] = config[:write_timeout]
+        opts[:creds] = @creds if @creds
         @docker_connection ||= ::Docker::Connection.new(config[:docker_host_url], opts)
       end
 
@@ -541,7 +553,7 @@ module Kitchen
             original_image = Docker::Image.get("#{repo(image)}:#{tag(image)}", {}, docker_connection)
           end
 
-          new_image = Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}" }, docker_connection)
+          new_image = Docker::Image.create({ 'fromImage' => "#{repo(image)}:#{tag(image)}", 'conn' => docker_connection })
 
           !(original_image && original_image.id.start_with?(new_image.id))
         end

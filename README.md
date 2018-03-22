@@ -399,6 +399,26 @@ platforms:
     intermediate_instructions:
       # prevent APT from deleting the APT folder
       - RUN rm /etc/apt/apt.conf.d/docker-clean
+
+### Docker Credentials
+
+You can set credentials for pulling images from private docker registries in a json file.
+```json
+{
+  "username": "myusername",
+  "password": "mypassword",
+  "email": "myemail@mydomain",
+  "serveraddress": "https://index.docker.io/v1/"
+}
+```
+
+Then add the `creds_file` driver configuration option.
+```yaml
+platforms:
+- name: ubuntu-16.04
+  driver:
+    image: myorg/private-ubuntu-16.04
+    creds_file: './config.json'
 ```
 
 Using dokken-images
