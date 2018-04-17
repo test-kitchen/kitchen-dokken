@@ -9,6 +9,8 @@ Overview
 This test-kitchen plugin provides a driver, transport, and provisioner
 for rapid cookbook testing and container development using Docker and Chef.
 
+![Rokken.](http://i.onionstatic.com/onion/5507/4/16x9/1600.jpg)
+
 Usage
 =====
 Add the following to your ~/.bash_profile
