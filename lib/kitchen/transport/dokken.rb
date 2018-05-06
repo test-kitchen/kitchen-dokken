@@ -167,7 +167,9 @@ module Kitchen
 
         def login_command
           @runner = options[:instance_name].to_s
-          args = ['exec', '-it', @runner, '/bin/bash', '-login', '-i']
+          cols = `tput cols`
+          lines = `tput lines`
+          args = ['exec', '-e', "COLUMNS=#{cols}", '-e', "LINES=#{lines}", '-it', @runner, '/bin/bash', '-login', '-i']
           LoginCommand.new('docker', args)
         end
 
