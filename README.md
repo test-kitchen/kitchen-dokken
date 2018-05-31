@@ -375,6 +375,32 @@ You can combine `intermediate_instructions` and `pid_one_command` as needed.
       - RUN /usr/bin/apt-get install apt-transport-https
 ```
 
+### Caching Downloaded Files
+
+On Debian/Ubuntu systems, all files downloaded via it's package manager (`apt`) are stored at `/var/cache/apt/archives/`.
+Therefore one may save the downloads on a different volume and therefore save time. One may even use one's own apt cache folder to save even more time.
+
+On some versions of Ubuntu (16.04 at least), the container deletes all the downloads uppon every run of `apt-get update`, so that must be disabled
+
+- `apt` Caching on Ubuntu 16.04
+```yaml
+---
+driver:
+  name: dokken
+  volumes:
+  # saves the apt archieves outside of the container
+  - /var/cache/apt/archives/:/var/cache/apt/archives/
+
+platforms:
+- name: ubuntu-16.04
+  driver:
+    image: dokken/ubuntu-16.04
+    pid_one_command: /bin/systemd
+    intermediate_instructions:
+      # prevent APT from deleting the APT folder
+      - RUN rm /etc/apt/apt.conf.d/docker-clean
+```
+
 Using dokken-images
 ===================
 While the `intermediate_instructions` directive is a fine hack around the
