@@ -4,7 +4,7 @@ user 'notroot' do
   action :create
 end
 
-package_list = %w(
+package %w(
   gcc-c++
   gcc
   git
@@ -24,8 +24,6 @@ package_list = %w(
   telnet
   which
 )
-
-package package_list
 
 docker_service 'default' do
   host ['tcp://127.0.0.1']
