@@ -117,6 +117,9 @@ VOLUME /opt/verifier
 
     def docker_info
       @docker_info ||= ::Docker.info
+    rescue Excon::Error::Socket
+      puts "kitchen-dokken could not connect to the docker host at #{default_docker_host}. Is docker running?"
+      exit!
     end
 
     def dokken_create_sandbox
