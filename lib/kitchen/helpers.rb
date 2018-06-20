@@ -24,7 +24,7 @@ module Dokken
     def insecure_ssh_public_key
       <<-EOF
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoJwyW7qNhw+NTuOjC4+RVpESl+JBXebXzB7JqxRgKAbymq6B39azEAiNx5NzHkWcQmOyQNhFpKFSAufegcXRS4ctS1LcElEoXe9brDAqKEBSkmnXYfZXMNIG0Enw4+5W/rZxHFCAlsUSAHYtYZEs+3CgbIWuHhZ95C8UC6nGLWHNZOjcbsYZFrnFfO0qg0ene2w8LKhxqj5X0MRSdCIn1IwyxIbl5NND5Yk1Hx8JKsJtTiNTdxssiMgmM5bvTbYQUSf8pbGrRI30VQKBgQ8/UkidZbaTfvzWXYpwcDUERSbzEYCvkUytTemZIv6uhpPxqkfjl6KEOOml/iGqquPEr test-kitchen-rsa
-EOF
+      EOF
     end
 
     def insecure_ssh_private_key
@@ -56,7 +56,7 @@ D58kDk7684mKwKotr34NfqkFl2ZJ8T+f8pVwmUNvtPtX0j8IO7/6bfIjPTFyNeFJ
 XuIb2Qt4MLHABySsk653LDw/jTIGV26c068nZryq5OUPxk67Xgod54jKgOwjgjZS
 X8N2N9ZNnORJqK374yGj1jWUU66mQhPvn49QpG8P2HEoh2RQjNvyHA==
 -----END RSA PRIVATE KEY-----
-EOF
+      EOF
     end
 
     def data_dockerfile
@@ -83,7 +83,7 @@ CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "UsePrivilege
 
 VOLUME /opt/kitchen
 VOLUME /opt/verifier
-EOF
+      EOF
     end
 
     def create_data_image
@@ -121,10 +121,10 @@ EOF
 
     def dokken_create_sandbox
       info("Creating kitchen sandbox at #{dokken_kitchen_sandbox}")
-      FileUtils.mkdir_p(dokken_kitchen_sandbox, :mode => 0o755)
+      FileUtils.mkdir_p(dokken_kitchen_sandbox, mode: 0o755)
 
       info("Creating verifier sandbox at #{dokken_verifier_sandbox}")
-      FileUtils.mkdir_p(dokken_verifier_sandbox, :mode => 0o755)
+      FileUtils.mkdir_p(dokken_verifier_sandbox, mode: 0o755)
     end
 
     def dokken_delete_sandbox

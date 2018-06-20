@@ -438,7 +438,6 @@ module Kitchen
               rescue ::Docker::Error::ConflictError
                 debug "driver - rescue ConflictError: #{args['name']}"
                 with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
-
               end
             end
           rescue ::Docker::Error => e
