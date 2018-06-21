@@ -4,6 +4,9 @@ gemspec
 
 gem 'berkshelf'
 gem 'kitchen-inspec'
-gem 'pry'
-gem 'pry-coolline'
 gem 'test-kitchen'
+
+group :development do
+  gem 'pry'
+  gem 'pry-coolline'
+end

@@ -1,5 +1,4 @@
-# coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'kitchen/driver/dokken_version'
 
@@ -18,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'test-kitchen', '~> 1.15'
   spec.add_dependency 'docker-api', '~> 1.33'
   spec.add_dependency 'lockfile', '~> 2.1'
+  spec.add_dependency 'test-kitchen', '~> 1.15'
 end

@@ -4,7 +4,7 @@ user 'notroot' do
   action :create
 end
 
-package_list = %w(
+package %w(
   gcc-c++
   gcc
   git
@@ -25,8 +25,6 @@ package_list = %w(
   which
 )
 
-package package_list
-
 docker_service 'default' do
   host ['tcp://127.0.0.1']
   action [:create, :start]
@@ -40,7 +38,7 @@ git '/home/notroot/kitchen-dokken' do
 end
 
 execute 'install gem bundle' do
-  command '/usr/bin/bundle install'
+  command '/usr/bin/bundle install --without development'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream false
