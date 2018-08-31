@@ -61,9 +61,12 @@ X8N2N9ZNnORJqK374yGj1jWUU66mQhPvn49QpG8P2HEoh2RQjNvyHA==
 
     def data_dockerfile
       <<-EOF
-FROM centos:7
+FROM #{config[:data_image_registry]}/centos:7
 MAINTAINER Sean OMeara \"sean@sean.io\"
 ENV LANG en_US.UTF-8
+#{Array(config[:data_intermediate_instructions]).each do |instruction|
+  instruction
+end.join("\n")}
 
 RUN yum -y install tar rsync openssh-server passwd git
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
