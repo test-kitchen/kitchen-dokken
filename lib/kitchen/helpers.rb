@@ -61,7 +61,7 @@ X8N2N9ZNnORJqK374yGj1jWUU66mQhPvn49QpG8P2HEoh2RQjNvyHA==
 
     def data_dockerfile
       <<-EOF
-FROM centos:7
+FROM #{data_image_registry}/centos:7
 MAINTAINER Sean OMeara \"sean@sean.io\"
 ENV LANG en_US.UTF-8
 
