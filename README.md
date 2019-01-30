@@ -374,6 +374,22 @@ You can combine `intermediate_instructions` and `pid_one_command` as needed.
       - RUN /usr/bin/apt-get install apt-transport-https
 ```
 
+### Running with User Namespaces enabled
+
+IF you are running a Docker daemon with user namespace remapping enabled you'll get errors running dokken with priveleged containers.
+
+To mitigate this, add the following to your driver definition:
+```yaml
+platforms:
+- name: centos-7
+  driver:
+    image: centos:7
+    privileged: true
+    userns_host: true
+```
+
+This will disable user namespaces for the running container.
+
 ### Caching Downloaded Files
 
 On Debian/Ubuntu systems, all files downloaded via it's package manager (`apt`) are stored at `/var/cache/apt/archives/`.
