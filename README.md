@@ -464,6 +464,19 @@ provisioner:
   chef_output_format: minimal
 ```
 
+Disable pulling platform images
+===============================
+
+To test a locally built image without pulling it first, one can disable
+pulling of platform images, which will avoid pulling images that already
+exist locally.
+
+```yaml
+driver:
+  name: dokken
+  pull_platform_image: false
+```
+
 Testing without Chef
 ====================
 
