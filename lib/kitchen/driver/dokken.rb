@@ -62,7 +62,7 @@ module Kitchen
 
       def set_creds
         if config[:creds_file]
-          @creds = JSON.parse(IO.read('config.json'))
+          @creds = JSON.parse(IO.read(config[:creds_file]))
           ::Docker.authenticate!(@creds) if @creds
         end
       end
