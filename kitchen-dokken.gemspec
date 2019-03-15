@@ -13,11 +13,9 @@ Gem::Specification.new do |spec|
   spec.license       = 'Apache-2.0'
 
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(/LICENSE|^lib/)
-  spec.executables   = []
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
   spec.add_dependency 'docker-api', '~> 1.33'
   spec.add_dependency 'lockfile', '~> 2.1'
-  spec.add_dependency 'test-kitchen', '~> 1.15'
+  spec.add_dependency 'test-kitchen', '>= 1.15', '< 3'
 end
