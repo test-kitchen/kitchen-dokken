@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.6.8 (2019-03-19)
+
+- Loosen the Test Kitchen depedency to allow this plugin to be used with the upcoming Test Kitchen 2.0 release
+
 # 2.6.7 (2018-03-05)
 
 - Fix a potential race condition that may have led to the error 'Did not find config file: /opt/kitchen/client.rb'
