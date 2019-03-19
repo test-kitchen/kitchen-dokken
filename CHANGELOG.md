@@ -3,6 +3,10 @@
 # 2.6.8 (2019-03-19)
 
 - Loosen the Test Kitchen depedency to allow this plugin to be used with the upcoming Test Kitchen 2.0 release
+- Added a Rakefile to make it easier to ship build/install/release the gem
+- Various readme improvements to clarify how to use the plugin
+- Fix terminal size issue when using kitchen login
+- Fail with a friendly warning if docker can't be found
 
 # 2.6.7 (2018-03-05)
 
