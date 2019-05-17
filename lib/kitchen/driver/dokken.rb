@@ -37,8 +37,25 @@ module Kitchen
       default_config :binds, []
       default_config :cap_add, nil
       default_config :cap_drop, nil
-      default_config :chef_image, 'chef/chef'
-      default_config :chef_version, 'latest'
+      # default_config :chef_image, 'chef/chef'
+      default_config :chef_image do |driver|
+        provisioner = driver.instance.provisioner
+        if provisioner[:product_name].nil?
+          'chef/chef'
+        else
+          "chef/#{provisioner[:product_name]}"
+        end
+      end
+      # default_config :chef_version, 'latest'
+      default_config :chef_version do |driver|
+        provisioner = driver.instance.provisioner
+        if provisioner[:product_version].nil?
+          'latest'
+        else
+          provisioner[:product_version]
+        end
+
+      end
       default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
@@ -58,6 +75,11 @@ module Kitchen
       default_config :tmpfs, {}
       default_config :volumes, nil
       default_config :write_timeout, 3600
+
+      deprecate_config_for :chef_version, Util.outdent!(<<-MSG)
+        Specify your desired Chef version using 'product_name: chef' and
+        'product_version: 15' in the dokken provisioner.
+      MSG
 
       # (see Base#create)
       def create(state)
@@ -503,8 +525,20 @@ module Kitchen
       end
 
       def chef_version
-        return 'latest' if config[:chef_version] == 'stable'
-        config[:chef_version]
+        @chef_version ||= begin
+          provisioner = instance.provisioner
+          if provisioner[:product_name].nil?
+            if config[:chef_version] == 'stable'
+              'latest'
+            else
+              config[:chef_version]
+            end
+          elsif provisioner[:product_name] == 'chef'
+            provisioner[:product_version]
+          else
+            raise "Can only use 'chef' as the product_name with kitchen-dokken"
+          end
+        end
       end
 
       def data_container_name

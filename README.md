@@ -28,13 +28,15 @@ export KITCHEN_LOCAL_YAML=.kitchen.dokken.yml
 ---
 driver:
   name: dokken
-  chef_version: latest
 
 transport:
   name: dokken
 
 provisioner:
   name: dokken
+  product_name: chef
+  product_version: latest
+  channel: stable
 
 verifier:
   name: inspec
