@@ -1,34 +1,33 @@
-kitchen-dokken
-==============
+# kitchen-dokken
 
 [![Build Status](https://travis-ci.org/someara/kitchen-dokken.svg?branch=master)](https://travis-ci.org/someara/kitchen-dokken)
 [![Gem Version](https://badge.fury.io/rb/kitchen-dokken.svg)](https://badge.fury.io/rb/kitchen-dokken)
 
-Overview
-========
+## Overview
 
-This test-kitchen plugin provides a driver, transport, and provisioner
-for rapid cookbook testing and container development using Docker and Chef.
+This Test Kitchen plugin provides a driver, transport, and provisioner for rapid cookbook testing and container development using Docker and Chef Infra Client.
 
-Usage
-=====
-Add the following to your ~/.bash_profile
-```bash
-export KITCHEN_YAML=.kitchen.yml
-export KITCHEN_LOCAL_YAML=.kitchen.dokken.yml
-```
+### Why should I use kitchen-dokken?
 
-- Behold `.kitchen.yml`
+kitchen-dokken is fast. Really fast.
 
-```bash
- cat .kitchen.yml
-```
+Test Kitchen itself has four components: Drivers, Transports, Provisioners, and Verifiers. Drivers are responsible for creating a system on local hypervisors or a cloud. Transports such as ssh or winrm are responsible for connecting to these hosts. Provisioners are responsible for provisioning the hosts to the desired state using scripts or configuration management tools. The final components is the verifier which is responsible for verifying the system state matches the desired state.
+
+Unlike all other Test Kitchen drivers, kitchen-dokken handles all the tasks of the driver, transport, and provisioner itself. This approach requires a narrow focus of just Chef Infra cookbook testing, but provides ultra fast testing times. Docker containers have a fast creation and start time, and dokken uses the official Chef Infra Client containers instead of spending the time to download and install the client. These design decisions result in tests that run in seconds instead of minutes and don't require high banwidth Internet connections.
+
+### kitchen-dokken vs. other drivers
+
+As stated above kitchen-dokken is purpose built for speed and it achieves this by narrowing the testing scope to just Chef Infra cookbook testing. Other drivers like kitchen-vagrant or kitchen-docker are general purpose drivers that can be used with any of the Kitchen provisioners such as kitchen-puppet or kitchen-ansible. Also keep in mind that testing with conainers is not a perfect analog to a full blown system. The dokken-images containers are designed to be similar to a standard OS install, but they do not perfectly match those installs and may need additional packages to work properly. If you're looking for perfect analog to your production systems, without the additional work of package installation, then consider a driver such as kitchen-vagrant. If you're willing to potentially invest in a bit of package troubleshooting in exchange for faster feedback cycles then kitchen-dokken is for you.
+
+## Usage
+
+A sample kitchen-dokken `kitchen.yml` config:
 
 ```yaml
 ---
 driver:
   name: dokken
-  chef_version: latest
+  chef_version: latest # or 15 or 15.0 or 15.0.300 or curent
 
 transport:
   name: dokken
@@ -50,28 +49,35 @@ suites:
     - recipe[hello_dokken::default]
 ```
 
-How it works
-============
+## How it works
 
 ### Primordial State
-- List kitchen suites
+
+#### List kitchen suites
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen list
 Instance          Driver  Provisioner  Verifier  Transport  Last Action    Last Error
-
 ```
-- List containers
+
+#### List containers
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 ```
-- List images
+
+#### List images
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 ```
 
 ### Create phase
+
+#### kitchen create
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen create
 -----> Starting Kitchen (v1.15.0)
@@ -80,40 +86,20 @@ laptop:~/src/chef-cookbooks/hello_dokken$ kitchen create
        Building work image..
        Finished creating <default-centos-7> (0m21.04s).
 -----> Kitchen is finished. (0m21.95s)
-
-
 ```
 
-The `kitchen create` phase of the kitchen run pulls (if missing)
-the `chef/chef` image from the Docker hub, then creates a volume
-container named `chef-<version>`. This makes `/opt/chef` available for
-mounting by other containers.
+The `kitchen create` phase of the kitchen run pulls (if missing) the `chef/chef` image from the Docker hub, then creates a volume container named `chef-<version>`. This makes `/opt/chef` available for mounting by other containers.
 
-When talking to a local Docker host (over a socket), The driver
-creates and bind mounts a sandbox directory to `/opt/kitchen`. This
-prevents us from having to "upload" the test data.
+When talking to a local Docker host (over a socket), The driver creates and bind mounts a sandbox directory to `/opt/kitchen`. This prevents us from having to "upload" the test data.
 
-When talking to a *remote* Docker host (tcp://somewhere.else), dokken
-starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and
-`/opt/verifier` available for mounting by the runner. The data
-container is the "trick" to the whole thing. It comes with rsync, runs
-an openssh daemon, and uses an insecure, authorized_key ala
-Vagrant. This is later used to upload cookbook test data.
+When talking to a *remote* Docker host (tcp://somewhere.else), dokken starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and ` /opt/verifier` available for mounting by the runner. The data container is the "trick" to the whole thing. It comes with rsync, runs an openssh daemon, and uses an insecure, authorized_key ala Vagrant. This is later used to upload cookbook test data.
 
-The venerable `/tmp` directory is avoided, due to the popularity of
-`tmpfs` clobbering by inits.
+The venerable `/tmp` directory is avoided, due to the popularity of `tmpfs` clobbering by inits.
 
-Finally, the driver pulls the image specified by the suite's platform
-section and creates a runner container named
-`<unique_prefix>-<suitename>`. This container bind-mounts the volumes
-from `chef-<version>` and `<suite-name>-data`, giving access to Chef
-and the test data. By default, the `pid_one_command` of the runner
-container is a script that sleeps in a loop, letting us `exec` our
-provisioner in the next phase. It can be overridden with init systems
-like Upstart and systemd, for testing recipes with service resources
-as needed.
+Finally, the driver pulls the image specified by the suite's platform section and creates a runner container named `<unique_prefix>-<suitename>`. This container bind-mounts the volumes from `chef-<version>` and `<suite-name>-data`, giving access to Chef and the test data. By default, the `pid_one_command` of the runner container is a script that sleeps in a loop, letting us `exec` our provisioner in the next phase. It can be overridden with init systems like Upstart and systemd, for testing recipes with service resources as needed.
 
-- List containers
+#### List containers
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                                COMMAND                  CREATED              STATUS              PORTS               NAMES
@@ -121,7 +107,7 @@ CONTAINER ID        IMAGE                                COMMAND                
 f678882b1575        chef/chef:current                    "true"                   About a minute ago   Created                                 chef-current
 ```
 
-- List images
+#### List images
 
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
@@ -133,7 +119,8 @@ centos                        7                   67591570dd29        7 weeks ag
 
 ### Converge phase
 
-- Converge suite
+#### kitchen converge
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
 -----> Starting Kitchen (v1.15.0)
@@ -176,14 +163,10 @@ user    0m1.080s
 sys    0m0.210s
 ```
 
-The `kitchen-converge` phase of the kitchen run uses the provisioner
-to upload cookbooks through the data container, then execs
-`chef-client` in the runner container. It does NOT install Chef, as it
-is has already mounted by the driver. The transport then commits the
-runner container, creating an image that only contains the changes
-made by Chef.
+The `kitchen-converge` phase of the kitchen run uses the provisioner to upload cookbooks through the data container, then execs `chef-client` in the runner container. It does NOT install Chef Infra Client, as it is has already mounted by the driver. The transport then commits the runner container, creating an image that only contains the changes made by Chef.
 
-- List containers
+#### List containers
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
@@ -192,7 +175,8 @@ c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   9 mi
 7e327add6bf2        chef/chef:12.5.1               "true"                   17 minutes ago      Created                                     chef-12.5.1
 ```
 
-- List images
+#### List images
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
@@ -202,7 +186,8 @@ chef/chef               12.5.1              86245605bbe3        4 weeks ago     
 centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
 ```
 
-- Diff container
+#### Diff container
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker diff default-centos-7
 A /hello
@@ -220,7 +205,9 @@ C /var/lib/rpm/__db.003
 ```
 
 ### Verify phase
-- Verify suite
+
+#### kitchen verify
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen verify
 -----> Starting Kitchen (v1.15.0)
@@ -249,7 +236,8 @@ sys    0m0.365s
 
 The `kitchen-verify` phase uses the transport to run acceptance tests, verifying image state.
 
-- List containers
+#### List containers
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                                COMMAND                  CREATED             STATUS              PORTS               NAMES
@@ -257,7 +245,8 @@ CONTAINER ID        IMAGE                                COMMAND                
 f678882b1575        chef/chef:current                    "true"                   9 minutes ago       Created                                 chef-current
 ```
 
-- List images
+#### List images
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
@@ -267,6 +256,9 @@ centos                        7                   67591570dd29        7 weeks ag
 ```
 
 ### Destroy phase
+
+#### kitchen destroy
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen destroy
 -----> Starting Kitchen (v1.15.0)
@@ -276,15 +268,16 @@ laptop:~/src/chef-cookbooks/hello_dokken$ kitchen destroy
 -----> Kitchen is finished. (0m1.81s)
 ```
 
-- List containers
+#### List containers
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 f678882b1575        chef/chef:current   "true"              10 minutes ago      Created                                 chef-current
-
 ```
 
-- List images
+#### List images
+
 ```
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
@@ -292,8 +285,7 @@ chef/chef           current             01ec788610e2        6 days ago          
 centos              7                   67591570dd29        7 weeks ago         192 MB
 ```
 
-Advanced Configuration
-======================
+## Advanced Configuration
 
 Due to the nature of Docker, a handful of considerations need to be addressed.
 
@@ -301,6 +293,7 @@ A complete example of a non-trivial `kitchen.yml` is found in the `docker` cookb
 https://github.com/chef-cookbooks/docker/blob/master/kitchen.yml
 
 ### Minimalist images
+
 The Distros (debian, centos, etc) will typically manage an official image on the
 Docker Hub. They are really pushing the boundaries of minimalist images, well
 beyond what is typically laid to disk as part of a "base installation".
@@ -349,6 +342,7 @@ If you need to use the service resource to drive Upstart or systemd, you'll need
 specify the path to init. Here are more examples from `httpd`
 
 - systemd for RHEL-7 based platforms
+
 ```yaml
 platforms:
 - name: centos-7
@@ -400,8 +394,8 @@ platforms:
       - RUN rm /etc/apt/apt.conf.d/docker-clean
 ```
 
-Using dokken-images
-===================
+### Using dokken-images
+
 While the `intermediate_instructions` directive is a fine hack around the
 minimalist image issue, it remains exactly that: A hack. If you
 work on a lot of cookbooks you will find yourself copying around
@@ -443,15 +437,14 @@ verifier:
   sudo: false
 ```
 
-Install Chef from current channel
-=================================
+### Install Chef Infra Client from current channel
 
 Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
 including those from the "current" channel. If you wish to use pre-release versions of Chef, set
 your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `chef/chef`, you can overwrite `chef_image` under the [driver context](https://github.com/someara/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `someara/chef`.
 
-Chef options
-============
+
+### Chef Infra Client options
 
 It is possible to pass several extra configs to configure the chef binary and options, for example
  to use older versions that do not have the "-z" switch or to get some debug logging.
@@ -464,8 +457,7 @@ provisioner:
   chef_output_format: minimal
 ```
 
-Disable pulling platform images
-===============================
+### Disable pulling platform images
 
 To test a locally built image without pulling it first, one can disable
 pulling of platform images, which will avoid pulling images that already
@@ -477,8 +469,7 @@ driver:
   pull_platform_image: false
 ```
 
-Testing without Chef
-====================
+### Testing without Chef
 
 Containers that supply a no-op binary which returns a successful exit status can
 be tested without requiring Chef to actually converge.
@@ -495,17 +486,16 @@ platforms:
       chef_binary: /bin/true
 ```
 
-FAQ
-===
+## FAQ
 
 ### What about kitchen-docker?
+
 We already had a thing that drives Docker, why did you make this instead of modifying that?
 
 The current `kitchen-docker` driver ends up baking SSH, Chef, and the kitchen data
 into the image. This does not. To make this work, I had to create a Driver, a Transport,
 and a Provisioner that blur the traditional duties of each. The current Docker driver
-can be used with Puppet, Ansible, CFEngine provisioners. This (for the time being) requires
-Chef.
+can be used with Puppet, Ansible, CFEngine provisioners. This requires Chef.
 
 See ["Kitchen-Docker or Kitchen-Dokken? Using Test Kitchen and Docker for fast cookbook testing"](https://blog.chef.io/2018/03/06/kitchen-docker-or-kitchen-dokken-using-test-kitchen-and-docker-for-fast-cookbook-testing/) for a more detailed comparison.
 
