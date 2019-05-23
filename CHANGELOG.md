@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.6.9 (2019-05-23)
+
+- Support Chef Infra Client 15+ license acceptance. If the license has been accepted on your local workstation it will be passed through the the Chef Infra installation. The license can also be set via the `chef_license` configuration property. See https://docs.chef.io/chef_license_accept.html for more details.
+
 # 2.6.8 (2019-03-19)
 
 - Loosen the Test Kitchen depedency to allow this plugin to be used with the upcoming Test Kitchen 2.0 release
