@@ -17,6 +17,7 @@ env:
   global:
     - KITCHEN_YAML=.kitchen.yml
     - INSTANCE=default-fedora
+    - CHEF_LICENSE="accept-no-persist"
 
 before_install:
   - sudo apt-get -qq update
