@@ -3,6 +3,7 @@
 # 2.6.9 (2019-05-23)
 
 - Support Chef Infra Client 15+ license acceptance. If the license has been accepted on your local workstation it will be passed through the the Chef Infra installation. The license can also be set via the `chef_license` configuration property. See https://docs.chef.io/chef_license_accept.html for more details.
+- Add a new config option `pull_platform_image` (true/false) which allows you to disable pulling the platform image on every dokken converge/test. This is particularly useful for local image testing.
 
 # 2.6.8 (2019-03-19)
 
