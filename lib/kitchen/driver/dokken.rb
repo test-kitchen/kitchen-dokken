@@ -58,6 +58,7 @@ module Kitchen
       default_config :tmpfs, {}
       default_config :volumes, nil
       default_config :write_timeout, 3600
+      default_config :userns_host, false
       default_config :pull_platform_image, true
 
       # (see Base#create)
@@ -309,6 +310,9 @@ module Kitchen
         }
         unless self[:entrypoint].to_s.empty?
           config['Entrypoint'] = self[:entrypoint]
+        end
+        if self[:userns_host]
+          config['HostConfig']['UsernsMode'] = 'host'
         end
         runner_container = run_container(config)
         state[:runner_container] = runner_container.json
