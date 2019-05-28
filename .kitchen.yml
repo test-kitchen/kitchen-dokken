@@ -32,10 +32,15 @@ platforms:
       volumes:
         - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
 
+  - name: local_image
+    driver:
+      image: local-example:latest
+      pull_platform_image: false
+
 suites:
   - name: default
-    excludes:
-      - hello
+    includes:
+      - fedora
     run_list:
       - recipe[dokken_test::default]
     attributes:
@@ -51,8 +56,8 @@ suites:
       hostname: hello.computers.biz
       ports: '1234'
       pid_one_command: ''
-    excludes:
-      - fedora
+    includes:
+      - hello
 
   - name: helloagain
     driver:
@@ -63,5 +68,9 @@ suites:
         - '8301'
         - '8301:8301/udp'
         - '127.0.0.1:8500:8500'
-    excludes:
-      - fedora
+    includes:
+      - hello
+
+  - name: local_image
+    includes:
+      - local_image

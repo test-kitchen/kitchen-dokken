@@ -58,7 +58,8 @@ execute 'Test Kitchen verify hello' do
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
-              'DOCKER_HOST' => 'tcp://127.0.0.1:2375'
+              'DOCKER_HOST' => 'tcp://127.0.0.1:2375',
+              'CHEF_LICENSE' => 'accept-no-persist'
   action :run
 end
 
@@ -70,5 +71,24 @@ execute 'destroy hello again suite' do
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
               'DOCKER_HOST' => 'tcp://127.0.0.1:2375'
+  action :run
+end
+
+docker_tag 'local-example' do
+  target_repo 'fedora'
+  target_tag 'latest'
+  to_repo 'local-example'
+  to_tag 'latest'
+end
+
+execute 'Test Kitchen verify without image pull' do
+  command '/usr/bin/bundle exec kitchen test local_image -l debug'
+  cwd '/home/notroot/kitchen-dokken'
+  user 'notroot'
+  live_stream true
+  environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
+              'HOME' => '/home/notroot',
+              'DOCKER_HOST' => 'tcp://127.0.0.1:2375',
+              'CHEF_LICENSE' => 'accept-no-persist'
   action :run
 end

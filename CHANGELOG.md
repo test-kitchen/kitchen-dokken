@@ -1,5 +1,18 @@
 # Dokken Changelog
 
+# 2.6.9 (2019-05-23)
+
+- Support Chef Infra Client 15+ license acceptance. If the license has been accepted on your local workstation it will be passed through the the Chef Infra installation. The license can also be set via the `chef_license` configuration property. See https://docs.chef.io/chef_license_accept.html for more details.
+- Add a new config option `pull_platform_image` (true/false) which allows you to disable pulling the platform image on every dokken converge/test. This is particularly useful for local image testing.
+
+# 2.6.8 (2019-03-19)
+
+- Loosen the Test Kitchen depedency to allow this plugin to be used with the upcoming Test Kitchen 2.0 release
+- Added a Rakefile to make it easier to ship build/install/release the gem
+- Various readme improvements to clarify how to use the plugin
+- Fix terminal size issue when using kitchen login
+- Fail with a friendly warning if docker can't be found
+
 # 2.6.7 (2018-03-05)
 
 - Fix a potential race condition that may have led to the error 'Did not find config file: /opt/kitchen/client.rb'
