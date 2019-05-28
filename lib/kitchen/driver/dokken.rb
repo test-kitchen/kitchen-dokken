@@ -59,6 +59,7 @@ module Kitchen
       default_config :volumes, nil
       default_config :write_timeout, 3600
       default_config :pull_platform_image, true
+      default_config :pull_chef_image, true
 
       # (see Base#create)
       def create(state)
@@ -392,7 +393,7 @@ module Kitchen
 
       def pull_chef_image
         debug "driver - pulling #{chef_image} #{repo(chef_image)} #{tag(chef_image)}"
-        pull_if_missing chef_image
+        config[:pull_chef_image] ? pull_image(chef_image) : pull_if_missing(chef_image)
       end
 
       def delete_image(name)
