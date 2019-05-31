@@ -3,7 +3,7 @@
 # 2.7.0 (2019-05-29)
 
 - Add ability to disable user namespace mode when running privileged containers with a new `userns_host` config option. See the readme for details.
-- Added a new option `pull_platform_image` (true/false) to control force pulling the chef image on each run to check for newer images. This now defaults to true so that testing on latest and current always actually mean latest and current.
+- Added a new option `pull_chef_image` (true/false) to control force pulling the chef image on each run to check for newer images. This now defaults to true so that testing on latest and current always actually mean latest and current.
 
 # 2.6.9 (2019-05-23)
 
