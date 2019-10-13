@@ -17,7 +17,7 @@ Unlike all other Test Kitchen drivers, kitchen-dokken handles all the tasks of t
 
 ### kitchen-dokken vs. other drivers
 
-As stated above kitchen-dokken is purpose built for speed and it achieves this by narrowing the testing scope to just Chef Infra cookbook testing. Other drivers like kitchen-vagrant or kitchen-docker are general purpose drivers that can be used with any of the Kitchen provisioners such as kitchen-puppet or kitchen-ansible. Also keep in mind that testing with conainers is not a perfect analog to a full blown system. The dokken-images containers are designed to be similar to a standard OS install, but they do not perfectly match those installs and may need additional packages to work properly. If you're looking for perfect analog to your production systems, without the additional work of package installation, then consider a driver such as kitchen-vagrant. If you're willing to potentially invest in a bit of package troubleshooting in exchange for faster feedback cycles then kitchen-dokken is for you.
+As stated above kitchen-dokken is purpose built for speed and it achieves this by narrowing the testing scope to just Chef Infra cookbook testing. Other drivers like kitchen-vagrant or kitchen-docker are general purpose drivers that can be used with any of the Kitchen provisioners such as kitchen-puppet or kitchen-ansible. Also keep in mind that testing with containers is not a perfect analog to a full blown system. The dokken-images containers are designed to be similar to a standard OS install, but they do not perfectly match those installs and may need additional packages to work properly. If you're looking for perfect analog to your production systems, without the additional work of package installation, then consider a driver such as kitchen-vagrant. If you're willing to potentially invest in a bit of package troubleshooting in exchange for faster feedback cycles then kitchen-dokken is for you.
 
 ## Usage
 
@@ -90,7 +90,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ kitchen create
 
 The `kitchen create` phase of the kitchen run pulls (if missing) the `chef/chef` image from the Docker hub, then creates a volume container named `chef-<version>`. This makes `/opt/chef` available for mounting by other containers.
 
-When talking to a local Docker host (over a socket), The driver creates and bind mounts a sandbox directory to `/opt/kitchen`. This prevents us from having to "upload" the test data.
+When talking to a local Docker host (over a socket), the driver creates and bind mounts a sandbox directory to `/opt/kitchen`. This prevents us from having to "upload" the test data.
 
 When talking to a *remote* Docker host (tcp://somewhere.else), dokken starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and ` /opt/verifier` available for mounting by the runner. The data container is the "trick" to the whole thing. It comes with rsync, runs an openssh daemon, and uses an insecure, authorized_key ala Vagrant. This is later used to upload cookbook test data.
 
@@ -389,7 +389,7 @@ This will disable user namespaces for the running container.
 On Debian/Ubuntu systems, all files downloaded via it's package manager (`apt`) are stored at `/var/cache/apt/archives/`.
 Therefore one may save the downloads on a different volume and therefore save time. One may even use one's own apt cache folder to save even more time.
 
-On some versions of Ubuntu (16.04 at least), the container deletes all the downloads uppon every run of `apt-get update`, so that must be disabled
+On some versions of Ubuntu (16.04 at least), the container deletes all the downloads upon every run of `apt-get update`, so that must be disabled
 
 - `apt` Caching on Ubuntu 16.04
 ```yaml
