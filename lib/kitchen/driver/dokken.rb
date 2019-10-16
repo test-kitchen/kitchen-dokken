@@ -436,6 +436,9 @@ module Kitchen
       rescue
         with_retries do
           begin
+            args['env'] = [] if args['env'].nil?
+            args['env'] << 'TEST_KITCHEN=1'
+            args['env'] << "CI=#{ENV['CI']}" if ENV.include? 'CI'
             info "Creating container #{args['name']}"
             debug "driver - create_container args #{args}"
             with_retries do
