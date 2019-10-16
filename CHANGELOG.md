@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.8.0 (2019-10-16)
+
+- Set CI and TEST_KITCHEN environment variables to match other Test Kitchen drivers
+
 # 2.7.0 (2019-05-29)
 
 - Add ability to disable user namespace mode when running privileged containers with a new `userns_host` config option. See the readme for details.
