@@ -61,12 +61,15 @@ module Kitchen
           end
 
           conn.execute(prepare_command)
-          conn.execute_with_retry(
-            run_command,
-            config[:retry_on_exit_code],
-            config[:max_retries],
-            config[:wait_for_retry]
-          )
+          # converge one or more times. multiple_converge defaults to 1
+          config[:multiple_converge].to_i.times do
+            conn.execute_with_retry(
+              run_command,
+              config[:retry_on_exit_code],
+              config[:max_retries],
+              config[:wait_for_retry]
+            )
+          end
         end
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
