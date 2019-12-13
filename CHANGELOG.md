@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.8.1 (2019-12-12)
+
+- Correct container env arg (env -> Env) to match driver config
+
 # 2.8.0 (2019-10-16)
 
 - Set CI and TEST_KITCHEN environment variables to match other Test Kitchen drivers
