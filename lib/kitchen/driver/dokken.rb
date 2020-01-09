@@ -65,9 +65,9 @@ module Kitchen
       default_config :memory_limit, 0
 
       def set_creds
+        @creds = [nil]
         if config[:creds_file]
-          @creds = JSON.parse(IO.read(config[:creds_file]))
-          ::Docker.authenticate!(@creds) if @creds
+          @creds += JSON.parse(IO.read(config[:creds_file]))
         end
       end
 
@@ -132,7 +132,6 @@ module Kitchen
         opts = ::Docker.options
         opts[:read_timeout] = config[:read_timeout]
         opts[:write_timeout] = config[:write_timeout]
-        opts[:creds] = @creds if @creds
         @docker_connection ||= ::Docker::Connection.new(config[:docker_host_url], opts)
       end
 
@@ -569,15 +568,28 @@ module Kitchen
       end
 
       def pull_image(image)
+        original_image = nil
         with_retries do
           if Docker::Image.exist?("#{repo(image)}:#{tag(image)}", {}, docker_connection)
             original_image = Docker::Image.get("#{repo(image)}:#{tag(image)}", {}, docker_connection)
           end
-
-          new_image = Docker::Image.create({ "fromImage" => "#{repo(image)}:#{tag(image)}", "conn" => docker_connection })
-
-          !(original_image && original_image.id.start_with?(new_image.id))
         end
+
+        last_error = nil
+        new_image = @creds.inject(nil) do |img, creds|
+          img ||= begin
+                    with_retries do
+                      Docker::Image.create({ "fromImage" => "#{repo(image)}:#{tag(image)}", "conn" => docker_connection }, creds)
+                    end
+                  rescue Docker::Error::DockerError => e
+                    last_error = e
+                    nil
+                  end
+          img
+        end
+        raise last_error unless new_image
+
+        !(original_image && original_image.id.start_with?(new_image.id))
       end
 
       def runner_container_name

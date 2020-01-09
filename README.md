@@ -447,24 +447,27 @@ provisioner:
 ```
 
 ### Docker Credentials
-￼
-￼You can set credentials for pulling images from private docker registries in a json file.
-￼```json
-￼{
-￼  "username": "myusername",
-￼  "password": "mypassword",
-￼  "email": "myemail@mydomain",
-￼  "serveraddress": "https://index.docker.io/v1/"
-￼}
-￼```
-￼
-￼Then add the `creds_file` driver configuration option.
-￼```yaml
-￼platforms:
-￼- name: ubuntu-16.04
-￼  driver:
-￼    image: myorg/private-ubuntu-16.04
-￼    creds_file: './config.json'
+
+You can set an array of credentials for pulling images from private docker registries in a json file.
+```json
+[
+  {
+    "username": "myusername",
+    "password": "mypassword",
+    "email": "myemail@mydomain",
+    "serveraddress": "https://index.docker.io/v1/"
+  }
+]
+```
+
+Then add the `creds_file` driver configuration option.
+```yaml
+platforms:
+  - name: ubuntu-16.04
+    driver:
+      image: myorg/private-ubuntu-16.04
+      creds_file: './config.json'
+```
 
 ### Using dokken-images
 
