@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.8.2 (2020-03-10)
+
+- Use `/opt/chef/bin/chef-client` not `/opt/chef/embedded/bin/chef-client` by default.
+
 # 2.8.1 (2019-12-12)
 
 - Correct container env arg (env -> Env) to match driver config
