@@ -50,6 +50,7 @@ module Kitchen
         driver = provisioner.instance.driver
         driver[:chef_version]
       end
+      default_config :clean_dokken_sandbox, true
 
       # (see Base#call)
       def call(state)
@@ -71,6 +72,7 @@ module Kitchen
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
       ensure
+        return unless config[:clean_dokken_sandbox]
         cleanup_dokken_sandbox
       end
 
