@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.9.0 (2020-05-06)
+
+- Add a new provisioning configuration `clean_dokken_sandbox` to allow not cleaning up the Chef Infra and Test Kitchen files between converges to speed up repeatedly converging systems. This defaults to true which maintains the existing behavior. Thanks `@chrisUsick`
+
 # 2.8.2 (2020-03-10)
 
 - Use `/opt/chef/bin/chef-client` not `/opt/chef/embedded/bin/chef-client` by default.
@@ -24,7 +28,7 @@
 
 # 2.6.8 (2019-03-19)
 
-- Loosen the Test Kitchen depedency to allow this plugin to be used with the upcoming Test Kitchen 2.0 release
+- Loosen the Test Kitchen dependency to allow this plugin to be used with the upcoming Test Kitchen 2.0 release
 - Added a Rakefile to make it easier to ship build/install/release the gem
 - Various readme improvements to clarify how to use the plugin
 - Fix terminal size issue when using kitchen login
@@ -105,7 +109,7 @@
 
 - Features meant for 2.2.0, but tested properly this time.
 - Initial support for clusters / inter-suite name resolution
-- Dokken now creates a user-defined network named "dokken" and connects containers to it. This allows us to take advantage of the built in DNS server that in Docker 1.10 and later.
+- Dokken now creates a user-defined network named "dokken" and connects containers to it. This allows us to take advantage of the built-in DNS server that in Docker 1.10 and later.
 
   ```
    driver:
@@ -123,11 +127,11 @@
 
 # 2.2.4
 
-- bugfix: Only placing runner containers in user defined network
+- bugfix: Only placing runner containers in user-defined network
 
 # 2.2.3
 
-- bugfix: Adding gaurd logic for already existing dokken network
+- bugfix: Adding guard logic for already existing dokken network
 
 # 2.2.2
 
@@ -141,7 +145,7 @@
 # 2.2.0
 
 - Initial support for clusters / inter-suite name resolution
-- Dokken now creates a user-defined network named "dokken" and connects containers to it. This allows us to take advantage of the built in DNS server that in Docker 1.10 and later.
+- Dokken now creates a user-defined network named "dokken" and connects containers to it. This allows us to take advantage of the built-in DNS server that in Docker 1.10 and later.
 
   driver: hostname: www.computers.biz
 
@@ -198,7 +202,7 @@
 
 - Bind mounts data instead of uploading through kitchen-cache container when talking to a local Docker host. (most use cases)
 
-- Renders a Dockefile and builds dokken/kitchen-cache when taling to a remote Docker host. (DOCKER_HOST =~ /^tcp:/)
+- Renders a Dockefile and builds dokken/kitchen-cache when talking to a remote Docker host. (DOCKER_HOST =~ /^tcp:/)
 
 ## 1.0.0
 
