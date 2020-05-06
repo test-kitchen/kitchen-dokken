@@ -410,6 +410,17 @@ platforms:
       - RUN rm /etc/apt/apt.conf.d/docker-clean
 ```
 
+### Chef cache
+
+When chef converges `kitchen-dokken` populates `/opt/kitchen/` with the chef and test kitchen data required to converge. By default this directory is cleared out at the end of every run. One of the subdirectories of `/opt/kitchen/` is the chef cache directory. For cookbooks that download significant amounts of data from the network, i.e. many `remote_file` calls, this can make subsequent converges unnecessarily slow.  
+If you would like the chef cache to be preserved between converges add `clean_dokken_sandbox: false` to the provisioner section of `kitchen.yml`. The default value is true. 
+
+```
+provisioner:
+  name: dokken
+  clean_dokken_sandbox: false
+```
+
 ### Using dokken-images
 
 While the `intermediate_instructions` directive is a fine hack around the
