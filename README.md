@@ -336,7 +336,7 @@ Using kitchen `intemediate_instructions` and `entrypoint` you can overcome the p
 ```yaml
 driver:
   name: dokken
-  chef_version: 14
+  chef_version: 16
   entrypoint: /bin/entrypoint
   intermediate_instructions:
     - RUN /usr/bin/openssl s_client -showcerts -verify 5 -connect free.fr:443 </dev/null | /usr/bin/awk '/BEGIN/,/END/{if(/BEGIN/){a++}; certs[a]=(certs[a] "\n" $0)}; END {print certs[a]}' >> /usr/local/share/ca-certificates/ca.crt && update-ca-certificates
