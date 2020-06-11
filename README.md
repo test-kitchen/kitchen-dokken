@@ -324,6 +324,31 @@ provided. Any valid instruction will work, including `MAINTAINER`,
 
 This should be used as little as possible.
 
+#### Exemple use case of intermediate_instruction
+
+A possible use case is running kitchen behind a [MITM proxy](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)  
+If you did read the link, it's scary yes, but a reality in many corporate networks where any https connection is intercepted, when done right (morally) the proxy use a internal Certificate Authority (CA) which is not trusted by most programs.
+
+It's always a problem to get things accessing TLS secured servers through this kind of proxy when working in a container and here is how you can do it for Chef specifically.
+
+Using kitchen `intemediate_instructions` and `entrypoint` you can overcome the problem in dokken in this way:
+
+```yaml
+driver:
+  name: dokken
+  chef_version: 16
+  entrypoint: /bin/entrypoint
+  intermediate_instructions:
+    - RUN /usr/bin/openssl s_client -showcerts -verify 5 -connect free.fr:443 </dev/null | /usr/bin/awk '/BEGIN/,/END/{if(/BEGIN/){a++}; certs[a]=(certs[a] "\n" $0)}; END {print certs[a]}' >> /usr/local/share/ca-certificates/ca.crt && update-ca-certificates
+    - RUN echo  "#!/bin/bash -ex\ncat /usr/local/share/ca-certificates/ca.crt >> /opt/chef/embedded/ssl/certs/cacert.pem\nexec \"\$@\"\n" >> /bin/entrypoint && chmod +x /bin/entrypoint
+```
+
+The code above does call a site (here free.fr, my french ISP :)) with openssl s_client and does an ugly awk parsing to extract the root CA from the chain and write it in `/usr/local/share/ca-certificate/ca.crt` and then update system certs (which makes curl, wget, and other system calls works with the proxy)
+
+The second RUN create an entrypoint for the container which will add the cert to Chef CA bundle and then exec whatever is passed as `pid_one_command` (see next paragraph, it does match CMD in dockerfile), this ensure once the container is created with chef volume and data volume mounted, the Chef's CA bundle accept your proxy certificate.
+
+Caveat: multiple suites running will add the cert to the chef container each time and may make it grow large after a time, in CI system regularily pruning containers this should not be a problem.
+
 ### Process orientation
 
 Docker containers are process oriented rather than machine oriented. This makes life
