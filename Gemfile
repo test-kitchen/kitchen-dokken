@@ -8,5 +8,5 @@ gem 'test-kitchen'
 
 group :development do
   gem 'pry'
-  gem 'pry-coolline'
+  gem 'pry-byebug'
 end
