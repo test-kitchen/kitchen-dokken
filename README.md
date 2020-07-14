@@ -548,6 +548,16 @@ platforms:
       chef_binary: /bin/true
 ```
 
+### Controlling container memory
+
+By default the memory limit of the containers you run is unbound (or limited by the Docker client on OSX). If however you need to constrain the container memory allocation you can set a memory limit in bytes on the driver:
+
+```yaml
+driver:
+  name: dokken
+  memory_limit: 2147483648 # 2GB
+```
+
 ## FAQ
 
 ### What about kitchen-docker?
