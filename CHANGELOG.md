@@ -1,5 +1,10 @@
 # Dokken Changelog
 
+# 2.9.1 (2020-07-14)
+
+- Add docs for internal CA and MITM proxy Thanks `@Tensibai`
+- Fix using `multiple_converge`. Thanks `@ramereth`
+
 # 2.9.0 (2020-05-06)
 
 - Add a new provisioning configuration `clean_dokken_sandbox` to allow not cleaning up the Chef Infra and Test Kitchen files between converges to speed up repeatedly converging systems. This defaults to true which maintains the existing behavior. Thanks `@chrisUsick`
