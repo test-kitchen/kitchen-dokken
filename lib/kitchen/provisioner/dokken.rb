@@ -55,6 +55,7 @@ module Kitchen
       # (see Base#call)
       def call(state)
         create_sandbox
+        write_run_command(run_command)
         instance.transport.connection(state) do |conn|
           if remote_docker_host?
             info("Transferring files to #{instance.to_str}")
@@ -63,7 +64,7 @@ module Kitchen
 
           conn.execute(prepare_command)
           conn.execute_with_retry(
-            run_command,
+            "sh #{config[:root_path]}/run_command",
             config[:retry_on_exit_code],
             config[:max_retries],
             config[:wait_for_retry]
@@ -105,6 +106,12 @@ module Kitchen
         cmd << " -F #{config[:chef_output_format]}"
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
+
+        chef_cmd(cmd)
+      end
+
+      def write_run_command(command)
+        File.write("#{dokken_kitchen_sandbox}/run_command", command)
       end
 
       def runner_container_name
