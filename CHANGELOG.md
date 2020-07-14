@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.10.0 (2020-07-14)
+
+- Added a new `memory_limit` config to set memory limits on the container. Thanks `@shanethehat`
+
 # 2.9.1 (2020-07-14)
 
 - Add docs for internal CA and MITM proxy Thanks `@Tensibai`
