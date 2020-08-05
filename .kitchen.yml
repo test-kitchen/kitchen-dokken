@@ -1,16 +1,16 @@
 ---
 driver:
-  name: dokken
+  name: podman
   chef_version: latest
   privileged: true
   volumes: [ '/var/lib/docker' ]
   env: [CHEF_LICENSE=accept]
 
 transport:
-  name: dokken
+  name: podman
 
 provisioner:
-  name: dokken
+  name: podman
 
 verifier:
   name: inspec
@@ -43,9 +43,9 @@ suites:
     includes:
       - centos
     run_list:
-      - recipe[dokken_test::default]
+      - recipe[podman_test::default]
     attributes:
-      dokken_test:
+      podman_test:
         revision: <%= `git rev-parse HEAD` %>
 
   - name: idempotency
@@ -56,7 +56,7 @@ suites:
       multiple_converge: 2
       deprecations_as_errors: true
     run_list:
-      - recipe[dokken_test::idempotency]
+      - recipe[podman_test::idempotency]
 
   - name: hello
     driver:

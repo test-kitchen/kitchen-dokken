@@ -1,3 +1,10 @@
+# Differences between kitchen-dokken and kitchen-podman:
+#
+# Author:: David Marshall (<dmarshall@gmail.com>)
+#
+# Copyright (C) 2020, Verizon Media Group
+#
+# original kitchen-dokken:
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
@@ -21,20 +28,20 @@ require 'tmpdir'
 require 'digest/sha1'
 require_relative '../helpers'
 
-include Dokken::Helpers
+include Podman::Helpers
 
 module Kitchen
   module Transport
     # Wrapped exception for any internally raised errors.
     #
     # @author Sean OMeara <sean@sean.io>
-    class DockerExecFailed < TransportFailed; end
+    class PodmanExecFailed < TransportFailed; end
 
     # A Transport which uses Docker tricks to execute commands and
     # transfer files.
     #
     # @author Sean OMeara <sean@sean.io>
-    class Dokken < Kitchen::Transport::Base
+    class Podman < Kitchen::Transport::Base
       kitchen_transport_api_version 2
 
       plugin_version Kitchen::VERSION
@@ -59,7 +66,7 @@ module Kitchen
       end
 
       # @author Sean OMeara <sean@sean.io>
-      class Connection < Kitchen::Transport::Dokken::Connection
+      class Connection < Kitchen::Transport::Podman::Connection
         def docker_connection
           @docker_connection ||= ::Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])
         end

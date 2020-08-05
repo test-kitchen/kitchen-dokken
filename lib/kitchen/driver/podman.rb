@@ -1,3 +1,10 @@
+# Differences between kitchen-dokken and kitchen-podman:
+#
+# Author:: David Marshall (<dmarshall@gmail.com>)
+#
+# Copyright (C) 2020, Verizon Media Group
+#
+# original kitchen-dokken:
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #

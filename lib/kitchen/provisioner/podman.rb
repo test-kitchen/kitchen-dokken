@@ -1,4 +1,10 @@
+# Differences between kitchen-dokken and kitchen-podman:
 #
+# Author:: David Marshall (<dmarshall@gmail.com>)
+#
+# Copyright (C) 2020, Verizon Media Group
+#
+# original kitchen-dokken:
 # Author:: Sean OMeara (<sean@sean.io>)
 #
 # Copyright (C) 2015, Sean OMeara
@@ -19,12 +25,12 @@ require 'kitchen'
 require 'kitchen/provisioner/chef_zero'
 require_relative '../helpers'
 
-include Dokken::Helpers
+include Podman::Helpers
 
 module Kitchen
   module Provisioner
     # @author Sean OMeara <sean@sean.io>
-    class Dokken < Kitchen::Provisioner::ChefZero
+    class Podman < Kitchen::Provisioner::ChefZero
       kitchen_provisioner_api_version 2
 
       plugin_version Kitchen::VERSION

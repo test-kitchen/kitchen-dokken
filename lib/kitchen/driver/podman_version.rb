@@ -1,3 +1,10 @@
+# Differences between kitchen-dokken and kitchen-podman:
+#
+# Author:: David Marshall (<dmarshall@gmail.com>)
+#
+# Copyright (C) 2020, Verizon Media Group
+#
+# original kitchen-dokken:
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
@@ -17,7 +24,7 @@
 
 module Kitchen
   module Driver
-    # Version string for Dokken Kitchen driver
-    DOKKEN_VERSION = '2.10.0'.freeze
+    # Version string for podman Kitchen driver
+    PODMAN_VERSION = '0.0.1'.freeze
   end
 end
