@@ -42,7 +42,6 @@ ruby_block'whut' do
     Chef::Log.warn(`which bundle`)
     Chef::Log.warn(`which ruby`)
     Chef::Log.warn(`which chef-client`)
-    Chef::Log.warn(`chef-client --version`)
     Chef::Log.warn(`cat /home/notroot/kitchen-dokken/Gemfile`)
   end
 end
