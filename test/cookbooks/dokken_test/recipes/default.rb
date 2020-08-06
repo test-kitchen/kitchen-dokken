@@ -41,7 +41,7 @@ execute 'install gem bundle' do
   command '/usr/bin/bundle install --without development --path vendor/bundle'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
-  live_stream false
+  live_stream true
   creates '/home/notroot/kitchen-dokken/Gemfile.lock'
   environment 'HOME' => '/home/notroot'
   action :run
