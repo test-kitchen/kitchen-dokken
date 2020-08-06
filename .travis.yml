@@ -1,8 +1,12 @@
+language: ruby
 rvm:
-  - 2.5.1
+  - 2.7.1
 cache: bundler
-sudo: required
 group: edge
+dist: xenial
+os: linux
+git:
+  depth: false
 
 services: docker
 
@@ -16,7 +20,7 @@ branches:
 env:
   global:
     - KITCHEN_YAML=.kitchen.yml
-    - INSTANCE=default-fedora
+    - INSTANCE=default-centos
     - CHEF_LICENSE="accept-no-persist"
 
 before_install:
