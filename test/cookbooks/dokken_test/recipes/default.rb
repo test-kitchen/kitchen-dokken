@@ -37,17 +37,14 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
-bash 'whut' do
-  cwd '/home/notroot/kitchen-dokken'
-  code <<-EOH
-      which bundle
-      bundle version
-      which ruby
-      ruby -v
-      which chef-client
-      chef-client --version
-      cat /home/notroot/kitchen-dokken/Gemfile
-      EOH
+ruby_block'whut' do
+  block do
+    Chef::Log.warn(`which bundle`)
+    Chef::Log.warn(`which ruby`)
+    Chef::Log.warn(`which chef-client`)
+    Chef::Log.warn(`chef-client --version`)
+    Chef::Log.warn(`cat /home/notroot/kitchen-dokken/Gemfile`)
+  end
 end
 
 return
