@@ -52,7 +52,7 @@ end
 
 return
 
-execute 'install gem bundle' don
+execute 'install gem bundle' do
   command '/usr/bin/bundle install --without development --path vendor/bundle'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
