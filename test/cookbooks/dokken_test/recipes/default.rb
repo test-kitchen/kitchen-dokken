@@ -37,7 +37,22 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
-execute 'install gem bundle' do
+bash 'whut' do
+  cwd '/home/notroot/kitchen-dokken'
+  code <<-EOH
+      which bundle
+      bundle version
+      which ruby
+      ruby -v
+      which chef-client
+      chef-client --version
+      cat /home/notroot/kitchen-dokken/Gemfile
+      EOH
+end
+
+return
+
+execute 'install gem bundle' don
   command '/usr/bin/bundle install --without development --path vendor/bundle'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
