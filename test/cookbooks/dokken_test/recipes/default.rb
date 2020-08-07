@@ -37,14 +37,8 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
-ruby_block'whut' do
-  block do
-    Chef::Log.warn(`bundle version`)
-  end
-end
-
 execute 'install gem bundle' do
-  command '/usr/bin/bundle install -V --without development --path vendor/bundle'
+  command '/usr/bin/bundle install --without development --path vendor/bundle --jobs 4'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
