@@ -27,6 +27,7 @@ package %w(
 
 docker_service 'default' do
   host ['tcp://127.0.0.1']
+  storage_driver 'overlay2'
   action [:create, :start]
 end
 

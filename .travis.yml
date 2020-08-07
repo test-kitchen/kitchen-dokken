@@ -26,11 +26,6 @@ env:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y nmap
-  - |
-      echo '{
-        "storage-driver": "overlay2"
-      }' | sudo tee /etc/docker/daemon.json
-  - sudo service docker restart
 
 before_script:
  - sudo nmap -p- localhost
