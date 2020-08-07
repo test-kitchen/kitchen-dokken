@@ -37,21 +37,20 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
-execute 'install gem bundle' do
-  command '/usr/bin/bundle install --without development --path vendor/bundle --jobs 4'
-  cwd '/home/notroot/kitchen-dokken'
-  user 'notroot'
-  live_stream true
-  creates '/home/notroot/kitchen-dokken/Gemfile.lock'
-  environment 'HOME' => '/home/notroot'
-  action :run
+yum_repository 'chef-stable' do
+  description 'chef-stable'
+  baseurl 'https://packages.chef.io/repos/yum/stable/el/7/$basearch'
+  gpgkey 'https://packages.chef.io/chef.asc'
 end
+
+yum_package 'chef-workstation'
+
 
 execute 'Test Kitchen verify hello' do
   command <<-EOH.gsub(/^\s{4}/, '').chomp
-    /usr/bin/bundle exec kitchen create hello -l debug
-    /usr/bin/bundle exec kitchen converge hello -l debug
-    /usr/bin/bundle exec kitchen verify hello -l debug
+    /usr/bin/kitchen create hello -l debug
+    /usr/bin/kitchen converge hello -l debug
+    /usr/bin/kitchen verify hello -l debug
   EOH
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
@@ -64,7 +63,7 @@ execute 'Test Kitchen verify hello' do
 end
 
 execute 'destroy hello again suite' do
-  command '/usr/bin/bundle exec kitchen destroy helloagain'
+  command '/usr/bin/kitchen destroy helloagain'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
@@ -82,7 +81,7 @@ docker_tag 'local-example' do
 end
 
 execute 'Test Kitchen verify without image pull' do
-  command '/usr/bin/bundle exec kitchen test local_image -l debug'
+  command '/usr/bin/kitchen test local_image -l debug'
   cwd '/home/notroot/kitchen-dokken'
   user 'notroot'
   live_stream true
