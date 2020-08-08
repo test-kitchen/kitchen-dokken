@@ -25,20 +25,20 @@ package %w(
   which
 )
 
-docker_service 'default' do
-  host ['tcp://127.0.0.1']
-  storage_driver 'vfs'
-  storage_opts ['size=256M']
-  action [:create, :start]
-end
+# docker_service 'default' do
+#   host ['tcp://127.0.0.1']
+#   storage_driver 'vfs'
+#   storage_opts ['size=256M']
+#   action [:create, :start]
+# end
 
-ruby_block 'docker info' do
-  block do
-    Chef::Log.warn(`docker -H 127.0.0.1 info`)
-  end
-end
+# ruby_block 'docker info' do
+#   block do
+#     Chef::Log.warn(`docker -H 127.0.0.1 info`)
+#   end
+# end
 
-return # we know this is broken...
+# return # we know this is broken...
 
 git '/home/notroot/kitchen-dokken' do
   repository '/opt/kitchen-dokken/.git'
