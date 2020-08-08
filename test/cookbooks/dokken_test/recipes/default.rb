@@ -27,6 +27,8 @@ package %w(
 
 docker_service 'default' do
   host ['tcp://127.0.0.1']
+  storage_driver 'vfs'
+  storage_opts ['size=256M']
   action [:create, :start]
 end
 
