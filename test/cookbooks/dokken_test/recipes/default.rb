@@ -4,6 +4,12 @@ user 'notroot' do
   action :create
 end
 
+yum_repository 'chef-stable' do
+  description 'chef-stable'
+  baseurl 'https://packages.chef.io/repos/yum/stable/el/7/$basearch'
+  gpgkey 'https://packages.chef.io/chef.asc'
+end
+
 package %w(
   gcc-c++
   gcc
@@ -23,14 +29,12 @@ package %w(
   rubygem-rake
   telnet
   which
+  chef-workstation
 )
 
-# docker_service 'default' do
-#   host ['tcp://127.0.0.1']
-#   storage_driver 'vfs'
-#   storage_opts ['size=256M']
-#   action [:create, :start]
-# end
+docker_service 'default' do
+  action [:start]
+end
 
 # ruby_block 'docker info' do
 #   block do
@@ -46,14 +50,6 @@ git '/home/notroot/kitchen-dokken' do
   user 'notroot'
   action :sync
 end
-
-yum_repository 'chef-stable' do
-  description 'chef-stable'
-  baseurl 'https://packages.chef.io/repos/yum/stable/el/7/$basearch'
-  gpgkey 'https://packages.chef.io/chef.asc'
-end
-
-yum_package 'chef-workstation'
 
 
 execute 'Test Kitchen verify hello' do
