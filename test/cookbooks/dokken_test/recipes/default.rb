@@ -27,9 +27,16 @@ package %w(
 
 docker_service 'default' do
   host ['tcp://127.0.0.1']
-  storage_driver 'overlay'
   action [:create, :start]
 end
+
+ruby_block 'docker info' do
+  block do
+    Chef::Log.warn(`docker info`)
+  end
+end
+
+return # we know this is broken...
 
 git '/home/notroot/kitchen-dokken' do
   repository '/opt/kitchen-dokken/.git'
