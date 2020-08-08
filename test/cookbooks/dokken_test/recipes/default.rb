@@ -32,7 +32,7 @@ end
 
 ruby_block 'docker info' do
   block do
-    Chef::Log.warn(`docker info`)
+    Chef::Log.warn(`docker info -H tcp://127.0.0.1:2375`)
   end
 end
 
