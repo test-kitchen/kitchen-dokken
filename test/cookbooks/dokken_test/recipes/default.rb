@@ -30,6 +30,7 @@ package %w(
   telnet
   which
   chef-workstation
+  docker
 )
 
 # docker_service 'default' do
