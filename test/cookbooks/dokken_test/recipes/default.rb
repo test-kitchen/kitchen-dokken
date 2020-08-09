@@ -37,11 +37,12 @@ package %w(
 #   action [:create, :start]
 # end
 
-# ruby_block 'docker info' do
-#   block do
-#     Chef::Log.warn(`docker -H 127.0.0.1 info`)
-#   end
-# end
+ruby_block 'docker info' do
+  block do
+    Chef::Log.warn(`ls -l /var/run/docker.run`)
+    Chef::Log.warn(`docker info`)
+  end
+end
 
 # return # we know this is broken...
 
