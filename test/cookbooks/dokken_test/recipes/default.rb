@@ -32,9 +32,9 @@ package %w(
   chef-workstation
 )
 
-docker_service 'default' do
-  action [:create, :start]
-end
+# docker_service 'default' do
+#   action [:create, :start]
+# end
 
 # ruby_block 'docker info' do
 #   block do
