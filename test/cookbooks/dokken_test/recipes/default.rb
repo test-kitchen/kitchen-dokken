@@ -73,7 +73,7 @@ execute 'destroy hello again suite' do
   user 'notroot'
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
-              'HOME' => '/home/notroot',
+              'HOME' => '/home/notroot'
   action :run
 end
 
