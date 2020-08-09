@@ -33,7 +33,7 @@ package %w(
 )
 
 docker_service 'default' do
-  action [:start]
+  action [:create, :start]
 end
 
 # ruby_block 'docker info' do
