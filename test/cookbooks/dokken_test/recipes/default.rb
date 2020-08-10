@@ -44,8 +44,6 @@ ruby_block 'docker info' do
   end
 end
 
-# return # we know this is broken...
-
 git '/home/notroot/kitchen-dokken' do
   repository '/opt/kitchen-dokken/.git'
   revision node['dokken_test']['revision']
@@ -53,6 +51,16 @@ git '/home/notroot/kitchen-dokken' do
   action :sync
 end
 
+ruby_block 'more info' do
+  block do
+    Chef::Log.warn('docker info:')
+    Chef::Log.warn(`docker -H unix:///tmp/docker.sock info`)
+    Chef::Log.warn('/opt/kitchen info:')
+    Chef::Log.warn(`ls -l /opt/kitchen`)
+    Chef::Log.warn('/opt/verifier info:')
+    Chef::Log.warn(`ls -l /opt/verifier`)
+  end
+end
 
 execute 'Test Kitchen verify hello' do
   command <<-EOH.gsub(/^\s{4}/, '').chomp
