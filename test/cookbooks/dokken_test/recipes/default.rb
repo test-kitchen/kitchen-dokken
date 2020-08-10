@@ -33,10 +33,10 @@ package %w(
   docker
 )
 
-docker_service 'default' do
-  host ['tcp://127.0.0.1']
-  action [:create, :start]
-end
+# docker_service 'default' do
+#   host ['tcp://127.0.0.1']
+#   action [:create, :start]
+# end
 
 ruby_block 'docker info' do
   block do
@@ -65,7 +65,6 @@ execute 'Test Kitchen verify hello' do
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
-              'DOCKER_HOST' => 'tcp://127.0.0.1:2375',
               'CHEF_LICENSE' => 'accept-no-persist'
   action :run
 end
@@ -76,7 +75,6 @@ execute 'destroy hello again suite' do
   user 'notroot'
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
-              'DOCKER_HOST' => 'tcp://127.0.0.1:2375',
               'HOME' => '/home/notroot'
   action :run
 end
@@ -95,7 +93,6 @@ execute 'Test Kitchen verify without image pull' do
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
-              'DOCKER_HOST' => 'tcp://127.0.0.1:2375',
               'CHEF_LICENSE' => 'accept-no-persist'
   action :run
 end
