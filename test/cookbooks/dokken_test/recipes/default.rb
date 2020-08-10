@@ -40,7 +40,7 @@ package %w(
 
 ruby_block 'docker info' do
   block do
-     Chef::Log.warn(`docker info`)
+     Chef::Log.warn(`docker -H unix:///tmp/docker.sock info`)
   end
 end
 
@@ -65,6 +65,7 @@ execute 'Test Kitchen verify hello' do
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
+              'DOCKER_HOST' => node['dokken_test']['docker_host'],
               'CHEF_LICENSE' => 'accept-no-persist'
   action :run
 end
@@ -75,6 +76,7 @@ execute 'destroy hello again suite' do
   user 'notroot'
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
+              'DOCKER_HOST' => node['dokken_test']['docker_host'],
               'HOME' => '/home/notroot'
   action :run
 end
@@ -93,6 +95,7 @@ execute 'Test Kitchen verify without image pull' do
   live_stream true
   environment 'PATH' => '/usr/bin:/usr/local/bin:/home/notroot/bin',
               'HOME' => '/home/notroot',
+              'DOCKER_HOST' => node['dokken_test']['docker_host'],
               'CHEF_LICENSE' => 'accept-no-persist'
   action :run
 end
