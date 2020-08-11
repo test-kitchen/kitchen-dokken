@@ -23,5 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "climate_control", "~> 0.2.0"
   spec.add_development_dependency "countloc", "~> 0.4.0"
   spec.add_development_dependency "pry-byebug", "~> 3.9"
+  spec.add_development_dependency "rake", "~> 13.0", ">= 13.0.1"
   spec.add_development_dependency "simplecov", "~> 0.18.5"
 end
