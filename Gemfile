@@ -1,12 +1,8 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
 gemspec
 
-gem 'berkshelf'
-gem 'kitchen-inspec'
-gem 'test-kitchen'
-
-group :development do
-  gem 'pry'
-  gem 'pry-byebug'
-end
+# These should be gems we need for functional testing
+# Unit testing gems should go into the gemspec.
+gem "berkshelf"
+gem "kitchen-inspec"

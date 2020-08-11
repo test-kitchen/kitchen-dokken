@@ -1,2 +1,2 @@
-name 'kitchen-dokken'
-version '0.0.1'
+name "kitchen-dokken"
+version "0.0.1"
