@@ -1,8 +1,8 @@
 module Dokken
   module Helpers
     # https://stackoverflow.com/questions/517219/ruby-see-if-a-port-is-open
-    require 'socket'
-    require 'timeout'
+    require 'socket' unless defined?(Socket)
+    require 'timeout' unless defined?(Timeout)
 
     def port_open?(ip, port)
       begin
@@ -243,7 +243,7 @@ VOLUME /opt/verifier
 
     def remote_docker_host?
       return false if config[:docker_info]['OperatingSystem'].include?('Boot2Docker')
-      return true if config[:docker_host_url] =~ /^tcp:/
+      return true if /^tcp:/.match?(config[:docker_host_url])
       false
     end
 

@@ -17,8 +17,8 @@
 
 require 'kitchen'
 require 'net/scp'
-require 'tmpdir'
-require 'digest/sha1'
+require 'tmpdir' unless defined?(Dir.mktmpdir)
+require 'digest/sha1' unless defined?(Digest::SHA1)
 require_relative '../helpers'
 
 include Dokken::Helpers
@@ -82,7 +82,7 @@ module Kitchen
             ssh_ip = options[:host_ip_override]
             ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
-          elsif options[:docker_host_url] =~ /unix:/
+          elsif /unix:/.match?(options[:docker_host_url])
             if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == '0.0.0.0'
               ssh_ip = options[:data_container][:NetworkSettings][:IPAddress]
               ssh_port = '22'
@@ -92,16 +92,16 @@ module Kitchen
               ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
             end
 
-          elsif options[:docker_host_url] =~ /tcp:/
+          elsif /tcp:/.match?(options[:docker_host_url])
             name = options[:data_container][:Name]
 
             # DOCKER_HOST
             docker_host_url_ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
 
             # mapped IP of data container
-            candidate_ip = ::Docker::Container.all.select do |x|
+            candidate_ip = ::Docker::Container.all.find do |x|
               x.info['Names'][0].eql?(name)
-            end.first.info['NetworkSettings']['Networks']['dokken']['IPAddress']
+            end.info['NetworkSettings']['Networks']['dokken']['IPAddress']
 
             # mapped port
             candidate_ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
