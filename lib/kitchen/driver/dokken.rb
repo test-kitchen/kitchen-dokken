@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'digest'
+require 'digest' unless defined?(Digest)
 require 'kitchen'
-require 'tmpdir'
+require 'tmpdir' unless defined?(Dir.mktmpdir)
 require 'docker'
 require 'lockfile'
 require_relative '../helpers'
