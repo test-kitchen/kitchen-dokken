@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.11.0 (2020-09-14)
+
+- Allow docker-api gem version 2.0, which works with newer docker API releases and is Ruby 2.7 compatible
+
 # 2.10.0 (2020-07-14)
 
 - Added a new `memory_limit` config to set memory limits on the container. Thanks `@shanethehat`
