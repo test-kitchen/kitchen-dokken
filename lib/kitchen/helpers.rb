@@ -11,7 +11,7 @@ module Dokken
             s = TCPSocket.new(ip, port)
             s.close
             return true
-          rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+          rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, Errno::ENETDOWN
             return false
           end
         end
