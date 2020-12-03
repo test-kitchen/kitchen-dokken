@@ -153,9 +153,9 @@ module Kitchen
         rescue Docker::Error::UnexpectedResponseError => e
           msg = 'work_image build failed: '
           msg += JSON.parse(e.to_s.split("\r\n").last)['error'].to_s
-          msg += '. The common scenerios are incorrect intermediate'
+          msg += '. The common scenarios are incorrect intermediate'
           msg += 'instructions such as not including `-y` on an `apt-get` '
-          msg += 'or similar. The other common scenerio is a transient '
+          msg += 'or similar. The other common scenario is a transient '
           msg += 'error such as an unresponsive mirror.'
           raise msg
         # fallback rescue above should catch most of the errors
