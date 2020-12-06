@@ -368,8 +368,16 @@ module Kitchen
         lockfile = Lockfile.new "#{home_dir}/.dokken-#{chef_container_name}.lock"
         begin
           lockfile.lock
-          with_retries { ::Docker::Container.get(chef_container_name, {}, docker_connection) }
+          with_retries {
+            # TEMPORARY FIX - docker-api 2.0.0 has a buggy Docker::Container.get - use .all instead
+            # https://github.com/swipely/docker-api/issues/566
+            # ::Docker::Container.get(chef_container_name, {}, docker_connection)
+            found = ::Docker::Container.all({all: true}, docker_connection).select { |c| c.info["Names"].include?("/#{chef_container_name}") }
+            raise ::Docker::Error::NotFoundError.new(chef_container_name) if found.empty?
+            debug "Chef container already exists, continuing"
+          }
         rescue ::Docker::Error::NotFoundError
+          debug "Chef container does not exist, creating a new Chef container"
           with_retries do
             begin
               debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
