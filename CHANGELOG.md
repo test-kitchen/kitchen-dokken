@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+# 2.11.2 (2020-12-07)
+
+- Resolve failures when using docker-api 2.x gem
+
 # 2.11.1 (2020-10-19)
 
 - When checking if a port is open consider it closed if the network is down or otherwise unreachable

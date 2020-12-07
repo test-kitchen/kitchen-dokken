@@ -1,5 +1,5 @@
 rvm:
-  - 2.5.1
+  - 2.5
 cache: bundler
 sudo: required
 group: edge
