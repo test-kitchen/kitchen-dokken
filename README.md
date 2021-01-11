@@ -326,7 +326,7 @@ This should be used as little as possible.
 
 #### Exemple use case of intermediate_instruction
 
-A possible use case is running kitchen behind a [MITM proxy](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)  
+A possible use case is running kitchen behind a [MITM proxy](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)
 If you did read the link, it's scary yes, but a reality in many corporate networks where any https connection is intercepted, when done right (morally) the proxy use a internal Certificate Authority (CA) which is not trusted by most programs.
 
 It's always a problem to get things accessing TLS secured servers through this kind of proxy when working in a container and here is how you can do it for Chef specifically.
@@ -437,8 +437,8 @@ platforms:
 
 ### Chef cache
 
-When chef converges `kitchen-dokken` populates `/opt/kitchen/` with the chef and test kitchen data required to converge. By default this directory is cleared out at the end of every run. One of the subdirectories of `/opt/kitchen/` is the chef cache directory. For cookbooks that download significant amounts of data from the network, i.e. many `remote_file` calls, this can make subsequent converges unnecessarily slow.  
-If you would like the chef cache to be preserved between converges add `clean_dokken_sandbox: false` to the provisioner section of `kitchen.yml`. The default value is true. 
+When chef converges `kitchen-dokken` populates `/opt/kitchen/` with the chef and test kitchen data required to converge. By default this directory is cleared out at the end of every run. One of the subdirectories of `/opt/kitchen/` is the chef cache directory. For cookbooks that download significant amounts of data from the network, i.e. many `remote_file` calls, this can make subsequent converges unnecessarily slow.
+If you would like the chef cache to be preserved between converges add `clean_dokken_sandbox: false` to the provisioner section of `kitchen.yml`. The default value is true.
 
 ```
 provisioner:
@@ -495,7 +495,6 @@ Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com
 including those from the "current" channel. If you wish to use pre-release versions of Chef, set
 your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `chef/chef`, you can overwrite `chef_image` under the [driver context](https://github.com/someara/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `someara/chef`.
 
-
 ### Chef Infra Client options
 
 It is possible to pass several extra configs to configure the chef binary and options, for example
@@ -507,6 +506,7 @@ provisioner:
   chef_options: ""
   chef_log_level: debug
   chef_output_format: minimal
+  profile_ruby: true
 ```
 
 ### Disable pulling platform Docker images

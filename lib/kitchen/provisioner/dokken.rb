@@ -34,6 +34,7 @@ module Kitchen
       default_config :chef_options, ' -z'
       default_config :chef_log_level, 'warn'
       default_config :chef_output_format, 'doc'
+      default_config :profile_ruby, false
       default_config :docker_info, docker_info
       default_config :docker_host_url, default_docker_host
 
@@ -106,6 +107,7 @@ module Kitchen
         cmd << " -F #{config[:chef_output_format]}"
         cmd << ' -c /opt/kitchen/client.rb'
         cmd << ' -j /opt/kitchen/dna.json'
+        cmd << "--profile-ruby" if config[:profile_ruby]
 
         chef_cmd(cmd)
       end
