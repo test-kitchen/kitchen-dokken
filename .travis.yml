@@ -16,7 +16,7 @@ branches:
 
 env:
   global:
-    - KITCHEN_YAML=.kitchen.yml
+    - KITCHEN_YAML=kitchen.yml
     - INSTANCE=default-fedora
     - CHEF_LICENSE="accept-no-persist"
 
