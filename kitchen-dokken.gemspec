@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(/LICENSE|^lib/)
   spec.require_paths = ["lib"]
 
-  gem.required_ruby_version = ">= 2.5"
+  spec.required_ruby_version = ">= 2.5"
 
   spec.add_dependency "docker-api", ">= 1.33", "< 3"
   spec.add_dependency "lockfile", "~> 2.1"
