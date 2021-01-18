@@ -1,23 +1,20 @@
 module Dokken
   module Helpers
     # https://stackoverflow.com/questions/517219/ruby-see-if-a-port-is-open
-    require 'socket' unless defined?(Socket)
-    require 'timeout' unless defined?(Timeout)
+    require "socket" unless defined?(Socket)
+    require "timeout" unless defined?(Timeout)
 
     def port_open?(ip, port)
       begin
         Timeout.timeout(1) do
-          begin
-            s = TCPSocket.new(ip, port)
-            s.close
-            return true
-          rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, Errno::ENETDOWN
-            return false
-          end
+          s = TCPSocket.new(ip, port)
+          s.close
+          return true
+        rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, Errno::ENETDOWN
+          return false
         end
       rescue Timeout::Error
       end
-
       false
     end
 
@@ -96,22 +93,22 @@ VOLUME /opt/verifier
 
       i = ::Docker::Image.build_from_dir(
         "#{tmpdir}/dokken",
-        'nocache' => true,
-        'rm' => true
+        "nocache" => true,
+        "rm" => true
       )
-      i.tag('repo' => repo(data_image), 'tag' => tag(data_image), 'force' => true)
+      i.tag("repo" => repo(data_image), "tag" => tag(data_image), "force" => true)
     end
 
     def default_docker_host
-      if ENV['DOCKER_HOST']
-        ENV['DOCKER_HOST']
-      elsif File.exist?('/var/run/docker.sock')
-        'unix:///var/run/docker.sock'
+      if ENV["DOCKER_HOST"]
+        ENV["DOCKER_HOST"]
+      elsif File.exist?("/var/run/docker.sock")
+        "unix:///var/run/docker.sock"
       # TODO: Docker for Windows also operates over a named pipe at
       # //./pipe/docker_engine that can be used if named pipe support is
       # added to the docker-api gem.
       else
-        'tcp://127.0.0.1:2375'
+        "tcp://127.0.0.1:2375"
       end
     end
 
@@ -152,7 +149,8 @@ VOLUME /opt/verifier
       # refs:
       # https://github.com/docker/machine/issues/1814
       # https://github.com/docker/toolbox/issues/607
-      return Dir.home.sub 'C:/Users', '/c/Users' if Dir.home =~ /^C:/ && remote_docker_host?
+      return Dir.home.sub "C:/Users", "/c/Users" if Dir.home =~ /^C:/ && remote_docker_host?
+
       Dir.home
     end
 
@@ -185,7 +183,7 @@ VOLUME /opt/verifier
         x = Array(v).map { |a| parse_port(a) }
         x.flatten!
         x.each_with_object({}) do |y, h|
-          h[y['container_port']] = {}
+          h[y["container_port"]] = {}
         end
       end
     end
@@ -198,52 +196,53 @@ VOLUME /opt/verifier
         x = Array(v).map { |a| parse_port(a) }
         x.flatten!
         x.each_with_object({}) do |y, h|
-          h[y['container_port']] = [] unless h[y['container_port']]
-          h[y['container_port']] << {
-            'HostIp' => y['host_ip'],
-            'HostPort' => y['host_port'],
+          h[y["container_port"]] = [] unless h[y["container_port"]]
+          h[y["container_port"]] << {
+            "HostIp" => y["host_ip"],
+            "HostPort" => y["host_port"],
           }
         end
       end
     end
 
     def parse_port(v)
-      parts = v.split(':')
+      parts = v.split(":")
       case parts.length
       when 3
         host_ip = parts[0]
         host_port = parts[1]
         container_port = parts[2]
       when 2
-        host_ip = '0.0.0.0'
+        host_ip = "0.0.0.0"
         host_port = parts[0]
         container_port = parts[1]
       when 1
-        host_ip = ''
-        host_port = ''
+        host_ip = ""
+        host_port = ""
         container_port = parts[0]
       end
-      port_range, protocol = container_port.split('/')
-      if port_range.include?('-')
-        port_range = container_port.split('-')
+      port_range, protocol = container_port.split("/")
+      if port_range.include?("-")
+        port_range = container_port.split("-")
         port_range.map!(&:to_i)
         Chef::Log.fatal("FATAL: Invalid port range! #{container_port}") if port_range[0] > port_range[1]
         port_range = (port_range[0]..port_range[1]).to_a
       end
       # qualify the port-binding protocol even when it is implicitly tcp #427.
-      protocol = 'tcp' if protocol.nil?
+      protocol = "tcp" if protocol.nil?
       Array(port_range).map do |port|
         {
-          'host_ip' => host_ip,
-          'host_port' => host_port,
-          'container_port' => "#{port}/#{protocol}",
+          "host_ip" => host_ip,
+          "host_port" => host_port,
+          "container_port" => "#{port}/#{protocol}",
         }
       end
     end
 
     def remote_docker_host?
-      return false if config[:docker_info]['OperatingSystem'].include?('Boot2Docker')
+      return false if config[:docker_info]["OperatingSystem"].include?("Boot2Docker")
       return true if /^tcp:/.match?(config[:docker_host_url])
+
       false
     end
 
@@ -252,13 +251,13 @@ VOLUME /opt/verifier
     end
 
     def sandbox_dirs
-      Dir.glob(File.join(sandbox_path, '*'))
+      Dir.glob(File.join(sandbox_path, "*"))
     end
 
     def create_sandbox
       info("Creating kitchen sandbox in #{sandbox_path}")
       unless ::Dir.exist?(sandbox_path)
-        FileUtils.mkdir_p(sandbox_path, :mode => 0o755)
+        FileUtils.mkdir_p(sandbox_path, mode: 0o755)
       end
     end
   end
@@ -269,7 +268,7 @@ module Kitchen
     class Base
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
-        FileUtils.mkdir_p(sandbox_path, :mode => 0o755)
+        FileUtils.mkdir_p(sandbox_path, mode: 0o755)
       end
 
       # this MUST be named 'sandbox_path' because ruby.
@@ -291,7 +290,7 @@ module Kitchen
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
         unless ::Dir.exist?(sandbox_path)
-          FileUtils.mkdir_p(sandbox_path, :mode => 0o755)
+          FileUtils.mkdir_p(sandbox_path, mode: 0o755)
         end
       end
 
@@ -313,7 +312,7 @@ module Kitchen
             conn.execute(init_command)
             info("Transferring files to #{instance.to_str}")
             conn.upload(sandbox_dirs, config[:root_path])
-            debug('Transfer complete')
+            debug("Transfer complete")
           end
 
           conn.execute(prepare_command)

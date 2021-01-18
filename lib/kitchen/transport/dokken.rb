@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'kitchen'
-require 'net/scp'
-require 'tmpdir' unless defined?(Dir.mktmpdir)
-require 'digest/sha1' unless defined?(Digest::SHA1)
-require_relative '../helpers'
+require "kitchen"
+require "net/scp"
+require "tmpdir" unless defined?(Dir.mktmpdir)
+require "digest/sha1" unless defined?(Digest::SHA1)
+require_relative "../helpers"
 
 include Dokken::Helpers
 
@@ -44,7 +44,7 @@ module Kitchen
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
       default_config :host_ip_override do |transport|
-        transport.docker_for_mac_or_win? ? 'localhost' : false
+        transport.docker_for_mac_or_win? ? "localhost" : false
       end
 
       # (see Base#connection)
@@ -69,7 +69,7 @@ module Kitchen
 
           with_retries { @runner = ::Docker::Container.get(instance_name, {}, docker_connection) }
           with_retries do
-            o = @runner.exec(Shellwords.shellwords(command), wait: options[:timeout], 'e' => { 'TERM' => 'xterm' }) { |_stream, chunk| print chunk.to_s }
+            o = @runner.exec(Shellwords.shellwords(command), wait: options[:timeout], "e" => { "TERM" => "xterm" }) { |_stream, chunk| print chunk.to_s }
             @exit_code = o[2]
           end
 
@@ -83,9 +83,9 @@ module Kitchen
             ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
 
           elsif /unix:/.match?(options[:docker_host_url])
-            if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == '0.0.0.0'
+            if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == "0.0.0.0"
               ssh_ip = options[:data_container][:NetworkSettings][:IPAddress]
-              ssh_port = '22'
+              ssh_port = "22"
             else
               # we should read the proper mapped ip, since this allows us to upload the files
               ssh_ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
@@ -96,12 +96,12 @@ module Kitchen
             name = options[:data_container][:Name]
 
             # DOCKER_HOST
-            docker_host_url_ip = options[:docker_host_url].split('tcp://')[1].split(':')[0]
+            docker_host_url_ip = options[:docker_host_url].split("tcp://")[1].split(":")[0]
 
             # mapped IP of data container
             candidate_ip = ::Docker::Container.all.find do |x|
-              x.info['Names'][0].eql?(name)
-            end.info['NetworkSettings']['Networks']['dokken']['IPAddress']
+              x.info["Names"][0].eql?(name)
+            end.info["NetworkSettings"]["Networks"]["dokken"]["IPAddress"]
 
             # mapped port
             candidate_ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
@@ -114,22 +114,22 @@ module Kitchen
               ssh_ip = candidate_ip
               ssh_port = candidate_ssh_port
 
-            elsif port_open?(candidate_ip, '22')
+            elsif port_open?(candidate_ip, "22")
               ssh_ip = candidate_ip
-              ssh_port = '22'
+              ssh_port = "22"
               debug "candidate_ip - #{candidate_ip}/22 open"
             else
               ssh_ip = docker_host_url_ip
               ssh_port = candidate_ssh_port
             end
           else
-            raise Kitchen::UserError, 'docker_host_url must be tcp:// or unix://'
+            raise Kitchen::UserError, "docker_host_url must be tcp:// or unix://"
           end
 
           debug "ssh_ip : #{ssh_ip}"
           debug "ssh_port : #{ssh_port}"
 
-          tmpdir = Dir.tmpdir + '/dokken/'
+          tmpdir = Dir.tmpdir + "/dokken/"
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
           FileUtils.mkdir_p tmpdir.to_s
@@ -137,26 +137,26 @@ module Kitchen
           FileUtils.chmod(0o600, "#{tmpdir}/id_rsa")
 
           begin
-            rsync_cmd = '/usr/bin/rsync -a -e'
-            rsync_cmd << ' \''
-            rsync_cmd << 'ssh -2'
+            rsync_cmd = "/usr/bin/rsync -a -e"
+            rsync_cmd << " '"
+            rsync_cmd << "ssh -2"
             rsync_cmd << " -i #{tmpdir}/id_rsa"
-            rsync_cmd << ' -o CheckHostIP=no'
-            rsync_cmd << ' -o Compression=no'
-            rsync_cmd << ' -o PasswordAuthentication=no'
-            rsync_cmd << ' -o StrictHostKeyChecking=no'
-            rsync_cmd << ' -o UserKnownHostsFile=/dev/null'
-            rsync_cmd << ' -o LogLevel=ERROR'
+            rsync_cmd << " -o CheckHostIP=no"
+            rsync_cmd << " -o Compression=no"
+            rsync_cmd << " -o PasswordAuthentication=no"
+            rsync_cmd << " -o StrictHostKeyChecking=no"
+            rsync_cmd << " -o UserKnownHostsFile=/dev/null"
+            rsync_cmd << " -o LogLevel=ERROR"
             rsync_cmd << " -p #{ssh_port}"
-            rsync_cmd << '\''
-            rsync_cmd << " #{locals.join(' ')} root@#{ssh_ip}:#{remote}"
+            rsync_cmd << "'"
+            rsync_cmd << " #{locals.join(" ")} root@#{ssh_ip}:#{remote}"
             debug "rsync_cmd :#{rsync_cmd}:"
             `#{rsync_cmd}`
           rescue Errno::ENOENT
-            debug 'Rsync is not installed. Falling back to SCP.'
+            debug "Rsync is not installed. Falling back to SCP."
             locals.each do |local|
               Net::SCP.upload!(ssh_ip,
-                               'root',
+                               "root",
                                local,
                                remote,
                                recursive: true,
@@ -169,8 +169,8 @@ module Kitchen
           @runner = options[:instance_name].to_s
           cols = `tput cols`
           lines = `tput lines`
-          args = ['exec', '-e', "COLUMNS=#{cols}", '-e', "LINES=#{lines}", '-it', @runner, '/bin/bash', '-login', '-i']
-          LoginCommand.new('docker', args)
+          args = ["exec", "-e", "COLUMNS=#{cols}", "-e", "LINES=#{lines}", "-it", @runner, "/bin/bash", "-login", "-i"]
+          LoginCommand.new("docker", args)
         end
 
         private
@@ -181,6 +181,7 @@ module Kitchen
 
         def work_image
           return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
+
           instance_name
         end
 
@@ -208,7 +209,7 @@ module Kitchen
       #
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
-        ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))['Name'] == 'moby'
+        ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "moby"
       rescue
         false
       end

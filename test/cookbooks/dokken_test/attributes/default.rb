@@ -1,1 +1,1 @@
-default['dokken_test']['revision'] = 'master'
+default["dokken_test"]["revision"] = "master"
