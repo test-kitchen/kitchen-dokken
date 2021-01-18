@@ -1,3 +1,4 @@
+---
 rvm:
   - 2.5
 cache: bundler
@@ -11,7 +12,7 @@ bundler_args: "--binstubs=$PWD/bin --jobs 3 --retry 3 --without development"
 
 branches:
   only:
-  - master
+    - master
 
 env:
   global:
@@ -24,13 +25,12 @@ before_install:
   - sudo apt-get install -y nmap
 
 before_script:
- - sudo nmap -p- localhost
- - sudo iptables -S
- - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
- - docker run --privileged -d -p 4444:4444 -e PORT=4444 jpetazzo/dind
+  - sudo nmap -p- localhost
+  - sudo iptables -S
+  - sudo iptables -L DOCKER || ( echo "DOCKER iptables chain missing" ; sudo iptables -N DOCKER )
+  - docker run --privileged -d -p 4444:4444 -e PORT=4444 jpetazzo/dind
 
 script:
-#  - DOCKER_HOST="tcp://localhost:4444" KITCHEN_YAML=.kitchen.yml time bundle exec kitchen test ${INSTANCE} -l debug
   - time bundle exec kitchen test ${INSTANCE} -l debug
 
 after_script: |
