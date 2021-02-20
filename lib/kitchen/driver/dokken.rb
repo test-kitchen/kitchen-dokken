@@ -33,6 +33,7 @@ module Kitchen
     #
     # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Driver::Base
+      default_config :aliases, nil
       default_config :api_retries, 20
       default_config :binds, []
       default_config :cap_add, nil
@@ -309,7 +310,7 @@ module Kitchen
           "NetworkingConfig" => {
             "EndpointsConfig" => {
               self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]),
+                "Aliases" => Array(self[:hostname]).concat(Array(self[:aliases])),
               },
             },
           },
