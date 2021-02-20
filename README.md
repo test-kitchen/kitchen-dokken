@@ -558,6 +558,17 @@ driver:
   memory_limit: 2147483648 # 2GB
 ```
 
+### Adding hostname aliases
+
+You can set the `aliases` parameter to create additional hostnames that will resolve to the container:
+
+```yaml
+driver:
+  name: dokken
+  aliases:
+    - foo
+```
+
 ## FAQ
 
 ### What about kitchen-docker?
