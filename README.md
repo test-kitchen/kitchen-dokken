@@ -476,6 +476,19 @@ the time being).
   - recipe[whatever::recipe]
 ```
 
+If you have your own mirror of Docker Hub, or you are using a registry other
+than Docker Hub, you can tell Dokken to always pull from a different registry
+by setting `docker_registry` under `driver`:
+
+```
+driver:
+  docker_registry: docker.sample.com
+```
+
+If you do this, it must have access to the dokken images for the platforms you
+want to test as well as the `centos` image that is used for the dynamic
+testing image.
+
 ### Tmpfs on /tmp
 
 When starting a container with an init system, it will often mount a tmpfs into `/tmp`.
