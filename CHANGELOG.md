@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.12.1 (2021-03-01)
+
+- Further improvements for using `docker_registry` to use a Docker Registry other than DockerHub [@jaymzh](https://github.com/jaymzh)
+
 ## 2.12.0 (2021-02-23)
 
 - Add a new `docker_registry` config option for specifying customer docker registry URLs [@jaymzh](https://github.com/jaymzh)
