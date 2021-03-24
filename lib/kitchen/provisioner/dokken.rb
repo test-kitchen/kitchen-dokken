@@ -16,7 +16,7 @@
 # limitations under the License.
 
 require "kitchen"
-require "kitchen/provisioner/chef_zero"
+require "kitchen/provisioner/chef_infra"
 require_relative "../helpers"
 
 include Dokken::Helpers
@@ -24,7 +24,7 @@ include Dokken::Helpers
 module Kitchen
   module Provisioner
     # @author Sean OMeara <sean@sean.io>
-    class Dokken < Kitchen::Provisioner::ChefZero
+    class Dokken < Kitchen::Provisioner::ChefInfra
       kitchen_provisioner_api_version 2
 
       plugin_version Kitchen::VERSION
@@ -38,14 +38,14 @@ module Kitchen
       default_config :docker_info, docker_info
       default_config :docker_host_url, default_docker_host
 
-      # Dokken is weird - the provisioner inherits from ChefZero but does not install
+      # Dokken is weird - the provisioner inherits from ChefInfra but does not install
       # chef-client. The version of chef used is customized by users in the driver
       # section since it is just downloading a specific Docker image of Chef Client.
       # In order to get the license-acceptance code working though (which depends on
       # the product_version from the provisioner) we need to copy the value from the
       # driver and set it here. If we remove this, users will set their chef_version
       # to 14 in the driver and still get prompted for license acceptance because
-      # the ChefZero provisioner defaults product_version to 'latest'.
+      # the ChefInfra provisioner defaults product_version to 'latest'.
       default_config :product_name, "chef"
       default_config :product_version do |provisioner|
         driver = provisioner.instance.driver
@@ -99,7 +99,7 @@ module Kitchen
 
       private
 
-      # patching Kitchen::Provisioner::ChefZero#run_command
+      # patching Kitchen::Provisioner::ChefInfra#run_command
       def run_command
         validate_config
         cmd = config[:chef_binary]
