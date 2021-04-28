@@ -48,6 +48,7 @@ module Kitchen
       default_config :entrypoint, nil
       default_config :env, nil
       default_config :hostname, "dokken"
+      default_config :hostname_aliases, nil
       default_config :image_prefix, nil
       default_config :links, nil
       default_config :memory_limit, 0
@@ -313,7 +314,7 @@ module Kitchen
           "NetworkingConfig" => {
             "EndpointsConfig" => {
               self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]),
+                "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
               },
             },
           },
