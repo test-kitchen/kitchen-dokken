@@ -117,6 +117,8 @@ VOLUME /opt/verifier
     end
 
     def docker_info
+      ::Docker.url = default_docker_host
+
       @docker_info ||= ::Docker.info
     rescue Excon::Error::Socket
       puts "kitchen-dokken could not connect to the docker host at #{default_docker_host}. Is docker running?"

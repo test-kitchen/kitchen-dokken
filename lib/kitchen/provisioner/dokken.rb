@@ -114,7 +114,7 @@ module Kitchen
       end
 
       def write_run_command(command)
-        File.write("#{dokken_kitchen_sandbox}/run_command", command)
+        File.write("#{dokken_kitchen_sandbox}/run_command", command, mode: "wb")
       end
 
       def runner_container_name
