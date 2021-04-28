@@ -33,7 +33,6 @@ module Kitchen
     #
     # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Driver::Base
-      default_config :aliases, nil
       default_config :api_retries, 20
       default_config :binds, []
       default_config :cap_add, nil
@@ -49,6 +48,7 @@ module Kitchen
       default_config :ports, nil
       default_config :docker_host_url, default_docker_host
       default_config :hostname, "dokken"
+      default_config :hostname_aliases, nil
       default_config :image_prefix, nil
       default_config :links, nil
       default_config :network_mode, "dokken"
@@ -310,7 +310,7 @@ module Kitchen
           "NetworkingConfig" => {
             "EndpointsConfig" => {
               self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]).concat(Array(self[:aliases])),
+                "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
               },
             },
           },

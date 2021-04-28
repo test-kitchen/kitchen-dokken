@@ -560,12 +560,12 @@ driver:
 
 ### Adding hostname aliases
 
-You can set the `aliases` parameter to create additional hostnames that will resolve to the container:
+You can set the `hostname_aliases` parameter to create additional hostnames that will resolve to the container:
 
 ```yaml
 driver:
   name: dokken
-  aliases:
+  hostname_aliases:
     - foo
 ```
 
