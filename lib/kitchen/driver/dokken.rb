@@ -600,7 +600,7 @@ module Kitchen
             original_image = Docker::Image.get(path, {}, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path }, docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path }, {}, docker_connection)
 
           !(original_image && original_image.id.start_with?(new_image.id))
         end
