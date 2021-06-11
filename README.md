@@ -525,6 +525,15 @@ driver:
   pull_chef_image: false
 ```
 
+### Testing for Slow Resources in Cookbooks
+
+You can enable the slow resource report at the end of the run in Chef Infra Client 17.2 or later with the `slow_resource_report` config option:
+
+```yaml
+provisioner:
+  slow_resource_report: true
+```
+
 ### Testing without Chef
 
 Containers that supply a no-op binary which returns a successful exit status can be tested without requiring Chef Infra to actually converge.

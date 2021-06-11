@@ -109,6 +109,7 @@ module Kitchen
         cmd << " -c /opt/kitchen/client.rb"
         cmd << " -j /opt/kitchen/dna.json"
         cmd << "--profile-ruby" if config[:profile_ruby]
+        cmd << "--slow-report" if config[:slow_resource_report]
 
         chef_cmd(cmd)
       end
