@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## 2.13.0 (2021-06-11)
+
+- Add support for running the slow resource report in Chef Infra Client 17.2+ with a new `slow_resource_config` option in the provisioner
+- Add the ability to set hostname aliases with a new `hostname_aliases` config in the driver [@npmeyer](https://github.com/npmeyer)
+- Fix execution failures on Windows [@jakauppila](https://github.com/jakauppila)
+- Fix failures when running on Podman [@tomhughes](https://github.com/tomhughes)
+
 ## 2.12.1 (2021-03-01)
 
 - Further improvements for using `docker_registry` to use a Docker Registry other than DockerHub [@jaymzh](https://github.com/jaymzh)
