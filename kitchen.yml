@@ -85,3 +85,9 @@ suites:
   - name: local_image
     includes:
       - local_image
+
+  - name: ipv6
+    includes:
+      - centos
+    driver:
+      ipv6: true

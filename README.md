@@ -570,6 +570,46 @@ driver:
   hostname_aliases:
     - foo
 ```
+### IPv6 Networking
+
+You can set the `ipv6` parameter to enable IPv6 networking on the `dokken` Docker network. Additionally, the `ipv6_subnet` parameter can be used to determine the subnet the network should use.
+
+```yaml
+driver:
+  name: dokken
+  ipv6: true
+  ipv6_subnet: "2001:db8:1::/64"  # "2001:db8::/32 Range reserved for documentation"
+```
+
+This parameter should be considered a global setting for all dokken containers since dokken does not update the `dokken` network once it's been created. It is *not* recommend to use this parameter within suites.
+
+You can check to see if IPv6 is enabled on the dokken network by seeing if the following command returns `true`:
+
+```bash
+docker network inspect dokken --format='{{.EnableIPv6}}'
+```
+
+If the command returns `false`, we recommend you delete the network and allow dokken to recreate it with IPv6.
+
+To allow IPv6 Docker networks to reach the internet IPv6 firewall rules must be set up. The simplest way to achieve this is to update Docker's `/etc/docker/daemon.json` to use the following settings. You will need to restart the docker daemon after making these changes.
+
+```json
+{
+  "experimental": true,
+  "ip6tables": true
+}
+```
+
+Some containers require the `ip6table_filter` kernel module to be loaded on the host system or ip6tables will not dunction on the container (Centos 7 for example). To check if the module is loaded use the command
+
+```bash
+sudo lsmod | grep ip6table_filter
+```
+
+. If there is no output than the module is not loaded and should be loaded using the command
+```bash
+modprobe ip6table_filter
+```
 
 ## FAQ
 
