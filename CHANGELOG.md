@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.13.0 (2021-07-02)
+
+- Support Test Kitchen 3.0
+
 ## 2.13.0 (2021-06-11)
 
 - Add support for running the slow resource report in Chef Infra Client 17.2+ with a new `slow_resource_config` option in the provisioner
