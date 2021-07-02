@@ -183,9 +183,9 @@ VOLUME /opt/verifier
           "EnableIPv6" => true,
           "IPAM" => {
             "Config" => [{
-              "Subnet" => self[:ipv6_subnet]
-            }]
-          }
+              "Subnet" => self[:ipv6_subnet],
+            }],
+          },
         }
       else
         {}

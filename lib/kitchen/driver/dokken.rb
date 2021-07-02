@@ -51,7 +51,7 @@ module Kitchen
       default_config :hostname_aliases, nil
       default_config :image_prefix, nil
       default_config :ipv6, false
-      default_config :ipv6_subnet, "2001:db8:1::/64"  # "2001:db8::/32 Range reserved for documentation"
+      default_config :ipv6_subnet, "2001:db8:1::/64" # "2001:db8::/32 Range reserved for documentation"
       default_config :links, nil
       default_config :memory_limit, 0
       default_config :network_mode, "dokken"
