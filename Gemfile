@@ -15,5 +15,5 @@ group :development do
 end
 
 group :chefstyle do
-  gem "chefstyle", "2.0.8"
+  gem "chefstyle", "2.0.9"
 end
