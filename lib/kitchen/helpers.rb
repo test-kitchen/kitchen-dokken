@@ -261,6 +261,7 @@ VOLUME /opt/verifier
     end
 
     def remote_docker_host?
+      return false if config[:docker_info]["OperatingSystem"].include?("Docker Desktop")
       return false if config[:docker_info]["OperatingSystem"].include?("Boot2Docker")
       return true if /^tcp:/.match?(config[:docker_host_url])
 
