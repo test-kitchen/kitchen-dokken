@@ -1,6 +1,10 @@
 # Dokken Changelog
 
-## 2.13.0 (2021-07-02)
+## 2.15.0 (2021-10-21)
+
+- Add support for Docker Desktop on Windows [@jakauppila](https://github.com/jakauppila)
+
+## 2.14.0 (2021-07-02)
 
 - Support Test Kitchen 3.0
 
