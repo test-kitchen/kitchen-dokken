@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.16.0 (2021-10-23)
+
+- Updates transport for color output with Kitchen::Logger [@collinmcneese](https://github.com/collinmcneese)
+
 ## 2.15.0 (2021-10-21)
 
 - Add support for Docker Desktop on Windows [@jakauppila](https://github.com/jakauppila)
