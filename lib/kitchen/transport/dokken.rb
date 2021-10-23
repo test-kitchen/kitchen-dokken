@@ -69,7 +69,9 @@ module Kitchen
 
           with_retries { @runner = ::Docker::Container.get(instance_name, {}, docker_connection) }
           with_retries do
-            o = @runner.exec(Shellwords.shellwords(command), wait: options[:timeout], "e" => { "TERM" => "xterm" }) { |_stream, chunk| print chunk.to_s }
+            o = @runner.exec(Shellwords.shellwords(command), wait: options[:timeout], "e" => { "TERM" => "xterm" }) do |_stream, chunk|
+              logger << chunk
+            end
             @exit_code = o[2]
           end
 
@@ -224,6 +226,7 @@ module Kitchen
       # @api private
       def connection_options(data)
         opts = {}
+        opts[:logger] = logger
         opts[:host_ip_override] = config[:host_ip_override]
         opts[:docker_host_url] = config[:docker_host_url]
         opts[:docker_host_options] = ::Docker.options
