@@ -66,9 +66,13 @@ module Kitchen
       default_config :userns_host, false
       default_config :volumes, nil
       default_config :write_timeout, 3600
+      default_config :creds_file, nil
 
       # (see Base#create)
       def create(state)
+        # Authenticate the private registry
+        authenticate!
+
         # image to config
         pull_platform_image
 
@@ -410,6 +414,21 @@ module Kitchen
         end
       end
 
+      def authenticate!
+        # No need to authenticate if the credentials are empty
+        return if docker_creds.empty?
+
+        ::Docker.authenticate! docker_creds
+      end
+
+      def docker_creds
+        @docker_creds ||= if config[:creds_file]
+                            JSON.parse(IO.read(config[:creds_file]))
+                          else
+                            {}
+                          end
+      end
+
       def pull_platform_image
         debug "driver - pulling #{short_image_path(platform_image)}"
         config[:pull_platform_image] ? pull_image(platform_image) : pull_if_missing(platform_image)
@@ -602,7 +621,7 @@ module Kitchen
             original_image = Docker::Image.get(path, {}, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path }, {}, docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path }, docker_creds, docker_connection)
 
           !(original_image && original_image.id.start_with?(new_image.id))
         end
