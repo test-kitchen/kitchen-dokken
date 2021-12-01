@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.17.0 (2021-12-01)
+
+- Added authentication for private registries [@ashiqueps](https://github.com/ashiqueps)
+
 ## 2.16.0 (2021-10-23)
 
 - Updates transport for color output with Kitchen::Logger [@collinmcneese](https://github.com/collinmcneese)
