@@ -611,6 +611,26 @@ sudo lsmod | grep ip6table_filter
 modprobe ip6table_filter
 ```
 
+### Private Docker Registries
+
+If the registry is private, you can configure the credentials that are required to authenticate the private docker registry in `creds_file` configuration. 
+```yaml
+platforms:
+  - name: centos-7
+    driver:
+      image: reg/centos-7
+      creds_file: './creds.json'
+```
+And the `creds.json` file may look like this:
+```json
+{
+   "username": "org_username",
+   "password": "password",
+   "email": "email@org.com",
+   "serveraddress": "https://registry.org.com/"
+}
+```
+
 ## FAQ
 
 ### What about kitchen-docker?
