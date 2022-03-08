@@ -450,10 +450,11 @@ module Kitchen
         image_registry = image.split('/').first
 
         # NOTE: Try to use DockerHub auth if exact registry match isn't found
+        default_registry = 'https://index.docker.io/v1/'
         if docker_config_creds.key?(image_registry)
           docker_config_creds[image_registry]
-        elsif docker_config_creds.key?('https://index.docker.io/v1/')
-          docker_config_creds['https://index.docker.io/v1/']
+        elsif docker_config_creds.key?(default_registry)
+          docker_config_creds[default_registry]
         end
       end
 
