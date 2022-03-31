@@ -4,8 +4,7 @@ name: linters
 'on':
   pull_request:
   push:
-    branches:
-      - master
+    branches: [main]
 
 jobs:
   yamllint:
@@ -28,3 +27,21 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - run: bundle exec rake style
+
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - default
+          - idempotency
+          - ipv6
+    name: Kitchen Verify ${{ matrix.suite }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0
+          bundler-cache: true
+      - run: bundle exec bundle exec kitchen test ${{ matrix.suite }}
