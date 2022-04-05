@@ -30,12 +30,12 @@ docker_service "default" do
   action %i{create start}
 end
 
-git "/home/notroot/kitchen-dokken" do
-  repository "/opt/kitchen-dokken/.git"
-  revision node["dokken_test"]["revision"]
-  user "notroot"
-  action :sync
-end
+# git "/home/notroot/kitchen-dokken" do
+#   repository "/opt/kitchen-dokken/.git"
+#   revision node["dokken_test"]["revision"]
+#   user "notroot"
+#   action :sync
+# end
 
 execute "install gem bundle" do
   command "/usr/bin/bundle install --without development --path vendor/bundle"
