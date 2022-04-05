@@ -56,7 +56,7 @@ suites:
       multiple_converge: 2
       deprecations_as_errors: true
     run_list:
-      - recipe[dokken_test::idempotency]
+      - recipe[dokken_test::default]
 
   - name: hello
     driver:
