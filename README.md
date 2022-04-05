@@ -54,21 +54,21 @@ suites:
 
 #### List kitchen suites
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen list
 Instance          Driver  Provisioner  Verifier  Transport  Last Action    Last Error
 ```
 
 #### List containers
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 ```
 
 #### List images
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 ```
@@ -77,7 +77,7 @@ REPOSITORY          TAG                 IMAGE ID            CREATED             
 
 #### kitchen create
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen create
 -----> Starting Kitchen (v1.15.0)
 -----> Creating <default-centos-7>...
@@ -91,7 +91,7 @@ The `kitchen create` phase of the kitchen run pulls (if missing) the `chef/chef`
 
 When talking to a local Docker host (over a socket), the driver creates and bind mounts a sandbox directory to `/opt/kitchen`. This prevents us from having to "upload" the test data.
 
-When talking to a *remote* Docker host (tcp://somewhere.else), dokken starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and ` /opt/verifier` available for mounting by the runner. The data container is the "trick" to the whole thing. It comes with rsync, runs an openssh daemon, and uses an insecure, authorized_key ala Vagrant. This is later used to upload cookbook test data.
+When talking to a *remote* Docker host (tcp://somewhere.else), dokken starts a container named `<suite-name>-data`. It makes `/opt/kitchen` and `/opt/verifier` available for mounting by the runner. The data container is the "trick" to the whole thing. It comes with rsync, runs an openssh daemon, and uses an insecure, authorized_key ala Vagrant. This is later used to upload cookbook test data.
 
 The venerable `/tmp` directory is avoided, due to the popularity of `tmpfs` clobbering by inits.
 
@@ -99,7 +99,7 @@ Finally, the driver pulls the image specified by the suite's platform section an
 
 #### List containers
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                                COMMAND                  CREATED              STATUS              PORTS               NAMES
 3489588d4470        6e1b03ab46-default-centos-7:latest   "sh -c 'trap exit ..."   About a minute ago   Up About a minute                       6e1b03ab46-default-centos-7
@@ -108,7 +108,7 @@ f678882b1575        chef/chef:current                    "true"                 
 
 #### List images
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED              SIZE
 6e1b03ab46-default-centos-7   latest              2ea1040b9c10        About a minute ago   192 MB
@@ -120,7 +120,7 @@ centos                        7                   67591570dd29        7 weeks ag
 
 #### kitchen converge
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen converge
 -----> Starting Kitchen (v1.15.0)
 -----> Converging <default-centos-7>...
@@ -165,7 +165,7 @@ The `kitchen-converge` phase of the kitchen run uses the provisioner to upload c
 
 #### List containers
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
 c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   9 minutes ago       Up 9 minutes                                default-centos-7
@@ -175,7 +175,7 @@ c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   9 mi
 
 #### List images
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 default-centos-7        latest              ec1d208d77cd        8 minutes ago       172.3 MB
@@ -186,7 +186,7 @@ centos                  7                   e9fa5d3a0d0e        6 weeks ago     
 
 #### Diff container
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker diff default-centos-7
 A /hello
 C /opt
@@ -206,7 +206,7 @@ C /var/lib/rpm/__db.003
 
 #### kitchen verify
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ time kitchen verify
 -----> Starting Kitchen (v1.15.0)
 -----> Setting up <default-centos-7>...
@@ -236,7 +236,7 @@ The `kitchen-verify` phase uses the transport to run acceptance tests, verifying
 
 #### List containers
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE                                COMMAND                  CREATED             STATUS              PORTS               NAMES
 84def4c49ce3        6e1b03ab46-default-centos-7:latest   "sh -c 'trap exit ..."   6 minutes ago       Up 6 minutes                            6e1b03ab46-default-centos-7
@@ -245,7 +245,7 @@ f678882b1575        chef/chef:current                    "true"                 
 
 #### List images
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
 6e1b03ab46-default-centos-7   latest              fec1a50470ed        6 minutes ago       192 MB
@@ -257,7 +257,7 @@ centos                        7                   67591570dd29        7 weeks ag
 
 #### kitchen destroy
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ kitchen destroy
 -----> Starting Kitchen (v1.15.0)
 -----> Destroying <default-centos-7>...
@@ -268,7 +268,7 @@ laptop:~/src/chef-cookbooks/hello_dokken$ kitchen destroy
 
 #### List containers
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
 f678882b1575        chef/chef:current   "true"              10 minutes ago      Created                                 chef-current
@@ -276,7 +276,7 @@ f678882b1575        chef/chef:current   "true"              10 minutes ago      
 
 #### List images
 
-```
+```shell
 laptop:~/src/chef-cookbooks/hello_dokken$ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 chef/chef           current             01ec788610e2        6 days ago          124 MB
@@ -287,7 +287,7 @@ centos              7                   67591570dd29        7 weeks ago         
 
 Due to the nature of Docker, a handful of considerations need to be addressed.
 
-A complete example of a non-trivial `kitchen.yml` is found in the `docker` cookbook, at https://github.com/chef-cookbooks/docker/blob/master/kitchen.yml
+A complete example of a non-trivial `kitchen.yml` is found in the `docker` cookbook, at <https://github.com/chef-cookbooks/docker/blob/master/kitchen.yml>
 
 ### Minimalist images
 
@@ -332,7 +332,7 @@ driver:
   entrypoint: /bin/entrypoint
   intermediate_instructions:
     - RUN /usr/bin/openssl s_client -showcerts -verify 5 -connect free.fr:443 </dev/null | /usr/bin/awk '/BEGIN/,/END/{if(/BEGIN/){a++}; certs[a]=(certs[a] "\n" $0)}; END {print certs[a]}' >> /usr/local/share/ca-certificates/ca.crt && update-ca-certificates
-    - RUN echo  "#!/bin/bash -ex\ncat /usr/local/share/ca-certificates/ca.crt >> /opt/chef/embedded/ssl/certs/cacert.pem\nexec \"\$@\"\n" >> /bin/entrypoint && chmod +x /bin/entrypoint
+    - RUN echo  "#!/bin/shell -ex\ncat /usr/local/share/ca-certificates/ca.crt >> /opt/chef/embedded/ssl/certs/cacert.pem\nexec \"\$@\"\n" >> /bin/entrypoint && chmod +x /bin/entrypoint
 ```
 
 The code above does call a site (here free.fr, my french ISP :)) with openssl s_client and does an ugly awk parsing to extract the root CA from the chain and write it in `/usr/local/share/ca-certificate/ca.crt` and then update system certs (which makes curl, wget, and other system calls works with the proxy)
@@ -368,6 +368,7 @@ platforms:
 You can combine `intermediate_instructions` and `pid_one_command` as needed.
 
 - Upstart for Ubuntu 12.04
+
 ```yaml
 - name: ubuntu-12.04
   driver:
@@ -383,6 +384,7 @@ You can combine `intermediate_instructions` and `pid_one_command` as needed.
 IF you are running a Docker daemon with user namespace remapping enabled you'll get errors running dokken with privileged containers.
 
 To mitigate this, add the following to your driver definition:
+
 ```yaml
 platforms:
 - name: centos-7
@@ -402,6 +404,7 @@ Therefore one may save the downloads on a different volume and therefore save ti
 On some versions of Ubuntu (16.04 at least), the container deletes all the downloads upon every run of `apt-get update`, so that must be disabled
 
 - `apt` Caching on Ubuntu 16.04
+
 ```yaml
 ---
 driver:
@@ -425,7 +428,7 @@ platforms:
 When chef converges `kitchen-dokken` populates `/opt/kitchen/` with the chef and test kitchen data required to converge. By default this directory is cleared out at the end of every run. One of the subdirectories of `/opt/kitchen/` is the chef cache directory. For cookbooks that download significant amounts of data from the network, i.e. many `remote_file` calls, this can make subsequent converges unnecessarily slow.
 If you would like the chef cache to be preserved between converges add `clean_dokken_sandbox: false` to the provisioner section of `kitchen.yml`. The default value is true.
 
-```
+```yaml
 provisioner:
   name: dokken
   clean_dokken_sandbox: false
@@ -465,7 +468,7 @@ If you have your own mirror of Docker Hub, or you are using a registry other
 than Docker Hub, you can tell Dokken to always pull from a different registry
 by setting `docker_registry` under `driver`:
 
-```
+```yaml
 driver:
   docker_registry: docker.sample.com
 ```
@@ -570,6 +573,7 @@ driver:
   hostname_aliases:
     - foo
 ```
+
 ### IPv6 Networking
 
 You can set the `ipv6` parameter to enable IPv6 networking on the `dokken` Docker network. Additionally, the `ipv6_subnet` parameter can be used to determine the subnet the network should use.
@@ -585,7 +589,7 @@ This parameter should be considered a global setting for all dokken containers s
 
 You can check to see if IPv6 is enabled on the dokken network by seeing if the following command returns `true`:
 
-```bash
+```shell
 docker network inspect dokken --format='{{.EnableIPv6}}'
 ```
 
@@ -602,18 +606,20 @@ To allow IPv6 Docker networks to reach the internet IPv6 firewall rules must be 
 
 Some containers require the `ip6table_filter` kernel module to be loaded on the host system or ip6tables will not dunction on the container (Centos 7 for example). To check if the module is loaded use the command
 
-```bash
+```shell
 sudo lsmod | grep ip6table_filter
 ```
 
 . If there is no output than the module is not loaded and should be loaded using the command
-```bash
+
+```shell
 modprobe ip6table_filter
 ```
 
 ### Private Docker Registries
 
-If the registry is private, you can configure the credentials that are required to authenticate the private docker registry in `creds_file` configuration. 
+If the registry is private, you can configure the credentials that are required to authenticate the private docker registry in `creds_file` configuration.
+
 ```yaml
 platforms:
   - name: centos-7
@@ -621,7 +627,9 @@ platforms:
       image: reg/centos-7
       creds_file: './creds.json'
 ```
+
 And the `creds.json` file may look like this:
+
 ```json
 {
    "username": "org_username",
@@ -650,7 +658,7 @@ Right now there is no `kitchen publish` mechanism. [See this issue](https://gith
 
 You can, however, do it manually.
 
-```
+```shell
 cd my_cookbook ;
 kitchen verify suite_name
 docker stop suite_name
