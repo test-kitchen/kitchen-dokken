@@ -1,8 +1,3 @@
 ---
 AllCops:
-  TargetRubyVersion: 2.5
-
-  Exclude:
-    - files/default/vendor/**/*
-    - vendor/**/*
-    - tmp/**/*
+  TargetRubyVersion: 2.7

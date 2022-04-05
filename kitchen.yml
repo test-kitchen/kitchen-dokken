@@ -33,11 +33,6 @@ platforms:
       volumes:
         - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
 
-  - name: local_image
-    driver:
-      image: local-example:latest
-      pull_platform_image: false
-
 suites:
   - name: default
     includes:
@@ -56,7 +51,7 @@ suites:
       multiple_converge: 2
       deprecations_as_errors: true
     run_list:
-      - recipe[dokken_test::idempotency]
+      - recipe[dokken_test::default]
 
   - name: hello
     driver:
@@ -73,8 +68,6 @@ suites:
   - name: helloagain
     driver:
       hostname: helloagain.computers.biz
-      intermediate_instructions:
-        - RUN apk update && apk add curl
       ports:
         - '8301'
         - '8301:8301/udp'
