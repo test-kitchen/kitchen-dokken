@@ -33,6 +33,10 @@ platforms:
       volumes:
         - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
 
+  - name: windows-2019
+    driver:
+      image: mcr.microsoft.com/windows/servercore:ltsc2022-amd64
+
 suites:
   - name: default
     includes:
@@ -84,3 +88,8 @@ suites:
       - centos
     driver:
       ipv6: true
+
+  - name: chocolatey
+    includes: windows-2019
+    run_list:
+      - recipe[chocolatey::default]
