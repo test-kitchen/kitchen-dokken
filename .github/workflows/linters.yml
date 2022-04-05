@@ -53,7 +53,8 @@ jobs:
         with:
           ruby-version: 3.0
           bundler-cache: true
+      - name: Suite $${{ matrix.suite }}
+        run: bundle exec bundle exec kitchen test ${{ matrix.suite }}
         env:
           KITCHEN_YAML: kitchen.yml
           CHEF_LICENSE: "accept-no-persist"
-      - run: bundle exec bundle exec kitchen test ${{ matrix.suite }}
