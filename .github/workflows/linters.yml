@@ -56,7 +56,7 @@ jobs:
           CHEF_LICENSE: "accept-no-persist"
 
   integration-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs: [mdl, yamllint, chefstyle]
     name: Verify Windows containers
     steps:
