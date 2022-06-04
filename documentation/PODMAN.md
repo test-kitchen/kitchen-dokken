@@ -14,6 +14,7 @@ driver:
 
 provisioner:
   name: dokken
+  login_command: podman
 
 transport:
   name: dokken
