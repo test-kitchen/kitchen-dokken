@@ -437,6 +437,8 @@ module Kitchen
         @docker_config_creds = {}
         config_file = ::File.join(::Dir.home, ".docker", "config.json")
         JSON.load_file!(config_file)["auths"].each do |k, v|
+          next if v["auth"].nil?
+
           username, password = Base64.decode64(v["auth"]).split(":")
           @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
         end
