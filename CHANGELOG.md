@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.17.2 (2022-06-16)
+
+- Attempt to read ~/.docker/config.json for registry auths [@evandam](https://github.com/evandam)
+
 ## 2.17.1 (2022-06-09)
 
 - Updated the Podman documentation [@damacus](https://github.com/damacus)
