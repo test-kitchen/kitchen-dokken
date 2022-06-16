@@ -20,6 +20,7 @@ require "kitchen"
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "docker"
 require "lockfile"
+require "base64" unless defined?(Base64)
 require_relative "../helpers"
 
 include Dokken::Helpers
@@ -67,6 +68,7 @@ module Kitchen
       default_config :volumes, nil
       default_config :write_timeout, 3600
       default_config :creds_file, nil
+      default_config :docker_config_creds, false
 
       # (see Base#create)
       def create(state)
@@ -429,6 +431,35 @@ module Kitchen
                           end
       end
 
+      def docker_config_creds
+        return @docker_config_creds if @docker_config_creds
+
+        @docker_config_creds = {}
+        config_file = ::File.join(::Dir.home, ".docker", "config.json")
+        JSON.load_file!(config_file)["auths"].each do |k, v|
+          next if v["auth"].nil?
+
+          username, password = Base64.decode64(v["auth"]).split(":")
+          @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
+        end
+
+        @docker_config_creds
+      end
+
+      def docker_creds_for_image(image)
+        return docker_creds if config[:creds_file]
+
+        image_registry = image.split("/").first
+
+        # NOTE: Try to use DockerHub auth if exact registry match isn't found
+        default_registry = "https://index.docker.io/v1/"
+        if docker_config_creds.key?(image_registry)
+          docker_config_creds[image_registry]
+        elsif docker_config_creds.key?(default_registry)
+          docker_config_creds[default_registry]
+        end
+      end
+
       def pull_platform_image
         debug "driver - pulling #{short_image_path(platform_image)}"
         config[:pull_platform_image] ? pull_image(platform_image) : pull_if_missing(platform_image)
@@ -621,7 +652,7 @@ module Kitchen
             original_image = Docker::Image.get(path, {}, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path }, docker_creds, docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path }, docker_creds_for_image(image), docker_connection)
 
           !(original_image && original_image.id.start_with?(new_image.id))
         end
