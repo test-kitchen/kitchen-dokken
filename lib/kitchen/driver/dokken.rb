@@ -57,6 +57,7 @@ module Kitchen
       default_config :memory_limit, 0
       default_config :network_mode, "dokken"
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
+      default_config :platform, ""
       default_config :ports, nil
       default_config :privileged, false
       default_config :pull_chef_image, true
@@ -135,9 +136,9 @@ module Kitchen
       end
 
       def delete_work_image
-        return unless ::Docker::Image.exist?(work_image, {}, docker_connection)
+        return unless ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
 
-        with_retries { @work_image = ::Docker::Image.get(work_image, {}, docker_connection) }
+        with_retries { @work_image = ::Docker::Image.get(work_image, { "platform" => config[:platform] }, docker_connection) }
 
         with_retries do
 
@@ -150,13 +151,14 @@ module Kitchen
 
       def build_work_image(state)
         info("Building work image..")
-        return if ::Docker::Image.exist?(work_image, {}, docker_connection)
+        return if ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
 
         begin
           @intermediate_image = ::Docker::Image.build(
             work_image_dockerfile,
             {
               "t" => work_image,
+              "platform" => config[:platform],
             },
             docker_connection
           )
@@ -471,7 +473,7 @@ module Kitchen
       end
 
       def delete_image(name)
-        with_retries { @image = ::Docker::Image.get(name, {}, docker_connection) }
+        with_retries { @image = ::Docker::Image.get(name, { "platform" => config[:platform] }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error
         puts "Image #{name} not found. Nothing to delete."
@@ -543,6 +545,7 @@ module Kitchen
           args["Env"] = [] if args["Env"].nil?
           args["Env"] << "TEST_KITCHEN=1"
           args["Env"] << "CI=#{ENV["CI"]}" if ENV.include? "CI"
+          args["Platform"] = config[:platform]
           info "Creating container #{args["name"]}"
           debug "driver - create_container args #{args}"
           with_retries do
@@ -635,7 +638,7 @@ module Kitchen
       end
 
       def pull_if_missing(image)
-        return if ::Docker::Image.exist?(registry_image_path(image), {}, docker_connection)
+        return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => config[:platform] }, docker_connection)
 
         pull_image image
       end
@@ -648,11 +651,11 @@ module Kitchen
       def pull_image(image)
         path = registry_image_path(image)
         with_retries do
-          if Docker::Image.exist?(path, {}, docker_connection)
-            original_image = Docker::Image.get(path, {}, docker_connection)
+          if Docker::Image.exist?(path, { "platform" => config[:platform] }, docker_connection)
+            original_image = Docker::Image.get(path, { "platform" => config[:platform] }, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path }, docker_creds_for_image(image), docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds, docker_connection)
 
           !(original_image && original_image.id.start_with?(new_image.id))
         end
