@@ -1,4 +1,7 @@
 # Dokken Changelog
+## 2.17.3 (2022-07-20)
+
+- check if ~/.docker/config.json file exists [@evandam](https://github.com/evandam)
 
 ## 2.17.2 (2022-06-16)
 
