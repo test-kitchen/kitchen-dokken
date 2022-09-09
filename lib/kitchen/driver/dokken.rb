@@ -607,10 +607,7 @@ module Kitchen
       end
 
       def chef_container_name
-        if config[:platform] != ""
-          return "chef-#{chef_version}-" + config[:platform].sub("/", "-")
-        end
-        "chef-#{chef_version}"
+        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
       end
 
       def chef_image
