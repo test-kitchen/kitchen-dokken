@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.17.4 (2022-12-20)
+
+- Add option to run container with --cgroupns=host [@drewhammond](https://github.com/drewhammond)
+
 ## 2.17.3 (2022-07-20)
 
 - check if ~/.docker/config.json file exists [@evandam](https://github.com/evandam)
