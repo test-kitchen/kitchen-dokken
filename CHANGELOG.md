@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.18.0 (2022-12-22)
+
+- Allow a user to specify a specific platform/architecture to use [@nrocco](https://github.com/nrocco)
+
 ## 2.17.4 (2022-12-20)
 
 - Add option to run container with --cgroupns=host [@drewhammond](https://github.com/drewhammond)
