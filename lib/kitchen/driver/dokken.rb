@@ -663,7 +663,7 @@ module Kitchen
             original_image = Docker::Image.get(path, { "platform" => config[:platform] }, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds, docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(image), docker_connection)
 
           !(original_image && original_image.id.start_with?(new_image.id))
         end
