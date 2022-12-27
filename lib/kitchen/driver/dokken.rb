@@ -142,11 +142,9 @@ module Kitchen
         with_retries { @work_image = ::Docker::Image.get(work_image, { "platform" => config[:platform] }, docker_connection) }
 
         with_retries do
-
           with_retries { @work_image.remove(force: true) }
         rescue ::Docker::Error::ConflictError
           debug "driver - #{work_image} cannot be removed"
-
         end
       end
 
@@ -391,7 +389,7 @@ module Kitchen
         lockfile = Lockfile.new "#{home_dir}/.dokken-#{chef_container_name}.lock"
         begin
           lockfile.lock
-          with_retries {
+          with_retries do
             # TEMPORARY FIX - docker-api 2.0.0 has a buggy Docker::Container.get - use .all instead
             # https://github.com/swipely/docker-api/issues/566
             # ::Docker::Container.get(chef_container_name, {}, docker_connection)
@@ -399,7 +397,7 @@ module Kitchen
             raise ::Docker::Error::NotFoundError.new(chef_container_name) if found.empty?
 
             debug "Chef container already exists, continuing"
-          }
+          end
         rescue ::Docker::Error::NotFoundError
           debug "Chef container does not exist, creating a new Chef container"
           with_retries do
@@ -557,7 +555,6 @@ module Kitchen
           info "Creating container #{args["name"]}"
           debug "driver - create_container args #{args}"
           with_retries do
-
             @container = ::Docker::Container.create(args.clone, docker_connection)
           rescue ::Docker::Error::ConflictError
             debug "driver - rescue ConflictError: #{args["name"]}"
@@ -566,7 +563,6 @@ module Kitchen
         rescue ::Docker::Error => e
           debug "driver - error :#{e}:"
           raise "driver - failed to create_container #{args["name"]}"
-
         end
       end
 
@@ -665,7 +661,7 @@ module Kitchen
 
           new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(image), docker_connection)
 
-          !(original_image && original_image.id.start_with?(new_image.id))
+          !(original_image&.id&.start_with?(new_image.id))
         end
       end
 
