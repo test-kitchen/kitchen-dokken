@@ -1,5 +1,11 @@
 # Dokken Changelog
 
+## 2.19.0 (2022-12-27)
+
+- Drop support for EOL Ruby 2.5 and 2.6 [@tas50](https://github.com/tas50)
+- Fix the homepage in the gemspec [@tas50](https://github.com/tas50)
+- Restore the attempt to read config.json for registry auth [@ashiqueps](https://github.com/ashiqueps)
+
 ## 2.18.0 (2022-12-22)
 
 - Allow a user to specify a specific platform/architecture to use [@nrocco](https://github.com/nrocco)
