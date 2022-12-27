@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["sean@sean.io"]
   spec.description   = "A Test Kitchen Driver for Docker & Chef Infra optimized for rapid testing using Chef Infra docker images"
   spec.summary       = "A Test Kitchen Driver for Docker & Chef Infra optimized for rapid testing using Chef Infra docker images"
-  spec.homepage      = "https://github.com/someara/kitchen-dokken"
+  spec.homepage      = "https://github.com/test-kitchen/kitchen-dokken"
   spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).grep(/LICENSE|^lib/)
