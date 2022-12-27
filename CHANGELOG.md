@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.18.1 (2022-12-27)
+
+- Restore the attempt to read config.json for registry auth [@ashiqueps](https://github.com/ashiqueps)
+
 ## 2.18.0 (2022-12-22)
 
 - Allow a user to specify a specific platform/architecture to use [@nrocco](https://github.com/nrocco)
