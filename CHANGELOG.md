@@ -1,5 +1,9 @@
 # Dokken Changelog
 
+## 2.19.1 (2023-02-07)
+
+- Fix login command for Podman [@jmauro](https://github.com/jmauro)
+
 ## 2.19.0 (2022-12-27)
 
 - Drop support for EOL Ruby 2.5 and 2.6 [@tas50](https://github.com/tas50)
