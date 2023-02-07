@@ -43,6 +43,7 @@ module Kitchen
       default_config :docker_host_url, default_docker_host
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
+      default_config :login_command, "docker"
       default_config :host_ip_override do |transport|
         transport.docker_for_mac_or_win? ? "localhost" : false
       end
@@ -172,7 +173,7 @@ module Kitchen
           cols = `tput cols`
           lines = `tput lines`
           args = ["exec", "-e", "COLUMNS=#{cols}", "-e", "LINES=#{lines}", "-it", @runner, "/bin/bash", "-login", "-i"]
-          LoginCommand.new("docker", args)
+          LoginCommand.new(options[:login_command], args)
         end
 
         private
@@ -233,6 +234,7 @@ module Kitchen
         opts[:data_container] = data[:data_container]
         opts[:instance_name] = data[:instance_name]
         opts[:timeout] = data[:write_timeout]
+        opts[:login_command] = data[:login_command]
         opts
       end
 
