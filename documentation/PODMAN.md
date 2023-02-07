@@ -14,10 +14,10 @@ driver:
 
 provisioner:
   name: dokken
-  login_command: podman
 
 transport:
   name: dokken
+  login_command: podman
 
 verifier:
   name: inspec
@@ -51,3 +51,5 @@ suites:
       post_destroy:
         - podman volume prune -f
 ```
+
+_Note:_ Specifying `podman` as the `login_command` in the `transport` section can solve the issue if you are unable to log into the instance using `kitchen login` when Docker isn't installed on your machine.

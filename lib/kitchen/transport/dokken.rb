@@ -169,7 +169,6 @@ module Kitchen
         end
 
         def login_command
-          pp options
           @runner = options[:instance_name].to_s
           cols = `tput cols`
           lines = `tput lines`
