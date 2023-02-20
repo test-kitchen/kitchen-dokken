@@ -69,6 +69,7 @@ module Kitchen
       default_config :userns_host, false
       default_config :volumes, nil
       default_config :write_timeout, 3600
+      default_config :user_ns_mode, nil
       default_config :creds_file, nil
       default_config :docker_config_creds, false
 
@@ -337,6 +338,15 @@ module Kitchen
         if self[:userns_host]
           config["HostConfig"]["UsernsMode"] = "host"
         end
+
+        if self[:privileged]
+          if self[:user_ns_mode] != 'host'
+            debug "driver - privileged mode is not supported with user namespaces enabled"
+            debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
+          end
+          config['HostConfig']['UsernsMode'] = 'host'
+        end
+
         runner_container = run_container(config)
         state[:runner_container] = runner_container.json
       end
