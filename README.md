@@ -643,6 +643,52 @@ And the `creds.json` file may look like this:
 }
 ```
 
+### Docker config file auth
+
+Instead of using a `creds_file`, you can read authentication information from your docker config at `~/.docker/config.json`
+
+```yaml
+platforms:
+  - name: centos-7
+    driver:
+      image: quay.io/example/centos:7
+      docker_config_creds: true
+```
+
+And your `~/.docker/config.json` would have an auth section for your private registry:
+
+```json
+{
+  "auths": {
+    "quay.io": {
+      "auth": "<base64 encoded username:password>"
+    }
+  }
+}
+```
+
+Additionally, you can use [Docker credential helpers](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers)
+
+```yaml
+platforms:
+  - name: centos-7
+    driver:
+      image: 1234-cloud-registry.example.com/centos:7
+      docker_config_creds: true
+```
+
+and your docker config has
+
+```json
+{
+  "credHelpers": {
+    "1234-cloud-registry.example.com": "example-cloud"
+  }
+}
+```
+
+Then `kitchen-dokken` will run the `docker-credential-example-cloud` command to get the credentials.
+
 ## FAQ
 
 ### What about kitchen-docker?

@@ -451,11 +451,23 @@ module Kitchen
         @docker_config_creds = {}
         config_file = ::File.join(::Dir.home, ".docker", "config.json")
         if ::File.exist?(config_file)
-          JSON.load_file!(config_file)["auths"].each do |k, v|
-            next if v["auth"].nil?
+          config = JSON.load_file!(config_file)
+          if config["auths"]
+            config["auths"].each do |k, v|
+              next if v["auth"].nil?
 
-            username, password = Base64.decode64(v["auth"]).split(":")
-            @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
+              username, password = Base64.decode64(v["auth"]).split(":")
+              @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
+            end
+          end
+
+          if config["credHelpers"]
+            config["credHelpers"].each do |k, v|
+              @docker_config_creds[k] = Proc.new do
+                c = JSON.parse(`echo #{k} | docker-credential-#{v} get`)
+                { serveraddress: c["ServerURL"], username: c["Username"], password: c["Secret"] }
+              end
+            end
           end
         else
           debug("~/.docker/config.json does not exist")
@@ -472,7 +484,8 @@ module Kitchen
         # NOTE: Try to use DockerHub auth if exact registry match isn't found
         default_registry = "https://index.docker.io/v1/"
         if docker_config_creds.key?(image_registry)
-          docker_config_creds[image_registry]
+          c = docker_config_creds[image_registry]
+          c.respond_to?(:call) ? c.call : c
         elsif docker_config_creds.key?(default_registry)
           docker_config_creds[default_registry]
         end
