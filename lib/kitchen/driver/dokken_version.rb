@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
@@ -19,6 +18,6 @@
 module Kitchen
   module Driver
     # Version string for Dokken Kitchen driver
-    DOKKEN_VERSION = '2.6.7'.freeze
+    DOKKEN_VERSION = "2.19.1".freeze
   end
 end

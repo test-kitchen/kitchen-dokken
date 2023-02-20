@@ -4,6 +4,7 @@ driver:
   chef_version: latest
   privileged: true
   volumes: [ '/var/lib/docker' ]
+  env: [CHEF_LICENSE=accept]
 
 transport:
   name: dokken
@@ -25,22 +26,32 @@ platforms:
     provisioner:
       chef_binary: /bin/true
 
-  - name: fedora
+  - name: centos
     driver:
-      image: fedora:25
+      image: dokken/centos-7
       pid_one_command: /usr/lib/systemd/systemd
       volumes:
         - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
 
 suites:
   - name: default
-    excludes:
-      - hello
+    includes:
+      - centos
     run_list:
       - recipe[dokken_test::default]
     attributes:
       dokken_test:
         revision: <%= `git rev-parse HEAD` %>
+
+  - name: idempotency
+    includes:
+      - centos
+    provisioner:
+      enforce_idempotency: true
+      multiple_converge: 2
+      deprecations_as_errors: true
+    run_list:
+      - recipe[dokken_test::default]
 
   - name: hello
     driver:
@@ -51,17 +62,25 @@ suites:
       hostname: hello.computers.biz
       ports: '1234'
       pid_one_command: ''
-    excludes:
-      - fedora
+    includes:
+      - hello
 
   - name: helloagain
     driver:
       hostname: helloagain.computers.biz
-      intermediate_instructions:
-        - RUN apk update && apk add curl
       ports:
         - '8301'
         - '8301:8301/udp'
         - '127.0.0.1:8500:8500'
-    excludes:
-      - fedora
+    includes:
+      - hello
+
+  - name: local_image
+    includes:
+      - local_image
+
+  - name: ipv6
+    includes:
+      - centos
+    driver:
+      ipv6: true

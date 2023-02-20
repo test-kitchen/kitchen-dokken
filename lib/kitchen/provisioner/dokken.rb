@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
@@ -16,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'kitchen'
-require 'kitchen/provisioner/chef_zero'
-require_relative '../helpers'
+require "kitchen"
+require "kitchen/provisioner/chef_zero"
+require_relative "../helpers"
 
 include Dokken::Helpers
 
@@ -30,17 +29,34 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
-      default_config :root_path, '/opt/kitchen'
-      default_config :chef_binary, '/opt/chef/embedded/bin/chef-client'
-      default_config :chef_options, ' -z'
-      default_config :chef_log_level, 'warn'
-      default_config :chef_output_format, 'doc'
+      default_config :root_path, "/opt/kitchen"
+      default_config :chef_binary, "/opt/chef/bin/chef-client"
+      default_config :chef_options, " -z"
+      default_config :chef_log_level, "warn"
+      default_config :chef_output_format, "doc"
+      default_config :profile_ruby, false
       default_config :docker_info, docker_info
       default_config :docker_host_url, default_docker_host
+
+      # Dokken is weird - the provisioner inherits from ChefZero but does not install
+      # chef-client. The version of chef used is customized by users in the driver
+      # section since it is just downloading a specific Docker image of Chef Client.
+      # In order to get the license-acceptance code working though (which depends on
+      # the product_version from the provisioner) we need to copy the value from the
+      # driver and set it here. If we remove this, users will set their chef_version
+      # to 14 in the driver and still get prompted for license acceptance because
+      # the ChefZero provisioner defaults product_version to 'latest'.
+      default_config :product_name, "chef"
+      default_config :product_version do |provisioner|
+        driver = provisioner.instance.driver
+        driver[:chef_version]
+      end
+      default_config :clean_dokken_sandbox, true
 
       # (see Base#call)
       def call(state)
         create_sandbox
+        write_run_command(run_command)
         instance.transport.connection(state) do |conn|
           if remote_docker_host?
             info("Transferring files to #{instance.to_str}")
@@ -49,7 +65,7 @@ module Kitchen
 
           conn.execute(prepare_command)
           conn.execute_with_retry(
-            run_command,
+            "sh #{config[:root_path]}/run_command",
             config[:retry_on_exit_code],
             config[:max_retries],
             config[:wait_for_retry]
@@ -58,14 +74,16 @@ module Kitchen
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
       ensure
+        return unless config[:clean_dokken_sandbox] # rubocop: disable Lint/EnsureReturn
+
         cleanup_dokken_sandbox
       end
 
       def validate_config
         # check if we have an space for the user provided options
         # or add it if not to avoid issues
-        unless config[:chef_options].start_with? ' '
-          config[:chef_options].prepend(' ')
+        unless config[:chef_options].start_with? " "
+          config[:chef_options].prepend(" ")
         end
 
         # strip spaces from all other options
@@ -75,8 +93,8 @@ module Kitchen
 
         # if the user wants to be funny and pass empty strings
         # just use the defaults
-        config[:chef_log_level] = 'warn' if config[:chef_log_level].empty?
-        config[:chef_output_format] = 'doc' if config[:chef_output_format].empty?
+        config[:chef_log_level] = "warn" if config[:chef_log_level].empty?
+        config[:chef_output_format] = "doc" if config[:chef_output_format].empty?
       end
 
       private
@@ -88,8 +106,16 @@ module Kitchen
         cmd << config[:chef_options].to_s
         cmd << " -l #{config[:chef_log_level]}"
         cmd << " -F #{config[:chef_output_format]}"
-        cmd << ' -c /opt/kitchen/client.rb'
-        cmd << ' -j /opt/kitchen/dna.json'
+        cmd << " -c /opt/kitchen/client.rb"
+        cmd << " -j /opt/kitchen/dna.json"
+        cmd << "--profile-ruby" if config[:profile_ruby]
+        cmd << "--slow-report" if config[:slow_resource_report]
+
+        chef_cmd(cmd)
+      end
+
+      def write_run_command(command)
+        File.write("#{dokken_kitchen_sandbox}/run_command", command, mode: "wb")
       end
 
       def runner_container_name
