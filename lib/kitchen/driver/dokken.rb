@@ -340,11 +340,11 @@ module Kitchen
         end
 
         if self[:privileged]
-          if self[:user_ns_mode] != 'host'
+          if self[:user_ns_mode] != "host"
             debug "driver - privileged mode is not supported with user namespaces enabled"
             debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
           end
-          config['HostConfig']['UsernsMode'] = 'host'
+          config["HostConfig"]["UsernsMode"] = "host"
         end
 
         runner_container = run_container(config)

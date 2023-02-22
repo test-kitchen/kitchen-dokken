@@ -268,7 +268,7 @@ module Dokken
 
       false
     end
-    
+
     def running_inside_docker?
       File.file?("/.dockerenv")
     end

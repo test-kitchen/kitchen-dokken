@@ -93,8 +93,8 @@ module Kitchen
 
           elsif /unix:/.match?(options[:docker_host_url])
             if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == "0.0.0.0"
-                ssh_ip = options[:data_container][:NetworkSettings][:IPAddress]
-                ssh_port = "22"
+              ssh_ip = options[:data_container][:NetworkSettings][:IPAddress]
+              ssh_port = "22"
             else
               # we should read the proper mapped ip, since this allows us to upload the files
               ssh_ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
