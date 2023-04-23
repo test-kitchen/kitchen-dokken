@@ -45,7 +45,13 @@ module Kitchen
       default_config :write_timeout, 3600
       default_config :login_command, "docker"
       default_config :host_ip_override do |transport|
-        transport.docker_for_mac_or_win? ? "localhost" : false
+        if running_inside_docker_desktop?
+          "host.docker.internal"
+        elsif transport.docker_for_mac_or_win?
+          "localhost"
+        else
+          false
+        end
       end
 
       # (see Base#connection)
@@ -212,7 +218,7 @@ module Kitchen
       #
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
-        ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "moby"
+        ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "docker-desktop"
       rescue
         false
       end

@@ -91,7 +91,7 @@ module Kitchen
         # data
         dokken_create_sandbox
 
-        if remote_docker_host?
+        if remote_docker_host? || running_inside_docker?
           make_data_image
           start_data_container state
         end
@@ -107,7 +107,7 @@ module Kitchen
       end
 
       def destroy(_state)
-        if remote_docker_host?
+        if remote_docker_host? || running_inside_docker?
           stop_data_container
           delete_data_container
         end
@@ -240,8 +240,8 @@ module Kitchen
 
       def dokken_binds
         ret = []
-        ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host?
-        ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host?
+        ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host? || running_inside_docker?
+        ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host? || running_inside_docker?
         ret << Array(config[:binds]) unless config[:binds].nil?
         ret.flatten
       end
@@ -290,7 +290,7 @@ module Kitchen
       def dokken_volumes_from
         ret = []
         ret << chef_container_name
-        ret << data_container_name if remote_docker_host?
+        ret << data_container_name if remote_docker_host? || running_inside_docker?
         ret
       end
 
@@ -340,11 +340,11 @@ module Kitchen
         end
 
         if self[:privileged]
-          if self[:user_ns_mode] != 'host'
+          if self[:user_ns_mode] != "host"
             debug "driver - privileged mode is not supported with user namespaces enabled"
             debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
           end
-          config['HostConfig']['UsernsMode'] = 'host'
+          config["HostConfig"]["UsernsMode"] = "host"
         end
 
         runner_container = run_container(config)

@@ -3,6 +3,7 @@ module Dokken
     # https://stackoverflow.com/questions/517219/ruby-see-if-a-port-is-open
     require "socket" unless defined?(Socket)
     require "timeout" unless defined?(Timeout)
+    require "resolv" unless defined?(Resolv)
 
     def port_open?(ip, port)
       begin
@@ -265,6 +266,17 @@ module Dokken
       return false if config[:docker_info]["OperatingSystem"].include?("Boot2Docker")
       return true if /^tcp:/.match?(config[:docker_host_url])
 
+      false
+    end
+
+    def running_inside_docker?
+      File.file?("/.dockerenv")
+    end
+
+    def running_inside_docker_desktop?
+      Resolv.getaddress "host.docker.internal."
+      true
+    rescue
       false
     end
 

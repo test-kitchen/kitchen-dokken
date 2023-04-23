@@ -58,7 +58,7 @@ module Kitchen
         create_sandbox
         write_run_command(run_command)
         instance.transport.connection(state) do |conn|
-          if remote_docker_host?
+          if remote_docker_host? || running_inside_docker?
             info("Transferring files to #{instance.to_str}")
             conn.upload(sandbox_dirs, config[:root_path])
           end
