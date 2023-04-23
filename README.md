@@ -445,12 +445,12 @@ minimalist image issue, it remains exactly that: A hack. If you
 work on a lot of cookbooks you will find yourself copying around
 boilerplate to get things working. Also, it's slow. Running
 `apt-get update` and
-[installing iproute2](https://github.com/someara/dokken-images/pull/13/files)
+[installing iproute2](https://github.com/test-kitchen/dokken-images/pull/13/files)
 all the time is a huge bummer.
 
 To solve this, we maintain the
-[dokken-images](https://github.com/someara/dokken-images) collection
-of fat images that you can find pushed to [Docker Hub](https://hub.docker.com/r/dokken/). The package list aims to make sure things like ohai
+[dokken-images](https://github.com/test-kitchen/dokken-images) collection
+of fat images that you can find pushed to [Docker Hub](https://hub.docker.com/u/dokken). The package list aims to make sure things like ohai
 function in a reasonable way and doing a `kitchen login` yields a
 useful environment for debugging. They're hosted on the Docker cloud
 and are rebuilt every day to keep the package metadata fresh.
@@ -494,7 +494,7 @@ verifier:
 ### Install Chef Infra Client from current channel
 
 Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
-including those from the "current" channel. If you wish to use pre-release versions of Chef, set your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `chef/chef`, you can overwrite `chef_image` under the [driver context](https://github.com/someara/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `someara/chef`.
+including those from the "current" channel. If you wish to use pre-release versions of Chef, set your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `chef/chef`, you can overwrite `chef_image` under the [driver context](https://github.com/test-kitchen/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `someara/chef`.
 
 ### Chef Infra Client options
 

@@ -163,7 +163,7 @@
 
   ```yaml
    driver:
-     hostname: www.computers.biz
+     hostname: example.com
      ports: "1234"
   ```
 
@@ -171,7 +171,7 @@
 
   ```yaml
    driver:
-     hostname: www.computers.biz
+     hostname: example.com
      ports:
        - '1234'
        - '4321:4321/udp'
@@ -197,7 +197,7 @@
 
   ```yaml
    driver:
-     hostname: www.computers.biz
+     hostname: example.com
   ```
 
 ## 2.3.1
@@ -231,7 +231,7 @@
 - Initial support for clusters / inter-suite name resolution
 - Dokken now creates a user-defined network named "dokken" and connects containers to it. This allows us to take advantage of the built-in DNS server that in Docker 1.10 and later.
 
-  driver: hostname: www.computers.biz
+  driver: hostname: example.com
 
 ## 2.1.10
 
