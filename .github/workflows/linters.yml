@@ -41,7 +41,7 @@ jobs:
         ruby: ['2.7', '3.0', '3.1']
     name: Chefstyle on Ruby ${{ matrix.ruby }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -53,7 +53,7 @@ jobs:
     needs: [mdl, yamllint, chefstyle, md-links]
     name: Kitchen Verify
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0
