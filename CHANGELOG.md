@@ -1,5 +1,23 @@
 # Dokken Changelog
 
+## 2.19.1 (2023-02-07)
+
+- Fix login command for Podman [@jmauro](https://github.com/jmauro)
+
+## 2.19.0 (2022-12-27)
+
+- Drop support for EOL Ruby 2.5 and 2.6 [@tas50](https://github.com/tas50)
+- Fix the homepage in the gemspec [@tas50](https://github.com/tas50)
+- Restore the attempt to read config.json for registry auth [@ashiqueps](https://github.com/ashiqueps)
+
+## 2.18.0 (2022-12-22)
+
+- Allow a user to specify a specific platform/architecture to use [@nrocco](https://github.com/nrocco)
+
+## 2.17.4 (2022-12-20)
+
+- Add option to run container with --cgroupns=host [@drewhammond](https://github.com/drewhammond)
+
 ## 2.17.3 (2022-07-20)
 
 - check if ~/.docker/config.json file exists [@evandam](https://github.com/evandam)
@@ -145,7 +163,7 @@
 
   ```yaml
    driver:
-     hostname: www.computers.biz
+     hostname: example.com
      ports: "1234"
   ```
 
@@ -153,7 +171,7 @@
 
   ```yaml
    driver:
-     hostname: www.computers.biz
+     hostname: example.com
      ports:
        - '1234'
        - '4321:4321/udp'
@@ -179,7 +197,7 @@
 
   ```yaml
    driver:
-     hostname: www.computers.biz
+     hostname: example.com
   ```
 
 ## 2.3.1
@@ -213,7 +231,7 @@
 - Initial support for clusters / inter-suite name resolution
 - Dokken now creates a user-defined network named "dokken" and connects containers to it. This allows us to take advantage of the built-in DNS server that in Docker 1.10 and later.
 
-  driver: hostname: www.computers.biz
+  driver: hostname: example.com
 
 ## 2.1.10
 

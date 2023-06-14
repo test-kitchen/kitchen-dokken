@@ -23,6 +23,17 @@ jobs:
       - name: Run yaml Lint
         uses: actionshub/yamllint@main
 
+  md-links:
+    runs-on: ubuntu-latest
+    name: Run markdown link check
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: markdown-link-check
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-verbose-mode: "yes"
+
   chefstyle:
     runs-on: ubuntu-latest
     strategy:
@@ -30,7 +41,7 @@ jobs:
         ruby: ['2.7', '3.0', '3.1']
     name: Chefstyle on Ruby ${{ matrix.ruby }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -39,10 +50,10 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
-    needs: [mdl, yamllint, chefstyle]
+    needs: [mdl, yamllint, chefstyle, md-links]
     name: Kitchen Verify
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0

@@ -4,9 +4,9 @@ source "https://rubygems.org"
 gemspec
 
 group :test do
-  gem "rake", ">= 11.0"
   gem "berkshelf"
   gem "kitchen-inspec"
+  gem "rake", ">= 11.0"
 end
 
 group :development do

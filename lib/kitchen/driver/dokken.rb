@@ -38,6 +38,7 @@ module Kitchen
       default_config :binds, []
       default_config :cap_add, nil
       default_config :cap_drop, nil
+      default_config :cgroupns_host, false
       default_config :chef_image, "chef/chef"
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
@@ -57,6 +58,7 @@ module Kitchen
       default_config :memory_limit, 0
       default_config :network_mode, "dokken"
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
+      default_config :platform, ""
       default_config :ports, nil
       default_config :privileged, false
       default_config :pull_chef_image, true
@@ -67,6 +69,7 @@ module Kitchen
       default_config :userns_host, false
       default_config :volumes, nil
       default_config :write_timeout, 3600
+      default_config :user_ns_mode, nil
       default_config :creds_file, nil
       default_config :docker_config_creds, false
 
@@ -88,7 +91,7 @@ module Kitchen
         # data
         dokken_create_sandbox
 
-        if remote_docker_host?
+        if remote_docker_host? || running_inside_docker?
           make_data_image
           start_data_container state
         end
@@ -104,7 +107,7 @@ module Kitchen
       end
 
       def destroy(_state)
-        if remote_docker_host?
+        if remote_docker_host? || running_inside_docker?
           stop_data_container
           delete_data_container
         end
@@ -135,28 +138,27 @@ module Kitchen
       end
 
       def delete_work_image
-        return unless ::Docker::Image.exist?(work_image, {}, docker_connection)
+        return unless ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
 
-        with_retries { @work_image = ::Docker::Image.get(work_image, {}, docker_connection) }
+        with_retries { @work_image = ::Docker::Image.get(work_image, { "platform" => config[:platform] }, docker_connection) }
 
         with_retries do
-
           with_retries { @work_image.remove(force: true) }
         rescue ::Docker::Error::ConflictError
           debug "driver - #{work_image} cannot be removed"
-
         end
       end
 
       def build_work_image(state)
         info("Building work image..")
-        return if ::Docker::Image.exist?(work_image, {}, docker_connection)
+        return if ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
 
         begin
           @intermediate_image = ::Docker::Image.build(
             work_image_dockerfile,
             {
               "t" => work_image,
+              "platform" => config[:platform],
             },
             docker_connection
           )
@@ -255,7 +257,7 @@ module Kitchen
       def dokken_volumes_from
         ret = []
         ret << chef_container_name
-        ret << data_container_name if remote_docker_host?
+        ret << data_container_name if remote_docker_host? || running_inside_docker?
         ret
       end
 
@@ -287,8 +289,8 @@ module Kitchen
         volumes = coerce_volumes(volumes, binds)
 
         binds_ret = []
-        binds_ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host?
-        binds_ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host?
+        binds_ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host? || running_inside_docker?
+        binds_ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host? || running_inside_docker?
         binds_ret << binds unless binds.nil?
 
         return volumes, binds_ret.flatten
@@ -334,9 +336,21 @@ module Kitchen
         unless self[:entrypoint].to_s.empty?
           config["Entrypoint"] = self[:entrypoint]
         end
+        if self[:cgroupns_host]
+          config["HostConfig"]["CgroupnsMode"] = "host"
+        end
         if self[:userns_host]
           config["HostConfig"]["UsernsMode"] = "host"
         end
+
+        if self[:privileged]
+          if self[:user_ns_mode] != "host"
+            debug "driver - privileged mode is not supported with user namespaces enabled"
+            debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
+          end
+          config["HostConfig"]["UsernsMode"] = "host"
+        end
+
         runner_container = run_container(config)
         state[:runner_container] = runner_container.json
       end
@@ -389,7 +403,7 @@ module Kitchen
         lockfile = Lockfile.new "#{home_dir}/.dokken-#{chef_container_name}.lock"
         begin
           lockfile.lock
-          with_retries {
+          with_retries do
             # TEMPORARY FIX - docker-api 2.0.0 has a buggy Docker::Container.get - use .all instead
             # https://github.com/swipely/docker-api/issues/566
             # ::Docker::Container.get(chef_container_name, {}, docker_connection)
@@ -397,7 +411,7 @@ module Kitchen
             raise ::Docker::Error::NotFoundError.new(chef_container_name) if found.empty?
 
             debug "Chef container already exists, continuing"
-          }
+          end
         rescue ::Docker::Error::NotFoundError
           debug "Chef container does not exist, creating a new Chef container"
           with_retries do
@@ -441,11 +455,23 @@ module Kitchen
         @docker_config_creds = {}
         config_file = ::File.join(::Dir.home, ".docker", "config.json")
         if ::File.exist?(config_file)
-          JSON.load_file!(config_file)["auths"].each do |k, v|
-            next if v["auth"].nil?
+          config = JSON.load_file!(config_file)
+          if config["auths"]
+            config["auths"].each do |k, v|
+              next if v["auth"].nil?
 
-            username, password = Base64.decode64(v["auth"]).split(":")
-            @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
+              username, password = Base64.decode64(v["auth"]).split(":")
+              @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
+            end
+          end
+
+          if config["credHelpers"]
+            config["credHelpers"].each do |k, v|
+              @docker_config_creds[k] = Proc.new do
+                c = JSON.parse(`echo #{k} | docker-credential-#{v} get`)
+                { serveraddress: c["ServerURL"], username: c["Username"], password: c["Secret"] }
+              end
+            end
           end
         else
           debug("~/.docker/config.json does not exist")
@@ -462,7 +488,8 @@ module Kitchen
         # NOTE: Try to use DockerHub auth if exact registry match isn't found
         default_registry = "https://index.docker.io/v1/"
         if docker_config_creds.key?(image_registry)
-          docker_config_creds[image_registry]
+          c = docker_config_creds[image_registry]
+          c.respond_to?(:call) ? c.call : c
         elsif docker_config_creds.key?(default_registry)
           docker_config_creds[default_registry]
         end
@@ -479,7 +506,7 @@ module Kitchen
       end
 
       def delete_image(name)
-        with_retries { @image = ::Docker::Image.get(name, {}, docker_connection) }
+        with_retries { @image = ::Docker::Image.get(name, { "platform" => config[:platform] }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error
         puts "Image #{name} not found. Nothing to delete."
@@ -551,10 +578,10 @@ module Kitchen
           args["Env"] = [] if args["Env"].nil?
           args["Env"] << "TEST_KITCHEN=1"
           args["Env"] << "CI=#{ENV["CI"]}" if ENV.include? "CI"
+          args["Platform"] = config[:platform]
           info "Creating container #{args["name"]}"
           debug "driver - create_container args #{args}"
           with_retries do
-
             @container = ::Docker::Container.create(args.clone, docker_connection)
           rescue ::Docker::Error::ConflictError
             debug "driver - rescue ConflictError: #{args["name"]}"
@@ -563,7 +590,6 @@ module Kitchen
         rescue ::Docker::Error => e
           debug "driver - error :#{e}:"
           raise "driver - failed to create_container #{args["name"]}"
-
         end
       end
 
@@ -612,7 +638,7 @@ module Kitchen
       end
 
       def chef_container_name
-        "chef-#{chef_version}"
+        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
       end
 
       def chef_image
@@ -643,7 +669,7 @@ module Kitchen
       end
 
       def pull_if_missing(image)
-        return if ::Docker::Image.exist?(registry_image_path(image), {}, docker_connection)
+        return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => config[:platform] }, docker_connection)
 
         pull_image image
       end
@@ -656,13 +682,13 @@ module Kitchen
       def pull_image(image)
         path = registry_image_path(image)
         with_retries do
-          if Docker::Image.exist?(path, {}, docker_connection)
-            original_image = Docker::Image.get(path, {}, docker_connection)
+          if Docker::Image.exist?(path, { "platform" => config[:platform] }, docker_connection)
+            original_image = Docker::Image.get(path, { "platform" => config[:platform] }, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path }, docker_creds_for_image(image), docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(image), docker_connection)
 
-          !(original_image && original_image.id.start_with?(new_image.id))
+          !(original_image&.id&.start_with?(new_image.id))
         end
       end
 
