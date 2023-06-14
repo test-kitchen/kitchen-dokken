@@ -283,7 +283,7 @@ module Kitchen
 
       def calc_volumes_binds
         volumes = Array.new(Array(config[:volumes]))
-        binds = Array.new(Array(config[:binds])) 
+        binds = Array.new(Array(config[:binds]))
 
         # Binds is mutated in-place, volumes *may* be.
         volumes = coerce_volumes(volumes, binds)
@@ -293,7 +293,7 @@ module Kitchen
         binds_ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host? || running_inside_docker?
         binds_ret << binds unless binds.nil?
 
-        return volumes, binds_ret.flatten
+        [volumes, binds_ret.flatten]
       end
 
       def start_runner_container(state)
