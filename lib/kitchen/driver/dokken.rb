@@ -321,14 +321,16 @@ module Kitchen
             "Tmpfs" => dokken_tmpfs,
             "Memory" => self[:memory_limit],
           },
-          "NetworkingConfig" => {
+        }
+        unless %w{host bridge}.include?(self[:network_mode])
+          config["NetworkingConfig"] = {
             "EndpointsConfig" => {
               self[:network_mode] => {
                 "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
               },
             },
-          },
-        }
+          }
+        end
         unless self[:entrypoint].to_s.empty?
           config["Entrypoint"] = self[:entrypoint]
         end
@@ -362,19 +364,23 @@ module Kitchen
             "PublishAllPorts" => true,
             "NetworkMode" => "bridge",
           },
-          "NetworkingConfig" => {
+        }
+        unless %w{host bridge}.include?(self[:network_mode])
+          config["NetworkingConfig"] = {
             "EndpointsConfig" => {
               self[:network_mode] => {
                 "Aliases" => Array(self[:hostname]),
               },
             },
-          },
-        }
+          }
+        end
         data_container = run_container(config)
         state[:data_container] = data_container.json
       end
 
       def make_dokken_network
+        return unless self[:network_mode] == "dokken"
+
         lockfile = Lockfile.new "#{home_dir}/.dokken-network.lock"
         begin
           lockfile.lock

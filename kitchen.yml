@@ -84,3 +84,11 @@ suites:
       - centos
     driver:
       ipv6: true
+
+  - name: bridge
+    driver:
+      network_mode: bridge
+
+  - name: host
+    driver:
+      network_mode: host
