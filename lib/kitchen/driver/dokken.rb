@@ -233,9 +233,7 @@ module Kitchen
       end
 
       def work_image
-        return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
-
-        instance_name
+        [image_prefix, instance_name].compact.join("/").downcase
       end
 
       def dokken_binds
