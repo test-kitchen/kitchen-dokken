@@ -171,7 +171,7 @@ module Dokken
 
     def instance_name
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-      "#{prefix}-#{instance.name}"
+      "#{prefix}-#{instance.name}".downcase
     end
 
     def exposed_ports
@@ -312,7 +312,7 @@ module Kitchen
 
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}"
+        "#{prefix}-#{instance.name}".downcase
       end
     end
   end
@@ -334,7 +334,7 @@ module Kitchen
 
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}"
+        "#{prefix}-#{instance.name}".downcase
       end
 
       def call(state)
