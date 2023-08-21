@@ -1,45 +1,16 @@
 ---
-name: linters
+name: 'Lint, Unit & Integration Tests'
 
 'on':
   pull_request:
-  push:
-    branches: [main]
 
 jobs:
-  mdl:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@master
-      - name: Run yaml Lint
-        uses: actionshub/markdownlint@main
-
-  yamllint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@master
-      - name: Run yaml Lint
-        uses: actionshub/yamllint@main
-
-  chefstyle:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ruby: ['2.7', '3.0', '3.1']
-    name: Chefstyle on Ruby ${{ matrix.ruby }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-      - run: bundle exec rake style
+  lint-unit:
+    uses: test-kitchen/.github/.github/workflows/lint-unit.yml@main
 
   integration:
     runs-on: ubuntu-latest
-    needs: [mdl, yamllint, chefstyle]
+    needs: lint-unit
     name: Kitchen Verify
     steps:
       - uses: actions/checkout@v2
