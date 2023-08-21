@@ -3,6 +3,7 @@ module Dokken
     # https://stackoverflow.com/questions/517219/ruby-see-if-a-port-is-open
     require "socket" unless defined?(Socket)
     require "timeout" unless defined?(Timeout)
+    require "resolv" unless defined?(Resolv)
 
     def port_open?(ip, port)
       begin
@@ -170,7 +171,7 @@ module Dokken
 
     def instance_name
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-      "#{prefix}-#{instance.name}"
+      "#{prefix}-#{instance.name}".downcase
     end
 
     def exposed_ports
@@ -268,6 +269,17 @@ module Dokken
       false
     end
 
+    def running_inside_docker?
+      File.file?("/.dockerenv")
+    end
+
+    def running_inside_docker_desktop?
+      Resolv.getaddress "host.docker.internal."
+      true
+    rescue
+      false
+    end
+
     def sandbox_path
       "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
     end
@@ -300,7 +312,7 @@ module Kitchen
 
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}"
+        "#{prefix}-#{instance.name}".downcase
       end
     end
   end
@@ -322,7 +334,7 @@ module Kitchen
 
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}"
+        "#{prefix}-#{instance.name}".downcase
       end
 
       def call(state)
