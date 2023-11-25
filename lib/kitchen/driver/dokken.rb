@@ -236,20 +236,8 @@ module Kitchen
         [image_prefix, instance_name].compact.join("/").downcase
       end
 
-      def dokken_binds
-        ret = []
-        ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host? || running_inside_docker?
-        ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host? || running_inside_docker?
-        ret << Array(config[:binds]) unless config[:binds].nil?
-        ret.flatten
-      end
-
       def dokken_tmpfs
         coerce_tmpfs(config[:tmpfs])
-      end
-
-      def dokken_volumes
-        coerce_volumes(config[:volumes])
       end
 
       def coerce_tmpfs(v)
@@ -264,27 +252,6 @@ module Kitchen
         end
       end
 
-      def coerce_volumes(v)
-        case v
-        when PartialHash, nil
-          v
-        when Hash
-          PartialHash[v]
-        else
-          b = []
-          v = Array(v).to_a # in case v.is_A?(Chef::Node::ImmutableArray)
-          v.delete_if do |x|
-            parts = x.split(":")
-            b << x if parts.length > 1
-          end
-          b = nil if b.empty?
-          config[:binds].push(b) unless config[:binds].include?(b) || b.nil?
-          return PartialHash.new if v.empty?
-
-          v.each_with_object(PartialHash.new) { |volume, h| h[volume] = {} }
-        end
-      end
-
       def dokken_volumes_from
         ret = []
         ret << chef_container_name
@@ -292,8 +259,45 @@ module Kitchen
         ret
       end
 
+      def coerce_volumes(v, binds)
+        case v
+        when PartialHash, nil
+          v
+        when Hash
+          PartialHash[v]
+        else
+          b = []
+          v.delete_if do |x|
+            parts = x.split(":")
+            b << x if parts.length > 1
+          end
+          b = nil if b.empty?
+          binds.push(b) unless binds.include?(b) || b.nil?
+          return PartialHash.new if v.empty?
+
+          v.each_with_object(PartialHash.new) { |volume, h| h[volume] = {} }
+        end
+      end
+
+      def calc_volumes_binds
+        volumes = Array.new(Array(config[:volumes]))
+        binds = Array.new(Array(config[:binds]))
+
+        # Binds is mutated in-place, volumes *may* be.
+        volumes = coerce_volumes(volumes, binds)
+
+        binds_ret = []
+        binds_ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host? || running_inside_docker?
+        binds_ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host? || running_inside_docker?
+        binds_ret << binds unless binds.nil?
+
+        [volumes, binds_ret.flatten]
+      end
+
       def start_runner_container(state)
         debug "driver - starting #{runner_container_name}"
+
+        volumes, binds = calc_volumes_binds
 
         config = {
           "name" => runner_container_name,
@@ -303,11 +307,11 @@ module Kitchen
           "Hostname" => self[:hostname],
           "Env" => self[:env],
           "ExposedPorts" => exposed_ports,
-          "Volumes" => dokken_volumes,
+          "Volumes" => volumes,
           "HostConfig" => {
             "Privileged" => self[:privileged],
             "VolumesFrom" => dokken_volumes_from,
-            "Binds" => dokken_binds,
+            "Binds" => binds,
             "Dns" => self[:dns],
             "DnsSearch" => self[:dns_search],
             "Links" => Array(self[:links]),
