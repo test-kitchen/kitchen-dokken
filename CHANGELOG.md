@@ -1,5 +1,13 @@
 # Dokken Changelog
 
+## [2.20.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.0...v2.20.1) (2023-11-25)
+
+
+### Bug Fixes
+
+* Avoid mutating config to fix concurrent execution ([#279](https://github.com/test-kitchen/kitchen-dokken/issues/279)) ([116ed4a](https://github.com/test-kitchen/kitchen-dokken/commit/116ed4a64fd292523a278636ce92b430ae7560f3))
+* do not set network aliases for host or bridge networks ([#295](https://github.com/test-kitchen/kitchen-dokken/issues/295)) ([02e6f23](https://github.com/test-kitchen/kitchen-dokken/commit/02e6f235de4cc43cfd9dbe9ddede0c5b6684804f))
+
 ## [2.20.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.19.1...v2.20.0) (2023-11-25)
 
 
