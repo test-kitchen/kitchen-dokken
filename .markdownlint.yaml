@@ -3,3 +3,5 @@ MD013: false
 MD024: false
 MD026: false
 MD036: false
+MD012: false # Multiple consecutive blank lines
+MD029: false # Ordered list item prefix
