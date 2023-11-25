@@ -1,5 +1,18 @@
 # Dokken Changelog
 
+## [2.20.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.19.1...v2.20.0) (2023-11-25)
+
+
+### Features
+
+* add support for running dokken in a container ([#281](https://github.com/test-kitchen/kitchen-dokken/issues/281)) ([bb38aca](https://github.com/test-kitchen/kitchen-dokken/commit/bb38aca9c062bc42094d1fb89fc67f3fdb9c5ba0))
+* use Docker credential helpers to get auth ([#287](https://github.com/test-kitchen/kitchen-dokken/issues/287)) ([d1ba01e](https://github.com/test-kitchen/kitchen-dokken/commit/d1ba01e08e01fdc7d4f3c5cc06242578d6f3957e))
+
+
+### Bug Fixes
+
+* **CI:** Update workflows ([#303](https://github.com/test-kitchen/kitchen-dokken/issues/303)) ([a7b4535](https://github.com/test-kitchen/kitchen-dokken/commit/a7b4535b99829f813cd3848ab3a1842b8d6c6f8c))
+
 ## 2.19.1 (2023-02-07)
 
 - Fix login command for Podman [@jmauro](https://github.com/jmauro)
