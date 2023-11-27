@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.20.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.1...v2.20.2) (2023-11-27)
+
+
+### Bug Fixes
+
+* Update renovate config ([#310](https://github.com/test-kitchen/kitchen-dokken/issues/310)) ([db1e793](https://github.com/test-kitchen/kitchen-dokken/commit/db1e79311e477880c60fd2c83a121a8610d4e2d0))
+
 ## [2.20.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.0...v2.20.1) (2023-11-25)
 
 
