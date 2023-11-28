@@ -13,7 +13,7 @@ jobs:
         id: release
         with:
           release-type: ruby
-          package-name: workflow-testing-gem
+          package-name: kitchen-dokken
           version-file: lib/kitchen/driver/dokken_version.rb
           token: ${{ secrets.PORTER_GITHUB_TOKEN }}
 
