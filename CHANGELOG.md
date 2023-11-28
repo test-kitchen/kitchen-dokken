@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.20.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.2...v2.20.3) (2023-11-28)
+
+
+### Bug Fixes
+
+* Published package name ([#313](https://github.com/test-kitchen/kitchen-dokken/issues/313)) ([57a7498](https://github.com/test-kitchen/kitchen-dokken/commit/57a74987f3c093073b09e49b05258a4b7ea0595f))
+
 ## [2.20.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.1...v2.20.2) (2023-11-27)
 
 
