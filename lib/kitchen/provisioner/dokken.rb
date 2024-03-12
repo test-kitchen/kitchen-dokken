@@ -74,9 +74,7 @@ module Kitchen
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
       ensure
-        return unless config[:clean_dokken_sandbox] # rubocop: disable Lint/EnsureReturn
-
-        cleanup_dokken_sandbox
+        cleanup_dokken_sandbox if config[:clean_dokken_sandbox] # rubocop: disable Lint/EnsureReturn
       end
 
       def validate_config
