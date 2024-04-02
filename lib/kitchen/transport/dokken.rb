@@ -39,7 +39,9 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
-      default_config :docker_info, docker_info
+      default_config :docker_info do |transport|
+        docker_info(transport[:docker_host_url])
+      end
       default_config :docker_host_url, default_docker_host
       default_config :read_timeout, 3600
       default_config :write_timeout, 3600
