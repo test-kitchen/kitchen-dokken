@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.20.4](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.3...v2.20.4) (2024-04-02)
+
+
+### Miscellaneous Chores
+
+* release 2.20.4 ([#320](https://github.com/test-kitchen/kitchen-dokken/issues/320)) ([054f2cf](https://github.com/test-kitchen/kitchen-dokken/commit/054f2cf175f515707535f5e6446327d7563b4244))
+
 ## [2.20.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.2...v2.20.3) (2023-11-28)
 
 
