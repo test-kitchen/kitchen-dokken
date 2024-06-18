@@ -12,11 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-unit
     name: Kitchen Verify
+    strategy:
+      matrix:
+        ruby: ["3.3", "3.4"]
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.3
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Create & Validate containers
         run: |
