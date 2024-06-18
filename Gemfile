@@ -3,8 +3,6 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in kitchen-dokken.gemspec
 gemspec
 
-gem "berkshelf"
-
 group :test do
   gem "berkshelf"
   gem "kitchen-inspec"
