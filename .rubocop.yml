@@ -1,2 +1,10 @@
 ---
+require:
+  - chefstyle
+
 AllCops:
+  Include:
+    - "**/*.rb"
+  Exclude:
+    - "vendor/**/*"
+    - "spec/**/*"
