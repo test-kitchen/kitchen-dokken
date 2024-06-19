@@ -1,3 +1,10 @@
 ---
+require:
+  - chefstyle
+
 AllCops:
-  TargetRubyVersion: 2.7
+  Include:
+    - "**/*.rb"
+  Exclude:
+    - "vendor/**/*"
+    - "spec/**/*"
