@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.20.6](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.5...v2.20.6) (2024-07-01)
+
+
+### Bug Fixes
+
+* Switch to using AlmaLinux 9 for the data container ([#329](https://github.com/test-kitchen/kitchen-dokken/issues/329)) ([955040e](https://github.com/test-kitchen/kitchen-dokken/commit/955040efdbe2c2e6e01797f59fb657313aceb86f))
+
 ## [2.20.5](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.4...v2.20.5) (2024-06-19)
 
 
