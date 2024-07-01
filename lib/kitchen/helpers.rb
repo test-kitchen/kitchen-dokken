@@ -58,7 +58,7 @@ module Dokken
     end
 
     def data_dockerfile(registry)
-      from = "centos:7"
+      from = "almalinux:9"
       if registry
         from = "#{registry}/#{from}"
       end
@@ -67,7 +67,7 @@ module Dokken
         MAINTAINER Sean OMeara "sean@sean.io"
         ENV LANG en_US.UTF-8
 
-        RUN yum -y install tar rsync openssh-server passwd git
+        RUN dnf -y install tar rsync openssh-server passwd git
         RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 
         # uncomment to debug cert issues
