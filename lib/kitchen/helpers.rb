@@ -57,7 +57,7 @@ X8N2N9ZNnORJqK374yGj1jWUU66mQhPvn49QpG8P2HEoh2RQjNvyHA==
     end
 
     def data_dockerfile(registry)
-      from = "centos:7"
+      from = "almalinux:9"
       if registry
         from = "#{registry}/#{from}"
       end
