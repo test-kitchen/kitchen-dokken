@@ -39,8 +39,11 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
+      default_config :hab_installation, true
       default_config :chef_image, "chef/chef"
       default_config :chef_version, "latest"
+      default_config :habitat_image, "ashiqueps/chef-habitat"
+      default_config :habitat_version, "19.0.35"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :dns, nil
       default_config :dns_search, nil
@@ -115,6 +118,14 @@ module Kitchen
         delete_runner_container
         delete_work_image
         dokken_delete_sandbox
+      end
+
+      def installer
+        @installer ||= if config[:hab_installation]
+                         "habitat"
+                       else
+                         "chef"
+                       end
       end
 
       private
@@ -401,11 +412,11 @@ module Kitchen
         rescue ::Docker::Error::NotFoundError
           debug "Chef container does not exist, creating a new Chef container"
           with_retries do
-            debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
+            debug "driver - creating volume container #{chef_container_name} from #{installer_image}"
             config = {
               "name" => chef_container_name,
               "Cmd" => "true",
-              "Image" => registry_image_path(chef_image),
+              "Image" => registry_image_path(installer_image),
               "HostConfig" => {
                 "NetworkMode" => self[:network_mode],
               },
@@ -474,8 +485,8 @@ module Kitchen
       end
 
       def pull_chef_image
-        debug "driver - pulling #{short_image_path(chef_image)}"
-        config[:pull_chef_image] ? pull_image(chef_image) : pull_if_missing(chef_image)
+        debug "driver - pulling #{short_image_path(installer_image)}"
+        config[:pull_chef_image] ? pull_image(installer_image) : pull_if_missing(installer_image)
       end
 
       def delete_image(name)
@@ -611,10 +622,12 @@ module Kitchen
       end
 
       def chef_container_name
-        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
+        config[:platform] != "" ? "#{installer}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{installer}-#{chef_version}"
       end
 
-      def chef_image
+      def installer_image
+        return "#{config[:habitat_image]}:#{config[:habitat_version]}" if installer == "habitat"
+
         "#{config[:chef_image]}:#{chef_version}"
       end
 
