@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.20.7](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.6...v2.20.7) (2024-10-23)
+
+
+### Bug Fixes
+
+* Use default registry credentials when they are set ([#317](https://github.com/test-kitchen/kitchen-dokken/issues/317)) ([5e7f3e6](https://github.com/test-kitchen/kitchen-dokken/commit/5e7f3e65dad826114574844fe77710ea27a359e1))
+
 ## [2.20.6](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.5...v2.20.6) (2024-07-01)
 
 
