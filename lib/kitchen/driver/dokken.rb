@@ -43,7 +43,7 @@ module Kitchen
       default_config :chef_image, "chef/chef"
       default_config :chef_version, "latest"
       default_config :habitat_image, "ashiqueps/chef-habitat"
-      default_config :habitat_version, "19.0.35"
+      default_config :habitat_image_version, "19.0.35"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :dns, nil
       default_config :dns_search, nil
@@ -626,7 +626,7 @@ module Kitchen
       end
 
       def installer_image
-        return "#{config[:habitat_image]}:#{config[:habitat_version]}" if installer == "habitat"
+        return "#{config[:habitat_image]}:#{config[:habitat_image_version]}" if installer == "habitat"
 
         "#{config[:chef_image]}:#{chef_version}"
       end
