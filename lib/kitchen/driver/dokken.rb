@@ -39,11 +39,8 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :hab_installation, true
-      default_config :chef_image, "chef/chef"
+      default_config :chef_image, "ashiqueps/chef-habitat"
       default_config :chef_version, "latest"
-      default_config :habitat_image, "ashiqueps/chef-habitat"
-      default_config :habitat_image_version, "19.0.35"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :dns, nil
       default_config :dns_search, nil
@@ -121,7 +118,7 @@ module Kitchen
       end
 
       def installer
-        @installer ||= if config[:hab_installation]
+        @installer ||= if config[:chef_image].include?("habitat")
                          "habitat"
                        else
                          "chef"
@@ -412,11 +409,11 @@ module Kitchen
         rescue ::Docker::Error::NotFoundError
           debug "Chef container does not exist, creating a new Chef container"
           with_retries do
-            debug "driver - creating volume container #{chef_container_name} from #{installer_image}"
+            debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
             config = {
               "name" => chef_container_name,
               "Cmd" => "true",
-              "Image" => registry_image_path(installer_image),
+              "Image" => registry_image_path(chef_image),
               "HostConfig" => {
                 "NetworkMode" => self[:network_mode],
               },
@@ -485,8 +482,8 @@ module Kitchen
       end
 
       def pull_chef_image
-        debug "driver - pulling #{short_image_path(installer_image)}"
-        config[:pull_chef_image] ? pull_image(installer_image) : pull_if_missing(installer_image)
+        debug "driver - pulling #{short_image_path(chef_image)}"
+        config[:pull_chef_image] ? pull_image(chef_image) : pull_if_missing(chef_image)
       end
 
       def delete_image(name)
@@ -625,9 +622,7 @@ module Kitchen
         config[:platform] != "" ? "#{installer}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{installer}-#{chef_version}"
       end
 
-      def installer_image
-        return "#{config[:habitat_image]}:#{config[:habitat_image_version]}" if installer == "habitat"
-
+      def chef_image
         "#{config[:chef_image]}:#{chef_version}"
       end
 
