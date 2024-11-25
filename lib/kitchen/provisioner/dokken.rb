@@ -31,7 +31,7 @@ module Kitchen
 
       default_config :root_path, "/opt/kitchen"
       default_config :chef_binary, "/opt/chef/bin/chef-client"
-      default_config :hab_chef_binary, "/hab/hab_bin"
+      default_config :hab_chef_binary, "/hab/hab"
       default_config :chef_options, " -z"
       default_config :chef_log_level, "warn"
       default_config :chef_output_format, "doc"

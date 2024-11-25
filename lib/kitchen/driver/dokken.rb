@@ -39,7 +39,7 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :chef_image, "ashiqueps/chef-habitat"
+      default_config :chef_image, "chef/chef-hab"
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :dns, nil
@@ -117,8 +117,10 @@ module Kitchen
         dokken_delete_sandbox
       end
 
+      # TODO: This method currently checks if the installer is a hab or omnibus based on the image name.
+      # Find a better way to determine the installer.
       def installer
-        @installer ||= if config[:chef_image].include?("habitat")
+        @installer ||= if config[:chef_image].include?("hab")
                          "habitat"
                        else
                          "chef"
