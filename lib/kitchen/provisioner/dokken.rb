@@ -31,6 +31,7 @@ module Kitchen
 
       default_config :root_path, "/opt/kitchen"
       default_config :chef_binary, "/opt/chef/bin/chef-client"
+      default_config :hab_chef_binary, "/hab/hab"
       default_config :chef_options, " -z"
       default_config :chef_log_level, "warn"
       default_config :chef_output_format, "doc"
@@ -100,14 +101,15 @@ module Kitchen
       # patching Kitchen::Provisioner::ChefZero#run_command
       def run_command
         validate_config
-        cmd = config[:chef_binary]
+        cmd = chef_executable
         cmd << config[:chef_options].to_s
         cmd << " -l #{config[:chef_log_level]}"
         cmd << " -F #{config[:chef_output_format]}"
         cmd << " -c /opt/kitchen/client.rb"
         cmd << " -j /opt/kitchen/dna.json"
-        cmd << "--profile-ruby" if config[:profile_ruby]
-        cmd << "--slow-report" if config[:slow_resource_report]
+        cmd << " --profile-ruby" if config[:profile_ruby]
+        cmd << " --slow-report" if config[:slow_resource_report]
+        cmd << " --chef-license-key=#{config[:chef_license_key]}" if instance.driver.installer == "habitat" && config[:chef_license_key]
 
         chef_cmd(cmd)
       end
@@ -125,6 +127,12 @@ module Kitchen
 
         debug("Cleaning up local sandbox in #{sandbox_path}")
         FileUtils.rmtree(Dir.glob("#{sandbox_path}/*"))
+      end
+
+      def chef_executable
+        return "HAB_LICENSE='accept-no-persist' #{config[:hab_chef_binary]} pkg exec chef/chef-infra-client -- chef-client " if instance.driver.installer == "habitat"
+
+        "#{config[:chef_binary]}"
       end
     end
   end
