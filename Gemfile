@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in kitchen-dokken.gemspec
 gemspec
 
-gem "chef-test-kitchen-enterprise", git: "https://github.com/chef/chef-test-kitchen-enterprise", branch: "rebranding_change"
+gem "chef-test-kitchen-enterprise", git: "https://github.com/chef/chef-test-kitchen-enterprise", branch: "main"
 
 group :test do
   gem "berkshelf"
