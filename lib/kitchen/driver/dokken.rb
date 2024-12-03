@@ -465,7 +465,7 @@ module Kitchen
               next if v["auth"].nil?
 
               username, password = Base64.decode64(v["auth"]).split(":")
-              @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
+              @docker_config_creds[k] = { serveraddress: k, username:, password: }
             end
           end
 
