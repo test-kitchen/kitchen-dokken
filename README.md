@@ -320,14 +320,14 @@ provided. Any valid instruction will work, including `MAINTAINER`,
 
 This should be used as little as possible.
 
-#### Exemple use case of intermediate_instruction
+#### Example use case of intermediate_instruction
 
 A possible use case is running kitchen behind a [MITM proxy](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)
 If you did read the link, it's scary yes, but a reality in many corporate networks where any HTTPS connection is intercepted, when done right (morally) the proxy uses an internal Certificate Authority (CA) which is not trusted by most programs.
 
 It's always a problem to get things accessing TLS secured servers through this kind of proxy when working in a container and here is how you can do it for Chef specifically.
 
-Using kitchen `intemediate_instructions` and `entrypoint` you can overcome the problem in dokken in this way:
+Using kitchen `intermediate_instructions` and `entrypoint` you can overcome the problem in dokken in this way:
 
 ```yaml
 driver:
@@ -414,7 +414,7 @@ On some versions of Ubuntu (16.04 at least), the container deletes all the downl
 driver:
   name: dokken
   volumes:
-  # saves the apt archieves outside of the container
+  # saves the apt archives outside of the container
   - /var/cache/apt/archives/:/var/cache/apt/archives/
 
 platforms:
@@ -608,7 +608,7 @@ To allow IPv6 Docker networks to reach the internet IPv6 firewall rules must be 
 }
 ```
 
-Some containers require the `ip6table_filter` kernel module to be loaded on the host system or ip6tables will not dunction on the container (Centos 7 for example). To check if the module is loaded use the command
+Some containers require the `ip6table_filter` kernel module to be loaded on the host system or ip6tables will not function on the container (Centos 7 for example). To check if the module is loaded use the command
 
 ```shell
 sudo lsmod | grep ip6table_filter
