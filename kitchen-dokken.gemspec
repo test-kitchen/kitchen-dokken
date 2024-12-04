@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.files         = %w{LICENSE kitchen-dokken.gemspec Gemfile Rakefile} + Dir.glob("lib/**/*")
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = ">= 2.7"
+  spec.required_ruby_version = ">= 3.1"
 
   spec.add_dependency "docker-api", ">= 1.33", "< 3"
   spec.add_dependency "lockfile", "~> 2.1"
