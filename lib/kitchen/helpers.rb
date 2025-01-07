@@ -4,6 +4,8 @@ module Dokken
     require "socket" unless defined?(Socket)
     require "timeout" unless defined?(Timeout)
     require "resolv" unless defined?(Resolv)
+    require "rubygems/package"
+    require "stringio"
 
     def port_open?(ip, port)
       begin
@@ -91,17 +93,46 @@ module Dokken
     def create_data_image(registry)
       return if ::Docker::Image.exist?(data_image)
 
+      docker_file_content = data_dockerfile(registry)
+      keys_content = insecure_ssh_public_key
+      i = if remote_docker_host?
+            build_docker_image_from_tar(docker_file_content, keys_content)
+          else
+            build_docker_image_from_dir(docker_file_content, keys_content)
+          end
+
+      i.tag("repo" => repo(data_image), "tag" => tag(data_image), "force" => true)
+    end
+
+    def build_docker_image_from_tar(docker_file_content, keys_content)
+      tar_io = StringIO.new
+      Gem::Package::TarWriter.new(tar_io) do |tar|
+        tar.add_file_simple('Dockerfile', 0644, docker_file_content.bytesize) do |io|
+          io.write docker_file_content
+        end
+
+        tar.add_file_simple('authorized_keys', 0644, keys_content.bytesize) do |io|
+          io.write keys_content
+        end
+      end
+
+      tar_io.rewind
+
+      # Pass the tarball to Docker
+      Docker::Image.build_from_tar(tar_io)
+    end
+
+    def build_docker_image_from_dir(docker_file_content, keys_content)
       tmpdir = Dir.tmpdir
       FileUtils.mkdir_p "#{tmpdir}/dokken"
-      File.write("#{tmpdir}/dokken/Dockerfile", data_dockerfile(registry))
-      File.write("#{tmpdir}/dokken/authorized_keys", insecure_ssh_public_key)
+      File.write("#{tmpdir}/dokken/Dockerfile", docker_file_content)
+      File.write("#{tmpdir}/dokken/authorized_keys", keys_content)
 
-      i = ::Docker::Image.build_from_dir(
+      ::Docker::Image.build_from_dir(
         "#{tmpdir}/dokken",
         "nocache" => true,
         "rm" => true
       )
-      i.tag("repo" => repo(data_image), "tag" => tag(data_image), "force" => true)
     end
 
     def default_docker_host
