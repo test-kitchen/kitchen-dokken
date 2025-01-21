@@ -4,8 +4,8 @@ module Dokken
     require "socket" unless defined?(Socket)
     require "timeout" unless defined?(Timeout)
     require "resolv" unless defined?(Resolv)
-    require "rubygems/package"
-    require "stringio"
+    require "rubygems/package" unless defined?(Gem::Package)
+    require "stringio" unless defined?(StringIO)
 
     def port_open?(ip, port)
       begin
@@ -107,18 +107,17 @@ module Dokken
     def build_docker_image_from_tar(docker_file_content, keys_content)
       tar_io = StringIO.new
       Gem::Package::TarWriter.new(tar_io) do |tar|
-        tar.add_file_simple('Dockerfile', 0644, docker_file_content.bytesize) do |io|
+        tar.add_file_simple("Dockerfile", 0644, docker_file_content.bytesize) do |io|
           io.write docker_file_content
         end
 
-        tar.add_file_simple('authorized_keys', 0644, keys_content.bytesize) do |io|
+        tar.add_file_simple("authorized_keys", 0644, keys_content.bytesize) do |io|
           io.write keys_content
         end
       end
 
       tar_io.rewind
 
-      # Pass the tarball to Docker
       Docker::Image.build_from_tar(tar_io)
     end
 
@@ -187,7 +186,9 @@ module Dokken
       # refs:
       # https://github.com/docker/machine/issues/1814
       # https://github.com/docker/toolbox/issues/607
-      return Dir.home.sub "C:/Users", "/c/Users" if Dir.home =~ /^C:/ && remote_docker_host?
+      #
+      # home_dir method is no longer used in other than the lockfiles and sandbox dir.
+      # return Dir.home.sub "C:/Users", "/c/Users" if Dir.home =~ /^C:/ && remote_docker_host?
 
       Dir.home
     end

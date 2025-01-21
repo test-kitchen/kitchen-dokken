@@ -170,14 +170,14 @@ module Kitchen
                                remote,
                                recursive: true,
                                ssh: { port: ssh_port, keys: ["#{tmpdir}/id_rsa"] })
+              debug "Copied #{local} to #{remote}"
             end
           end
         end
 
         def login_command
           @runner = options[:instance_name].to_s
-          cols = `tput cols`
-          lines = `tput lines`
+          lines, cols = IO.console.winsize
           args = ["exec", "-e", "COLUMNS=#{cols}", "-e", "LINES=#{lines}", "-it", @runner, "/bin/bash", "-login", "-i"]
           LoginCommand.new(options[:login_command], args)
         end
