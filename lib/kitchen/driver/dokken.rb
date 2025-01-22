@@ -404,7 +404,7 @@ module Kitchen
             debug "driver - error :#{e}:"
           end
         ensure
-          lockfile.unlock
+          lockfile.unlock if lockfile.locked?
         end
       end
 
