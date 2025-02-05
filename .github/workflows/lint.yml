@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cookstyle:
+  chefstyle:
     env:
       BUNDLE_WITH: ${{ inputs.bundle_with }}
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ["3.3"]
-    name: Cookstyle on Ruby
+    name: Chefstyle on Ruby
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,9 +40,9 @@ jobs:
           bundler-cache: true
       - uses: r7kamura/rubocop-problem-matchers-action@v1
         if: steps.check.outputs.gemfile == 'true'
-      - name: Cookstyle
+      - name: Chef Style
         if: steps.check.outputs.gemfile == 'true'
-        run: bundle exec cookstyle --chefstyle
+        run: bundle exec chefstyle
 
   yamllint:
     runs-on: ubuntu-latest
