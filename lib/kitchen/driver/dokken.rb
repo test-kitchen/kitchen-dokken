@@ -457,7 +457,7 @@ module Kitchen
 
       def docker_creds
         @docker_creds ||= if config[:creds_file]
-                            JSON.parse(IO.read(config[:creds_file]))
+                            JSON.parse(File.read(config[:creds_file]))
                           else
                             {}
                           end
