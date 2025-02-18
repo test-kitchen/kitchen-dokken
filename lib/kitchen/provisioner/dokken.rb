@@ -130,7 +130,7 @@ module Kitchen
       end
 
       def chef_executable
-        return "HAB_LICENSE='accept-no-persist' #{config[:hab_chef_binary]} pkg exec chef/chef-infra-client -- chef-client " if instance.driver.installer == "habitat"
+        return "HAB_LICENSE='accept-no-persist' IS_KITCHEN='true' #{config[:hab_chef_binary]} pkg exec chef/chef-infra-client -- chef-client " if instance.driver.installer == "habitat"
 
         "#{config[:chef_binary]}"
       end
