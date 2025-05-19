@@ -13,5 +13,5 @@ group :development do
 end
 
 group :linting do
-  gem "cookstyle", "7.32.8"
+  gem "cookstyle", "8.1.3"
 end
