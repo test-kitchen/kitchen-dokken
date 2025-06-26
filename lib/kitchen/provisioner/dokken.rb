@@ -31,7 +31,6 @@ module Kitchen
 
       default_config :root_path, "/opt/kitchen"
       default_config :chef_binary, "/opt/chef/bin/chef-client"
-      default_config :hab_chef_binary, "/hab/hab"
       default_config :chef_options, " -z"
       default_config :chef_log_level, "warn"
       default_config :chef_output_format, "doc"
@@ -130,9 +129,10 @@ module Kitchen
       end
 
       def chef_executable
-        return "HAB_LICENSE='accept-no-persist' IS_KITCHEN='true' #{config[:hab_chef_binary]} pkg exec chef/chef-infra-client -- chef-client " if instance.driver.installer == "habitat"
+        return  "#{config[:chef_binary]}" if instance.driver.installer == "chef"
 
-        "#{config[:chef_binary]}"
+        hab_bin = "HAB_BIN=$(find /hab/pkgs/core/hab/ -type f -name hab | sort | tail -n1)"
+       "HAB_LICENSE='accept-no-persist' #{hab_bin} && \"$HAB_BIN\" pkg exec chef/chef-infra-client -- chef-client "
       end
     end
   end
