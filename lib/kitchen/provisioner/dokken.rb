@@ -132,7 +132,7 @@ module Kitchen
         return  "#{config[:chef_binary]}" if instance.driver.installer == "chef"
 
         hab_bin = "HAB_BIN=$(find /hab/pkgs/core/hab/ -type f -name hab | sort | tail -n1)"
-       "HAB_LICENSE='accept-no-persist' #{hab_bin} && \"$HAB_BIN\" pkg exec chef/chef-infra-client -- chef-client "
+        "HAB_LICENSE='accept-no-persist' #{hab_bin} && \"$HAB_BIN\" pkg exec chef/chef-infra-client -- chef-client "
       end
     end
   end
