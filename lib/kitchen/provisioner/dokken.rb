@@ -104,8 +104,8 @@ module Kitchen
         cmd << config[:chef_options].to_s
         cmd << " -l #{config[:chef_log_level]}"
         cmd << " -F #{config[:chef_output_format]}"
-        cmd << " -c /opt/kitchen/client.rb"
-        cmd << " -j /opt/kitchen/dna.json"
+        cmd << " -c #{File.join(config[:root_path], "client.rb")}"
+        cmd << " -j #{File.join(config[:root_path], "dna.json")}"
         cmd << "--profile-ruby" if config[:profile_ruby]
         cmd << "--slow-report" if config[:slow_resource_report]
 
