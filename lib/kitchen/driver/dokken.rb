@@ -45,7 +45,9 @@ module Kitchen
       default_config :dns, nil
       default_config :dns_search, nil
       default_config :docker_host_url, default_docker_host
-      default_config :docker_info, docker_info
+      default_config :docker_info do |driver|
+        docker_info(driver[:docker_host_url])
+      end
       default_config :docker_registry, nil
       default_config :entrypoint, nil
       default_config :env, nil
