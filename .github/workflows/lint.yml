@@ -6,17 +6,22 @@ name: 'Lint, Unit & Integration Tests'
 
 jobs:
   lint-unit:
-    uses: test-kitchen/.github/.github/workflows/lint-unit.yml@v0.1.2
+    uses: test-kitchen/.github/.github/workflows/lint-unit.yml@main
+    with:
+      bundle_only: "linting"
 
   integration:
     runs-on: ubuntu-latest
     needs: lint-unit
     name: Kitchen Verify
+    strategy:
+      matrix:
+        ruby: ["3.3"]
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Create & Validate containers
         run: |

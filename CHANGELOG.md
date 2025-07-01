@@ -1,5 +1,33 @@
 # Dokken Changelog
 
+## [2.20.7](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.6...v2.20.7) (2024-10-23)
+
+
+### Bug Fixes
+
+* Use default registry credentials when they are set ([#317](https://github.com/test-kitchen/kitchen-dokken/issues/317)) ([5e7f3e6](https://github.com/test-kitchen/kitchen-dokken/commit/5e7f3e65dad826114574844fe77710ea27a359e1))
+
+## [2.20.6](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.5...v2.20.6) (2024-07-01)
+
+
+### Bug Fixes
+
+* Switch to using AlmaLinux 9 for the data container ([#329](https://github.com/test-kitchen/kitchen-dokken/issues/329)) ([955040e](https://github.com/test-kitchen/kitchen-dokken/commit/955040efdbe2c2e6e01797f59fb657313aceb86f))
+
+## [2.20.5](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.4...v2.20.5) (2024-06-19)
+
+
+### Bug Fixes
+
+* update release please configs ([#326](https://github.com/test-kitchen/kitchen-dokken/issues/326)) ([a407bcc](https://github.com/test-kitchen/kitchen-dokken/commit/a407bccf7c45beb0d8effb4a13ce1d0ccb50f866))
+
+## [2.20.4](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.3...v2.20.4) (2024-04-02)
+
+
+### Miscellaneous Chores
+
+* release 2.20.4 ([#320](https://github.com/test-kitchen/kitchen-dokken/issues/320)) ([054f2cf](https://github.com/test-kitchen/kitchen-dokken/commit/054f2cf175f515707535f5e6446327d7563b4244))
+
 ## [2.20.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.2...v2.20.3) (2023-11-28)
 
 
