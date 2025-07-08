@@ -1,7 +1,7 @@
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
-# Copyright (C) 2015, Sean OMeara
+# Copyright:: (C) 2015, Sean OMeara
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "kitchen"
-require "kitchen/provisioner/chef_zero"
-require_relative "../helpers"
+require 'kitchen'
+require 'kitchen/provisioner/chef_zero'
+require_relative '../helpers'
 
 include Dokken::Helpers
 
@@ -29,11 +29,11 @@ module Kitchen
 
       plugin_version Kitchen::VERSION
 
-      default_config :root_path, "/opt/kitchen"
-      default_config :chef_binary, "/opt/chef/bin/chef-client"
-      default_config :chef_options, " -z"
-      default_config :chef_log_level, "warn"
-      default_config :chef_output_format, "doc"
+      default_config :root_path, '/opt/kitchen'
+      default_config :chef_binary, '/opt/chef/bin/chef-client'
+      default_config :chef_options, ' -z'
+      default_config :chef_log_level, 'warn'
+      default_config :chef_output_format, 'doc'
       default_config :profile_ruby, false
       default_config :docker_info, docker_info
       default_config :docker_host_url, default_docker_host
@@ -46,7 +46,7 @@ module Kitchen
       # driver and set it here. If we remove this, users will set their chef_version
       # to 14 in the driver and still get prompted for license acceptance because
       # the ChefZero provisioner defaults product_version to 'latest'.
-      default_config :product_name, "chef"
+      default_config :product_name, 'chef'
       default_config :product_version do |provisioner|
         driver = provisioner.instance.driver
         driver[:chef_version]
@@ -82,8 +82,8 @@ module Kitchen
       def validate_config
         # check if we have an space for the user provided options
         # or add it if not to avoid issues
-        unless config[:chef_options].start_with? " "
-          config[:chef_options].prepend(" ")
+        unless config[:chef_options].start_with? ' '
+          config[:chef_options].prepend(' ')
         end
 
         # strip spaces from all other options
@@ -93,8 +93,8 @@ module Kitchen
 
         # if the user wants to be funny and pass empty strings
         # just use the defaults
-        config[:chef_log_level] = "warn" if config[:chef_log_level].empty?
-        config[:chef_output_format] = "doc" if config[:chef_output_format].empty?
+        config[:chef_log_level] = 'warn' if config[:chef_log_level].empty?
+        config[:chef_output_format] = 'doc' if config[:chef_output_format].empty?
       end
 
       private
@@ -106,16 +106,16 @@ module Kitchen
         cmd << config[:chef_options].to_s
         cmd << " -l #{config[:chef_log_level]}"
         cmd << " -F #{config[:chef_output_format]}"
-        cmd << " -c /opt/kitchen/client.rb"
-        cmd << " -j /opt/kitchen/dna.json"
-        cmd << "--profile-ruby" if config[:profile_ruby]
-        cmd << "--slow-report" if config[:slow_resource_report]
+        cmd << ' -c /opt/kitchen/client.rb'
+        cmd << ' -j /opt/kitchen/dna.json'
+        cmd << '--profile-ruby' if config[:profile_ruby]
+        cmd << '--slow-report' if config[:slow_resource_report]
 
         chef_cmd(cmd)
       end
 
       def write_run_command(command)
-        File.write("#{dokken_kitchen_sandbox}/run_command", command, mode: "wb")
+        File.write("#{dokken_kitchen_sandbox}/run_command", command, mode: 'wb')
       end
 
       def runner_container_name

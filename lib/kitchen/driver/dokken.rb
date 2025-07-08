@@ -1,7 +1,7 @@
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
-# Copyright (C) 2015, Sean OMeara
+# Copyright:: (C) 2015, Sean OMeara
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "digest" unless defined?(Digest)
-require "kitchen"
-require "tmpdir" unless defined?(Dir.mktmpdir)
-require "docker"
-require "lockfile"
-require "base64" unless defined?(Base64)
-require_relative "../helpers"
+require 'digest' unless defined?(Digest)
+require 'kitchen'
+require 'tmpdir' unless defined?(Dir.mktmpdir)
+require 'docker'
+require 'lockfile'
+require 'base64' unless defined?(Base64)
+require_relative '../helpers'
 
 include Dokken::Helpers
 
@@ -39,9 +39,9 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :chef_image, "chef/chef"
-      default_config :chef_version, "latest"
-      default_config :data_image, "dokken/kitchen-cache:latest"
+      default_config :chef_image, 'chef/chef'
+      default_config :chef_version, 'latest'
+      default_config :data_image, 'dokken/kitchen-cache:latest'
       default_config :dns, nil
       default_config :dns_search, nil
       default_config :docker_host_url, default_docker_host
@@ -49,16 +49,16 @@ module Kitchen
       default_config :docker_registry, nil
       default_config :entrypoint, nil
       default_config :env, nil
-      default_config :hostname, "dokken"
+      default_config :hostname, 'dokken'
       default_config :hostname_aliases, nil
       default_config :image_prefix, nil
       default_config :ipv6, false
-      default_config :ipv6_subnet, "2001:db8:1::/64" # "2001:db8::/32 Range reserved for documentation"
+      default_config :ipv6_subnet, '2001:db8:1::/64' # "2001:db8::/32 Range reserved for documentation"
       default_config :links, nil
       default_config :memory_limit, 0
-      default_config :network_mode, "dokken"
+      default_config :network_mode, 'dokken'
       default_config :pid_one_command, 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
-      default_config :platform, ""
+      default_config :platform, ''
       default_config :ports, nil
       default_config :privileged, false
       default_config :pull_chef_image, true
@@ -138,9 +138,9 @@ module Kitchen
       end
 
       def delete_work_image
-        return unless ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
+        return unless ::Docker::Image.exist?(work_image, { 'platform' => config[:platform] }, docker_connection)
 
-        with_retries { @work_image = ::Docker::Image.get(work_image, { "platform" => config[:platform] }, docker_connection) }
+        with_retries { @work_image = ::Docker::Image.get(work_image, { 'platform' => config[:platform] }, docker_connection) }
 
         with_retries do
           with_retries { @work_image.remove(force: true) }
@@ -150,26 +150,26 @@ module Kitchen
       end
 
       def build_work_image(state)
-        info("Building work image..")
-        return if ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
+        info('Building work image..')
+        return if ::Docker::Image.exist?(work_image, { 'platform' => config[:platform] }, docker_connection)
 
         begin
           @intermediate_image = ::Docker::Image.build(
             work_image_dockerfile,
             {
-              "t" => work_image,
-              "platform" => config[:platform],
+              't' => work_image,
+              'platform' => config[:platform],
             },
             docker_connection
           )
         # credit to https://github.com/someara/kitchen-dokken/issues/95#issue-224697526
         rescue Docker::Error::UnexpectedResponseError => e
-          msg = "work_image build failed: "
-          msg += JSON.parse(e.to_s.split("\r\n").last)["error"].to_s
-          msg += ". The common scenarios are incorrect intermediate "
-          msg += "instructions such as not including `-y` on an `apt-get` "
-          msg += "or similar. The other common scenario is a transient "
-          msg += "error such as an unresponsive mirror."
+          msg = 'work_image build failed: '
+          msg += JSON.parse(e.to_s.split("\r\n").last)['error'].to_s
+          msg += '. The common scenarios are incorrect intermediate '
+          msg += 'instructions such as not including `-y` on an `apt-get` '
+          msg += 'or similar. The other common scenario is a transient '
+          msg += 'error such as an unresponsive mirror.'
           raise msg
         # fallback rescue above should catch most of the errors
         rescue => e
@@ -233,7 +233,7 @@ module Kitchen
       end
 
       def work_image
-        [image_prefix, instance_name].compact.join("/").downcase
+        [image_prefix, instance_name].compact.join('/').downcase
       end
 
       def dokken_tmpfs
@@ -246,7 +246,7 @@ module Kitchen
           v
         else
           Array(v).each_with_object({}) do |y, h|
-            name, opts = y.split(":", 2)
+            name, opts = y.split(':', 2)
             h[name.to_s] = opts.to_s
           end
         end
@@ -268,7 +268,7 @@ module Kitchen
         else
           b = []
           v.delete_if do |x|
-            parts = x.split(":")
+            parts = x.split(':')
             b << x if parts.length > 1
           end
           b = nil if b.empty?
@@ -300,55 +300,55 @@ module Kitchen
         volumes, binds = calc_volumes_binds
 
         config = {
-          "name" => runner_container_name,
-          "Cmd" => Shellwords.shellwords(self[:pid_one_command]),
+          'name' => runner_container_name,
+          'Cmd' => Shellwords.shellwords(self[:pid_one_command]),
           # locally built image, must use short-name
-          "Image" => short_image_path(work_image),
-          "Hostname" => self[:hostname],
-          "Env" => self[:env],
-          "ExposedPorts" => exposed_ports,
-          "Volumes" => volumes,
-          "HostConfig" => {
-            "Privileged" => self[:privileged],
-            "VolumesFrom" => dokken_volumes_from,
-            "Binds" => binds,
-            "Dns" => self[:dns],
-            "DnsSearch" => self[:dns_search],
-            "Links" => Array(self[:links]),
-            "CapAdd" => Array(self[:cap_add]),
-            "CapDrop" => Array(self[:cap_drop]),
-            "SecurityOpt" => Array(self[:security_opt]),
-            "NetworkMode" => self[:network_mode],
-            "PortBindings" => port_bindings,
-            "Tmpfs" => dokken_tmpfs,
-            "Memory" => self[:memory_limit],
+          'Image' => short_image_path(work_image),
+          'Hostname' => self[:hostname],
+          'Env' => self[:env],
+          'ExposedPorts' => exposed_ports,
+          'Volumes' => volumes,
+          'HostConfig' => {
+            'Privileged' => self[:privileged],
+            'VolumesFrom' => dokken_volumes_from,
+            'Binds' => binds,
+            'Dns' => self[:dns],
+            'DnsSearch' => self[:dns_search],
+            'Links' => Array(self[:links]),
+            'CapAdd' => Array(self[:cap_add]),
+            'CapDrop' => Array(self[:cap_drop]),
+            'SecurityOpt' => Array(self[:security_opt]),
+            'NetworkMode' => self[:network_mode],
+            'PortBindings' => port_bindings,
+            'Tmpfs' => dokken_tmpfs,
+            'Memory' => self[:memory_limit],
           },
         }
-        unless %w{host bridge}.include?(self[:network_mode])
-          config["NetworkingConfig"] = {
-            "EndpointsConfig" => {
+        unless %w(host bridge).include?(self[:network_mode])
+          config['NetworkingConfig'] = {
+            'EndpointsConfig' => {
               self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
+                'Aliases' => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
               },
             },
           }
         end
         unless self[:entrypoint].to_s.empty?
-          config["Entrypoint"] = self[:entrypoint]
+          config['Entrypoint'] = self[:entrypoint]
         end
         if self[:cgroupns_host]
-          config["HostConfig"]["CgroupnsMode"] = "host"
+          config['HostConfig']['CgroupnsMode'] = 'host'
         end
         if self[:userns_host]
-          config["HostConfig"]["UsernsMode"] = "host"
+          config['HostConfig']['UsernsMode'] = 'host'
         end
 
         if self[:privileged]
-          if self[:user_ns_mode] != "host"
-            debug "driver - privileged mode is not supported with user namespaces enabled"
+          if self[:user_ns_mode] != 'host'
+            debug 'driver - privileged mode is not supported with user namespaces enabled'
             debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
           end
-          config["HostConfig"]["UsernsMode"] = "host"
+          config['HostConfig']['UsernsMode'] = 'host'
         end
 
         runner_container = run_container(config)
@@ -358,20 +358,20 @@ module Kitchen
       def start_data_container(state)
         debug "driver - creating #{data_container_name}"
         config = {
-          "name" => data_container_name,
+          'name' => data_container_name,
           # locally built image, must use short-name
-          "Image" => short_image_path(data_image),
-          "HostConfig" => {
-            "PortBindings" => port_bindings,
-            "PublishAllPorts" => true,
-            "NetworkMode" => "bridge",
+          'Image' => short_image_path(data_image),
+          'HostConfig' => {
+            'PortBindings' => port_bindings,
+            'PublishAllPorts' => true,
+            'NetworkMode' => 'bridge',
           },
         }
-        unless %w{host bridge}.include?(self[:network_mode])
-          config["NetworkingConfig"] = {
-            "EndpointsConfig" => {
+        unless %w(host bridge).include?(self[:network_mode])
+          config['NetworkingConfig'] = {
+            'EndpointsConfig' => {
               self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]),
+                'Aliases' => Array(self[:hostname]),
               },
             },
           }
@@ -381,15 +381,15 @@ module Kitchen
       end
 
       def make_dokken_network
-        return unless self[:network_mode] == "dokken"
+        return unless self[:network_mode] == 'dokken'
 
         lockfile = Lockfile.new "#{home_dir}/.dokken-network.lock"
         begin
           lockfile.lock
-          with_retries { ::Docker::Network.get("dokken", {}, docker_connection) }
+          with_retries { ::Docker::Network.get('dokken', {}, docker_connection) }
         rescue ::Docker::Error::NotFoundError
           begin
-            with_retries { ::Docker::Network.create("dokken", network_settings) }
+            with_retries { ::Docker::Network.create('dokken', network_settings) }
           rescue ::Docker::Error => e
             debug "driver - error :#{e}:"
           end
@@ -399,7 +399,7 @@ module Kitchen
       end
 
       def make_data_image
-        debug "driver - calling create_data_image"
+        debug 'driver - calling create_data_image'
         create_data_image(config[:docker_registry])
       end
 
@@ -411,21 +411,21 @@ module Kitchen
             # TEMPORARY FIX - docker-api 2.0.0 has a buggy Docker::Container.get - use .all instead
             # https://github.com/swipely/docker-api/issues/566
             # ::Docker::Container.get(chef_container_name, {}, docker_connection)
-            found = ::Docker::Container.all({ all: true }, docker_connection).select { |c| c.info["Names"].include?("/#{chef_container_name}") }
-            raise ::Docker::Error::NotFoundError.new(chef_container_name) if found.empty?
+            found = ::Docker::Container.all({ all: true }, docker_connection).select { |c| c.info['Names'].include?("/#{chef_container_name}") }
+            raise ::Docker::Error::NotFoundError, chef_container_name if found.empty?
 
-            debug "Chef container already exists, continuing"
+            debug 'Chef container already exists, continuing'
           end
         rescue ::Docker::Error::NotFoundError
-          debug "Chef container does not exist, creating a new Chef container"
+          debug 'Chef container does not exist, creating a new Chef container'
           with_retries do
             debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
             config = {
-              "name" => chef_container_name,
-              "Cmd" => "true",
-              "Image" => registry_image_path(chef_image),
-              "HostConfig" => {
-                "NetworkMode" => self[:network_mode],
+              'name' => chef_container_name,
+              'Cmd' => 'true',
+              'Image' => registry_image_path(chef_image),
+              'HostConfig' => {
+                'NetworkMode' => self[:network_mode],
               },
             }
             chef_container = create_container(config)
@@ -457,28 +457,28 @@ module Kitchen
         return @docker_config_creds if @docker_config_creds
 
         @docker_config_creds = {}
-        config_file = ::File.join(::Dir.home, ".docker", "config.json")
+        config_file = ::File.join(::Dir.home, '.docker', 'config.json')
         if ::File.exist?(config_file)
           config = JSON.load_file!(config_file)
-          if config["auths"]
-            config["auths"].each do |k, v|
-              next if v["auth"].nil?
+          if config['auths']
+            config['auths'].each do |k, v|
+              next if v['auth'].nil?
 
-              username, password = Base64.decode64(v["auth"]).split(":")
+              username, password = Base64.decode64(v['auth']).split(':')
               @docker_config_creds[k] = { serveraddress: k, username: username, password: password }
             end
           end
 
-          if config["credHelpers"]
-            config["credHelpers"].each do |k, v|
-              @docker_config_creds[k] = Proc.new do
+          if config['credHelpers']
+            config['credHelpers'].each do |k, v|
+              @docker_config_creds[k] = proc do
                 c = JSON.parse(`echo #{k} | docker-credential-#{v} get`)
-                { serveraddress: c["ServerURL"], username: c["Username"], password: c["Secret"] }
+                { serveraddress: c['ServerURL'], username: c['Username'], password: c['Secret'] }
               end
             end
           end
         else
-          debug("~/.docker/config.json does not exist")
+          debug('~/.docker/config.json does not exist')
         end
 
         @docker_config_creds
@@ -487,10 +487,10 @@ module Kitchen
       def docker_creds_for_image(image)
         return docker_creds if config[:creds_file]
 
-        image_registry = image.split("/").first
+        image_registry = image.split('/').first
 
         # NOTE: Try to use DockerHub auth if exact registry match isn't found
-        default_registry = "https://index.docker.io/v1/"
+        default_registry = 'https://index.docker.io/v1/'
         if docker_config_creds.key?(image_registry)
           c = docker_config_creds[image_registry]
           c.respond_to?(:call) ? c.call : c
@@ -510,27 +510,27 @@ module Kitchen
       end
 
       def delete_image(name)
-        with_retries { @image = ::Docker::Image.get(name, { "platform" => config[:platform] }, docker_connection) }
+        with_retries { @image = ::Docker::Image.get(name, { 'platform' => config[:platform] }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error
         puts "Image #{name} not found. Nothing to delete."
       end
 
       def container_exist?(name)
-        return true if ::Docker::Container.get(name, {}, docker_connection)
+        true if ::Docker::Container.get(name, {}, docker_connection)
       rescue StandardError, ::Docker::Error::NotFoundError
         false
       end
 
       def parse_image_name(image)
-        parts = image.split(":")
+        parts = image.split(':')
 
         if parts.size > 2
           tag = parts.pop
-          repo = parts.join(":")
+          repo = parts.join(':')
         else
-          tag = parts[1] || "latest"
-          repo = parts[0]
+          tag = parts[1] || 'latest'
+          repo = parts.first
         end
 
         [repo, tag]
@@ -542,7 +542,7 @@ module Kitchen
       # @param image [String] the docker image path to parse
       # @return [String] the repo portion of `image`
       def repo(image)
-        parse_image_name(image)[0]
+        parse_image_name(image).first
       end
 
       # Return the 'tag' of a docker image path. Will be `latest` if there
@@ -576,24 +576,24 @@ module Kitchen
       end
 
       def create_container(args)
-        with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
+        with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
       rescue
         with_retries do
-          args["Env"] = [] if args["Env"].nil?
-          args["Env"] << "TEST_KITCHEN=1"
-          args["Env"] << "CI=#{ENV["CI"]}" if ENV.include? "CI"
-          args["Platform"] = config[:platform]
-          info "Creating container #{args["name"]}"
+          args['Env'] = [] if args['Env'].nil?
+          args['Env'] << 'TEST_KITCHEN=1'
+          args['Env'] << "CI=#{ENV['CI']}" if ENV.include? 'CI'
+          args['Platform'] = config[:platform]
+          info "Creating container #{args['name']}"
           debug "driver - create_container args #{args}"
           with_retries do
             @container = ::Docker::Container.create(args.clone, docker_connection)
           rescue ::Docker::Error::ConflictError
-            debug "driver - rescue ConflictError: #{args["name"]}"
-            with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
+            debug "driver - rescue ConflictError: #{args['name']}"
+            with_retries { @container = ::Docker::Container.get(args['name'], {}, docker_connection) }
           end
         rescue ::Docker::Error => e
           debug "driver - error :#{e}:"
-          raise "driver - failed to create_container #{args["name"]}"
+          raise "driver - failed to create_container #{args['name']}"
         end
       end
 
@@ -601,14 +601,14 @@ module Kitchen
         create_container(args)
         with_retries do
           @container.start
-          @container = ::Docker::Container.get(args["name"], {}, docker_connection)
-          wait_running_state(args["name"], true)
+          @container = ::Docker::Container.get(args['name'], {}, docker_connection)
+          wait_running_state(args['name'], true)
         end
         @container
       end
 
       def container_state
-        @container ? @container.info["State"] : {}
+        @container ? @container.info['State'] : {}
       end
 
       def stop_container(name)
@@ -632,7 +632,7 @@ module Kitchen
         @container = ::Docker::Container.get(name, {}, docker_connection)
         i = 0
         tries = 20
-        until container_state["Running"] == v || container_state["FinishedAt"] != "0001-01-01T00:00:00Z"
+        until container_state['Running'] == v || container_state['FinishedAt'] != '0001-01-01T00:00:00Z'
           i += 1
           break if i == tries
 
@@ -642,7 +642,7 @@ module Kitchen
       end
 
       def chef_container_name
-        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
+        config[:platform] != '' ? "chef-#{chef_version}-" + config[:platform].sub('/', '-') : "chef-#{chef_version}"
       end
 
       def chef_image
@@ -650,7 +650,7 @@ module Kitchen
       end
 
       def chef_version
-        return "latest" if config[:chef_version] == "stable"
+        return 'latest' if config[:chef_version] == 'stable'
 
         config[:chef_version]
       end
@@ -668,31 +668,31 @@ module Kitchen
       end
 
       def platform_image_from_name
-        platform, release = instance.platform.name.split("-")
-        release ? [platform, release].join(":") : platform
+        platform, release = instance.platform.name.split('-')
+        release ? [platform, release].join(':') : platform
       end
 
       def pull_if_missing(image)
-        return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => config[:platform] }, docker_connection)
+        return if ::Docker::Image.exist?(registry_image_path(image), { 'platform' => config[:platform] }, docker_connection)
 
         pull_image image
       end
 
       # https://github.com/docker/docker/blob/4fcb9ac40ce33c4d6e08d5669af6be5e076e2574/registry/auth.go#L231
       def parse_registry_host(val)
-        val.sub(%r{https?://}, "").split("/").first
+        val.sub(%r{https?://}, '').split('/').first
       end
 
       def pull_image(image)
         path = registry_image_path(image)
         with_retries do
-          if Docker::Image.exist?(path, { "platform" => config[:platform] }, docker_connection)
-            original_image = Docker::Image.get(path, { "platform" => config[:platform] }, docker_connection)
+          if Docker::Image.exist?(path, { 'platform' => config[:platform] }, docker_connection)
+            original_image = Docker::Image.get(path, { 'platform' => config[:platform] }, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(image), docker_connection)
+          new_image = Docker::Image.create({ 'fromImage' => path, 'platform' => config[:platform] }, docker_creds_for_image(image), docker_connection)
 
-          !(original_image&.id&.start_with?(new_image.id))
+          !original_image&.id&.start_with?(new_image.id)
         end
       end
 

@@ -1,7 +1,7 @@
 #
 # Author:: Sean OMeara (<sean@sean.io>)
 #
-# Copyright (C) 2015, Sean OMeara
+# Copyright:: (C) 2015, Sean OMeara
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,6 @@
 module Kitchen
   module Driver
     # Version string for Dokken Kitchen driver
-    DOKKEN_VERSION = "2.20.2".freeze
+    DOKKEN_VERSION = '2.20.2'.freeze
   end
 end
