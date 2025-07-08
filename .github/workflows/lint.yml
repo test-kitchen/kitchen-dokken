@@ -29,4 +29,5 @@ jobs:
           bundle exec bundle exec kitchen test helloagain
           bundle exec bundle exec kitchen destroy hello
         env:
-          CHEF_LICENSE: "accept-no-persist"
+          # This needs to be set for all phases including the verify phase
+          CHEF_LICENSE: "accept"
