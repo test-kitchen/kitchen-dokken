@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.20.8](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.7...v2.20.8) (2025-07-08)
+
+
+### Bug Fixes
+
+* provisioner root_path config option ([#345](https://github.com/test-kitchen/kitchen-dokken/issues/345)) ([843c639](https://github.com/test-kitchen/kitchen-dokken/commit/843c63917133df399f509461bbbf8cd5b8505ceb))
+
 ## [2.20.7](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.6...v2.20.7) (2024-10-23)
 
 
