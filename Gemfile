@@ -12,8 +12,5 @@ end
 group :development do
   gem "pry"
   gem "pry-byebug"
-end
-
-group :chefstyle do
-  gem "chefstyle", "2.2.3"
+  gem "cookstyle"
 end
