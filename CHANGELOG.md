@@ -1,5 +1,17 @@
 # Dokken Changelog
 
+## [2.21.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.8...v2.21.0) (2025-08-16)
+
+
+### Features
+
+* Require Ruby 3.2 or later + misc cleanup ([#353](https://github.com/test-kitchen/kitchen-dokken/issues/353)) ([64db987](https://github.com/test-kitchen/kitchen-dokken/commit/64db98739c2a972b14b20fccc64a79897561daf3))
+
+
+### Bug Fixes
+
+* Chef license ([#348](https://github.com/test-kitchen/kitchen-dokken/issues/348)) ([0b751c3](https://github.com/test-kitchen/kitchen-dokken/commit/0b751c334be5ff677a632be8d8623b63157ee0fb))
+
 ## [2.20.8](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.7...v2.20.8) (2025-07-08)
 
 
