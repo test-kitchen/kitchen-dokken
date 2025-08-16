@@ -249,7 +249,7 @@
 
 ## 2.4.3
 
-- Using better paths for lockfiles
+- Using better paths for lock files
 
 ## 2.4.2
 
@@ -354,7 +354,7 @@
 
 - Bind mounts data instead of uploading through kitchen-cache container when talking to a local Docker host. (most use cases)
 
-- Renders a Dockefile and builds dokken/kitchen-cache when talking to a remote Docker host. (DOCKER_HOST =~ /^tcp:/)
+- Renders a Dockerfile and builds dokken/kitchen-cache when talking to a remote Docker host. (DOCKER_HOST =~ /^tcp:/)
 
 ## 1.0.0
 
