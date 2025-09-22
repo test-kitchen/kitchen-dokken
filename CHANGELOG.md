@@ -1,5 +1,24 @@
 # Dokken Changelog
 
+## [2.21.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.8...v2.21.0) (2025-08-16)
+
+
+### Features
+
+* Require Ruby 3.2 or later + misc cleanup ([#353](https://github.com/test-kitchen/kitchen-dokken/issues/353)) ([64db987](https://github.com/test-kitchen/kitchen-dokken/commit/64db98739c2a972b14b20fccc64a79897561daf3))
+
+
+### Bug Fixes
+
+* Chef license ([#348](https://github.com/test-kitchen/kitchen-dokken/issues/348)) ([0b751c3](https://github.com/test-kitchen/kitchen-dokken/commit/0b751c334be5ff677a632be8d8623b63157ee0fb))
+
+## [2.20.8](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.7...v2.20.8) (2025-07-08)
+
+
+### Bug Fixes
+
+* provisioner root_path config option ([#345](https://github.com/test-kitchen/kitchen-dokken/issues/345)) ([843c639](https://github.com/test-kitchen/kitchen-dokken/commit/843c63917133df399f509461bbbf8cd5b8505ceb))
+
 ## [2.20.7](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.6...v2.20.7) (2024-10-23)
 
 
@@ -242,7 +261,7 @@
 
 ## 2.4.3
 
-- Using better paths for lockfiles
+- Using better paths for lock files
 
 ## 2.4.2
 
@@ -347,7 +366,7 @@
 
 - Bind mounts data instead of uploading through kitchen-cache container when talking to a local Docker host. (most use cases)
 
-- Renders a Dockefile and builds dokken/kitchen-cache when talking to a remote Docker host. (DOCKER_HOST =~ /^tcp:/)
+- Renders a Dockerfile and builds dokken/kitchen-cache when talking to a remote Docker host. (DOCKER_HOST =~ /^tcp:/)
 
 ## 1.0.0
 

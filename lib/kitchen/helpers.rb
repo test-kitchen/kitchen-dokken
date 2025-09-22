@@ -83,7 +83,7 @@ module Dokken
         EXPOSE 22
         CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "MaxAuthTries=60" ]
 
-        VOLUME /opt/kitchen
+        VOLUME #{resolved_root_path}
         VOLUME /opt/verifier
       EOF
     end
@@ -293,6 +293,10 @@ module Dokken
       unless ::Dir.exist?(sandbox_path)
         FileUtils.mkdir_p(sandbox_path, mode: 0o755)
       end
+    end
+
+    def resolved_root_path
+      instance.provisioner[:root_path] || "/opt/kitchen"
     end
   end
 end
