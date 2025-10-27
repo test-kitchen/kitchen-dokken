@@ -289,7 +289,7 @@ module Kitchen
         volumes = coerce_volumes(volumes, binds)
 
         binds_ret = []
-        binds_ret << "#{dokken_kitchen_sandbox}:/opt/kitchen" unless dokken_kitchen_sandbox.nil? || remote_docker_host? || running_inside_docker?
+        binds_ret << "#{dokken_kitchen_sandbox}:#{resolved_root_path}" unless dokken_kitchen_sandbox.nil? || remote_docker_host? || running_inside_docker?
         binds_ret << "#{dokken_verifier_sandbox}:/opt/verifier" unless dokken_verifier_sandbox.nil? || remote_docker_host? || running_inside_docker?
         binds_ret << binds unless binds.nil?
 

@@ -1,14 +1,12 @@
 ---
-name: 'Lint, Unit & Integration Tests'
+name: "Lint, Unit & Integration Tests"
 
-'on':
+"on":
   pull_request:
 
 jobs:
   lint-unit:
     uses: test-kitchen/.github/.github/workflows/lint-unit.yml@main
-    with:
-      bundle_only: "linting"
 
   integration:
     runs-on: ubuntu-latest
@@ -16,9 +14,9 @@ jobs:
     name: Kitchen Verify
     strategy:
       matrix:
-        ruby: ["3.3"]
+        ruby: ["3.4"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -29,4 +27,5 @@ jobs:
           bundle exec bundle exec kitchen test helloagain
           bundle exec bundle exec kitchen destroy hello
         env:
-          CHEF_LICENSE: "accept-no-persist"
+          # This needs to be set for all phases including the verify phase
+          CHEF_LICENSE: "accept"
