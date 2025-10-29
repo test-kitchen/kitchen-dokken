@@ -147,8 +147,6 @@ module Kitchen
         false
       end
 
-      private
-
       # Detects if Dokken is configured to use a private Docker registry
       # Returns true if any private registry configuration is detected
       def private_registry_detected?
@@ -167,8 +165,8 @@ module Kitchen
 
         # Consider it private if it looks like a domain, IP, or has a port
         return true if registry_host.include?(".") ||
-                       registry_host.include?(":") ||
-                       registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/)
+          registry_host.include?(":") ||
+          registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/)
 
         # Default: assume public registry (like 'chef/chef-hab')
         false
