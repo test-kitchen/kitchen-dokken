@@ -152,16 +152,17 @@ module Kitchen
       # Detects if Dokken is configured to use a private Docker registry
       # Based on explicit Dokken private registry configuration options
       def private_registry_detected?
-        driver_config = instance.driver.config
+        # Access driver configuration through instance.driver[]
+        driver = instance.driver
 
         # 1. Explicit docker_registry configuration
-        return true unless driver_config[:docker_registry].to_s.strip.empty?
+        return true unless driver[:docker_registry].to_s.strip.empty?
 
         # 2. Explicit creds_file (Docker credentials file)
-        return true unless driver_config[:creds_file].to_s.strip.empty?
+        return true unless driver[:creds_file].to_s.strip.empty?
 
         # 3. chef_image contains private registry path (e.g., "my-registry.com/chef:17")
-        chef_image = driver_config[:chef_image].to_s.strip
+        chef_image = driver[:chef_image].to_s.strip
         if !chef_image.empty? && chef_image.include?("/")
           registry_host = chef_image.split("/").first.downcase
           # Known public registries - everything else is considered private
