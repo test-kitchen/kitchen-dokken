@@ -134,6 +134,43 @@ module Kitchen
         hab_bin = "HAB_BIN=$(find /hab/pkgs/core/hab/ -type f -name hab | sort | tail -n1)"
         "#{hab_bin} && HAB_LICENSE='accept-no-persist'  \"$HAB_BIN\" pkg exec chef/chef-infra-client -- chef-client "
       end
+
+      # Override bypass_chef_licensing? hook to provide dokken-specific licensing bypass logic
+      # This method is called by ChefInfra's check_license method to determine if licensing should be bypassed
+      def bypass_chef_licensing?
+        if private_registry_detected?
+          debug("Skipping Chef license check - private registry usage detected")
+          debug("Private registry users either have existing licenses or custom-built images")
+          return true
+        end
+
+        false
+      end
+
+      private
+
+      # Detects if Dokken is configured to use a private Docker registry
+      # Based on explicit Dokken private registry configuration options
+      def private_registry_detected?
+        driver_config = instance.driver.config
+
+        # 1. Explicit docker_registry configuration
+        return true unless driver_config[:docker_registry].to_s.strip.empty?
+
+        # 2. Explicit creds_file (Docker credentials file)
+        return true unless driver_config[:creds_file].to_s.strip.empty?
+
+        # 3. chef_image contains private registry path (e.g., "my-registry.com/chef:17")
+        chef_image = driver_config[:chef_image].to_s.strip
+        if !chef_image.empty? && chef_image.include?("/")
+          registry_host = chef_image.split("/").first.downcase
+          # Known public registries - everything else is considered private
+          public_registries = %w{docker.io hub.docker.com registry-1.docker.io index.docker.io}
+          return true unless public_registries.include?(registry_host)
+        end
+
+        false
+      end
     end
   end
 end
