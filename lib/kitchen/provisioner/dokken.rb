@@ -150,28 +150,30 @@ module Kitchen
       private
 
       # Detects if Dokken is configured to use a private Docker registry
-      # Based on explicit Dokken private registry configuration options
+      # Returns true if any private registry configuration is detected
       def private_registry_detected?
-        # Access driver configuration through instance.driver[]
         driver = instance.driver
 
-        # 1. Explicit docker_registry configuration
-        return true unless driver[:docker_registry].to_s.strip.empty?
+        # Explicit private registry configurations
+        return true if driver[:docker_registry].to_s.strip != ""
+        return true if driver[:creds_file].to_s.strip != ""
+        return true if driver[:docker_config_creds]
 
-        # 2. Explicit creds_file (Docker credentials file)
-        return true unless driver[:creds_file].to_s.strip.empty?
-
-        # 3. chef_image contains private registry path (e.g., "my-registry.com/chef:17")
+        # Check if chef_image references a private registry
         chef_image = driver[:chef_image].to_s.strip
-        if !chef_image.empty? && chef_image.include?("/")
-          registry_host = chef_image.split("/").first.downcase
-          # Known public registries - everything else is considered private
-          public_registries = %w{docker.io hub.docker.com registry-1.docker.io index.docker.io}
-          return true unless public_registries.include?(registry_host)
-        end
+        return false if chef_image.empty? || !chef_image.include?("/")
 
+        registry_host = chef_image.split("/").first.downcase
+
+        # Consider it private if it looks like a domain, IP, or has a port
+        return true if registry_host.include?(".") ||
+                       registry_host.include?(":") ||
+                       registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/)
+
+        # Default: assume public registry (like 'chef/chef-hab')
         false
       end
+
     end
   end
 end
