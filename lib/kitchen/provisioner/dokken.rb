@@ -176,7 +176,7 @@ module Kitchen
         # Case 4: chef_image contains private registry patterns
         return true if registry_host.include?(".") ||      # Domain-based registries
           registry_host.include?(":") ||                   # Custom port registries
-          registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/)  # Localhost/IP registries
+          registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/) # Localhost/IP registries
 
         # Default: assume public registry (like 'chef/chef-hab')
         false
