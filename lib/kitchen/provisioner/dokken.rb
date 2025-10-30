@@ -149,24 +149,34 @@ module Kitchen
 
       # Detects if Dokken is configured to use a private Docker registry
       # Returns true if any private registry configuration is detected
+      #
+      # Cases considered as private/internal registries:
+      # 1. driver[:docker_registry] - Explicit private registry URL configuration
+      # 2. driver[:creds_file] - Explicit credentials file for private registry authentication
+      # 3. driver[:docker_config_creds] - Using ~/.docker/config.json for authentication
+      # 4. chef_image with domain patterns:
+      #    - Domain-based: "registry.company.com/chef", "harbor.internal/image"
+      #    - IP-based: "192.168.1.100/chef", "10.0.0.50:5000/image"
+      #    - Localhost: "localhost:5000/chef", "127.0.0.1/image"
+      #    - Custom ports: "myregistry:8080/chef"
       def private_registry_detected?
         driver = instance.driver
 
         # Explicit private registry configurations
-        return true if driver[:docker_registry].to_s.strip != ""
-        return true if driver[:creds_file].to_s.strip != ""
-        return true if driver[:docker_config_creds]
+        return true if driver[:docker_registry].to_s.strip != ""  # Case 1: docker_registry set
+        return true if driver[:creds_file].to_s.strip != ""       # Case 2: creds_file provided
+        return true if driver[:docker_config_creds]               # Case 3: docker_config_creds enabled
 
-        # Check if chef_image references a private registry
+        # Detect private registries from chef_image hostname patterns
         chef_image = driver[:chef_image].to_s.strip
         return false if chef_image.empty? || !chef_image.include?("/")
 
         registry_host = chef_image.split("/").first.downcase
 
-        # Consider it private if it looks like a domain, IP, or has a port
-        return true if registry_host.include?(".") ||
-          registry_host.include?(":") ||
-          registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/)
+        # Case 4: chef_image contains private registry patterns
+        return true if registry_host.include?(".") ||      # Domain-based registries
+          registry_host.include?(":") ||                   # Custom port registries
+          registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/)  # Localhost/IP registries
 
         # Default: assume public registry (like 'chef/chef-hab')
         false
