@@ -35,7 +35,9 @@ module Kitchen
       default_config :chef_log_level, "warn"
       default_config :chef_output_format, "doc"
       default_config :profile_ruby, false
-      default_config :docker_info, docker_info
+      default_config :docker_info do |provisioner|
+        docker_info(provisioner[:docker_host_url])
+      end
       default_config :docker_host_url, default_docker_host
 
       # Dokken is weird - the provisioner inherits from ChefZero but does not install

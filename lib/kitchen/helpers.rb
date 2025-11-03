@@ -117,8 +117,8 @@ module Dokken
       end
     end
 
-    def docker_info
-      ::Docker.url = default_docker_host
+    def docker_info(docker_host)
+      ::Docker.url = docker_host
 
       @docker_info ||= ::Docker.info
     rescue Excon::Error::Socket
