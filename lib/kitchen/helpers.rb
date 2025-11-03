@@ -81,7 +81,7 @@ module Dokken
         RUN chmod 600  /root/.ssh/authorized_keys
 
         EXPOSE 22
-        CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "UsePrivilegeSeparation=no", "-o", "MaxAuthTries=60" ]
+        CMD [ "/usr/sbin/sshd", "-D", "-p", "22", "-o", "UseDNS=no", "-o", "MaxAuthTries=60" ]
 
         VOLUME #{resolved_root_path}
         VOLUME /opt/verifier
