@@ -138,9 +138,9 @@ module Kitchen
       end
 
       def delete_work_image
-        return unless ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
+        return unless ::Docker::Image.exist?(work_image, { "platform" => oci_platform(config[:platform]) }, docker_connection)
 
-        with_retries { @work_image = ::Docker::Image.get(work_image, { "platform" => config[:platform] }, docker_connection) }
+        with_retries { @work_image = ::Docker::Image.get(work_image, { "platform" => oci_platform(config[:platform]) }, docker_connection) }
 
         with_retries do
           with_retries { @work_image.remove(force: true) }
@@ -151,7 +151,7 @@ module Kitchen
 
       def build_work_image(state)
         info("Building work image..")
-        return if ::Docker::Image.exist?(work_image, { "platform" => config[:platform] }, docker_connection)
+        return if ::Docker::Image.exist?(work_image, { "platform" => oci_platform(config[:platform]) }, docker_connection)
 
         begin
           @intermediate_image = ::Docker::Image.build(
@@ -511,7 +511,7 @@ module Kitchen
       end
 
       def delete_image(name)
-        with_retries { @image = ::Docker::Image.get(name, { "platform" => config[:platform] }, docker_connection) }
+        with_retries { @image = ::Docker::Image.get(name, { "platform" => oci_platform(config[:platform]) }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error
         puts "Image #{name} not found. Nothing to delete."
@@ -674,7 +674,7 @@ module Kitchen
       end
 
       def pull_if_missing(image)
-        return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => config[:platform] }, docker_connection)
+        return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => oci_platform(config[:platform]) }, docker_connection)
 
         pull_image image
       end
@@ -687,14 +687,22 @@ module Kitchen
       def pull_image(image)
         path = registry_image_path(image)
         with_retries do
-          if Docker::Image.exist?(path, { "platform" => config[:platform] }, docker_connection)
-            original_image = Docker::Image.get(path, { "platform" => config[:platform] }, docker_connection)
+          if Docker::Image.exist?(path, { "platform" => oci_platform(config[:platform]) }, docker_connection)
+            original_image = Docker::Image.get(path, { "platform" => oci_platform(config[:platform]) }, docker_connection)
           end
 
           new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(image), docker_connection)
 
           !(original_image&.id&.start_with?(new_image.id))
         end
+      end
+
+      def oci_platform(platform)
+        if !platform.nil? && platform.include?("/")
+          os, arch = platform.split("/")
+          platform = { os: os, architecture: arch }.to_json
+        end
+        platform
       end
 
       def runner_container_name
