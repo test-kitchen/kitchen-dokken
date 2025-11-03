@@ -1,5 +1,13 @@
 # Dokken Changelog
 
+## [2.21.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.0...v2.21.1) (2025-11-03)
+
+
+### Bug Fixes
+
+* Use configured host URL when fetching docker information ([#321](https://github.com/test-kitchen/kitchen-dokken/issues/321)) ([#323](https://github.com/test-kitchen/kitchen-dokken/issues/323)) ([31e0468](https://github.com/test-kitchen/kitchen-dokken/commit/31e0468b7c7569c34abe366adf5e938f98e0e694))
+* Use JSON string of OCI platform instead of os/arch string ([#356](https://github.com/test-kitchen/kitchen-dokken/issues/356)) ([#357](https://github.com/test-kitchen/kitchen-dokken/issues/357)) ([e565b46](https://github.com/test-kitchen/kitchen-dokken/commit/e565b469ab5644fe6509d7bd3843b2d438dae584))
+
 ## [2.21.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.20.8...v2.21.0) (2025-08-16)
 
 
