@@ -92,3 +92,13 @@ suites:
   - name: host
     driver:
       network_mode: host
+
+  - name: dns
+    includes:
+      - centos
+    driver:
+      dns:
+        - 8.8.8.8
+        - 8.8.4.4
+      dns_search:
+        - example.com
