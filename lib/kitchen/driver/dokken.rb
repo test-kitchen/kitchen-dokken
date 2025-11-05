@@ -327,11 +327,17 @@ module Kitchen
           },
         }
         unless %w{host bridge}.include?(self[:network_mode])
+          endpoint_config = {
+            "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
+          }
+          if self[:dns] || self[:dns_search]
+            endpoint_config["DNSConfig"] = {}
+            endpoint_config["DNSConfig"]["Nameservers"] = self[:dns] if self[:dns]
+            endpoint_config["DNSConfig"]["Search"] = self[:dns_search] if self[:dns_search]
+          end
           config["NetworkingConfig"] = {
             "EndpointsConfig" => {
-              self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
-              },
+              self[:network_mode] => endpoint_config,
             },
           }
         end
@@ -370,11 +376,17 @@ module Kitchen
           },
         }
         unless %w{host bridge}.include?(self[:network_mode])
+          endpoint_config = {
+            "Aliases" => Array(self[:hostname]),
+          }
+          if self[:dns] || self[:dns_search]
+            endpoint_config["DNSConfig"] = {}
+            endpoint_config["DNSConfig"]["Nameservers"] = self[:dns] if self[:dns]
+            endpoint_config["DNSConfig"]["Search"] = self[:dns_search] if self[:dns_search]
+          end
           config["NetworkingConfig"] = {
             "EndpointsConfig" => {
-              self[:network_mode] => {
-                "Aliases" => Array(self[:hostname]),
-              },
+              self[:network_mode] => endpoint_config,
             },
           }
         end
