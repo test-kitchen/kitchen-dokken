@@ -122,6 +122,14 @@ module Kitchen
 
       private
 
+      def add_dns_config(endpoint_config)
+        return unless self[:dns] || self[:dns_search]
+
+        endpoint_config["DNSConfig"] = {}
+        endpoint_config["DNSConfig"]["Nameservers"] = self[:dns] if self[:dns]
+        endpoint_config["DNSConfig"]["Search"] = self[:dns_search] if self[:dns_search]
+      end
+
       class PartialHash < Hash
         def ==(other)
           other.is_a?(Hash) && all? { |key, val| other.key?(key) && other[key] == val }
@@ -330,11 +338,7 @@ module Kitchen
           endpoint_config = {
             "Aliases" => Array(self[:hostname]).concat(Array(self[:hostname_aliases])),
           }
-          if self[:dns] || self[:dns_search]
-            endpoint_config["DNSConfig"] = {}
-            endpoint_config["DNSConfig"]["Nameservers"] = self[:dns] if self[:dns]
-            endpoint_config["DNSConfig"]["Search"] = self[:dns_search] if self[:dns_search]
-          end
+          add_dns_config(endpoint_config)
           config["NetworkingConfig"] = {
             "EndpointsConfig" => {
               self[:network_mode] => endpoint_config,
@@ -379,11 +383,7 @@ module Kitchen
           endpoint_config = {
             "Aliases" => Array(self[:hostname]),
           }
-          if self[:dns] || self[:dns_search]
-            endpoint_config["DNSConfig"] = {}
-            endpoint_config["DNSConfig"]["Nameservers"] = self[:dns] if self[:dns]
-            endpoint_config["DNSConfig"]["Search"] = self[:dns_search] if self[:dns_search]
-          end
+          add_dns_config(endpoint_config)
           config["NetworkingConfig"] = {
             "EndpointsConfig" => {
               self[:network_mode] => endpoint_config,
