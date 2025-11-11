@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.21.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.1...v2.21.2) (2025-11-11)
+
+
+### Bug Fixes
+
+* **dns:** Fix DNS configuration ignored on custom Docker networks ([#359](https://github.com/test-kitchen/kitchen-dokken/issues/359)) ([ea7ccd4](https://github.com/test-kitchen/kitchen-dokken/commit/ea7ccd44edb2df687eece49094938f8adc8e5014))
+
 ## [2.21.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.0...v2.21.1) (2025-11-03)
 
 
