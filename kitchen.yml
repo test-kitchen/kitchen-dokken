@@ -102,3 +102,9 @@ suites:
         - 8.8.4.4
       dns_search:
         - example.com
+
+  - name: platform
+    includes:
+      - centos
+    driver:
+      platform: linux/amd64
