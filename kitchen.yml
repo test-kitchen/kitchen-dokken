@@ -108,3 +108,9 @@ suites:
       - centos
     driver:
       platform: linux/amd64
+
+  - name: platform-arm64
+    includes:
+      - centos
+    driver:
+      platform: linux/arm64
