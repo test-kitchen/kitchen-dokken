@@ -42,6 +42,7 @@ module Kitchen
       default_config :chef_image, "chef/chef"
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
+      default_config :data_ssh_port, nil
       default_config :dns, nil
       default_config :dns_search, nil
       default_config :docker_host_url, default_docker_host
@@ -374,8 +375,8 @@ module Kitchen
           # locally built image, must use short-name
           "Image" => short_image_path(data_image),
           "HostConfig" => {
-            "PortBindings" => port_bindings,
-            "PublishAllPorts" => true,
+            "PortBindings" => data_port_bindings,
+            "PublishAllPorts" => config[:data_ssh_port].nil?,
             "NetworkMode" => "bridge",
           },
         }
@@ -676,6 +677,27 @@ module Kitchen
 
       def data_image
         config[:data_image]
+      end
+
+      def data_port_bindings
+        return port_bindings unless config[:data_ssh_port]
+
+        # If data_ssh_port is specified, use it for SSH port mapping
+        ssh_port_binding = {
+          "22/tcp" => [
+            {
+              "HostIp" => "0.0.0.0",
+              "HostPort" => config[:data_ssh_port].to_s,
+            },
+          ],
+        }
+
+        # Merge with any existing port bindings
+        if port_bindings
+          port_bindings.merge(ssh_port_binding)
+        else
+          ssh_port_binding
+        end
       end
 
       def platform_image
