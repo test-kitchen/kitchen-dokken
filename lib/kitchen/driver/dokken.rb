@@ -436,7 +436,7 @@ module Kitchen
             debug "driver - creating volume container #{chef_container_name} from #{chef_image}"
             config = {
               "name" => chef_container_name,
-              "Cmd" => "true",
+              "Cmd" => ["true"],
               "Image" => registry_image_path(chef_image),
               "HostConfig" => {
                 "NetworkMode" => self[:network_mode],
