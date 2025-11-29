@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.21.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.2...v2.21.3) (2025-11-29)
+
+
+### Bug Fixes
+
+* fix SSH with with PAM ([#363](https://github.com/test-kitchen/kitchen-dokken/issues/363)) ([03f67eb](https://github.com/test-kitchen/kitchen-dokken/commit/03f67ebfb2e966d43bc34d5bea8d26adbab88113))
+
 ## [2.21.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.1...v2.21.2) (2025-11-11)
 
 
