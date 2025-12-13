@@ -376,7 +376,7 @@ module Kitchen
           "Image" => short_image_path(data_image),
           "HostConfig" => {
             "PortBindings" => data_port_bindings,
-            "PublishAllPorts" => config[:data_ssh_port].nil?,
+            "PublishAllPorts" => self[:data_ssh_port].nil?,
             "NetworkMode" => "bridge",
           },
         }
