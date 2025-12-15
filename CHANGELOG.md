@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.21.4](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.3...v2.21.4) (2025-12-15)
+
+
+### Bug Fixes
+
+* Cmd must be a slice/array of strings for modern Docker ([#368](https://github.com/test-kitchen/kitchen-dokken/issues/368)) ([9e2e819](https://github.com/test-kitchen/kitchen-dokken/commit/9e2e8191e345e5108dd7f417dc9245ebf49aa0b8))
+
 ## [2.21.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.2...v2.21.3) (2025-11-29)
 
 
