@@ -578,6 +578,20 @@ driver:
     - foo
 ```
 
+### Specifying SSH port for data container
+
+When using a remote Docker host, the data container's SSH service is mapped to a random host port (typically starting from 32768). You can specify a fixed port using the `data_ssh_port` parameter to simplify firewall configuration:
+
+```yaml
+driver:
+  name: dokken
+  data_ssh_port: 30000
+```
+
+This will bind the data container's SSH port (22) to host port 30000. This is only applicable when using remote Docker hosts or when running kitchen-dokken inside a Docker container.
+
+**Note:** If you don't specify `data_ssh_port`, Docker will automatically assign a random available port (default behavior).
+
 ### IPv6 Networking
 
 You can set the `ipv6` parameter to enable IPv6 networking on the `dokken` Docker network. Additionally, the `ipv6_subnet` parameter can be used to determine the subnet the network should use.
