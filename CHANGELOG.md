@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.22.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.4...v2.22.0) (2025-12-15)
+
+
+### Features
+
+* **ssh:** Add data_ssh_port configuration for fixed SSH port binding ([#362](https://github.com/test-kitchen/kitchen-dokken/issues/362)) ([03ed4cf](https://github.com/test-kitchen/kitchen-dokken/commit/03ed4cf8ef535f318f53decfa0c2b050335d7e81))
+
 ## [2.21.4](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.3...v2.21.4) (2025-12-15)
 
 
