@@ -307,6 +307,7 @@ module Kitchen
 
       def start_runner_container(state)
         debug "driver - starting #{runner_container_name}"
+        debug "driver - using platform: #{config[:platform]}" unless config[:platform].empty?
 
         volumes, binds = calc_volumes_binds
 
@@ -598,7 +599,7 @@ module Kitchen
           args["Env"] = [] if args["Env"].nil?
           args["Env"] << "TEST_KITCHEN=1"
           args["Env"] << "CI=#{ENV["CI"]}" if ENV.include? "CI"
-          args["Platform"] = config[:platform]
+          args["Platform"] = config[:platform] unless config[:platform].empty?
           info "Creating container #{args["name"]}"
           debug "driver - create_container args #{args}"
           with_retries do
