@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.22.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.22.0...v2.22.1) (2026-01-22)
+
+
+### Bug Fixes
+
+* bump dep for tk4 support and add kitchen-omnibus-chef dep ([#374](https://github.com/test-kitchen/kitchen-dokken/issues/374)) ([0aed12d](https://github.com/test-kitchen/kitchen-dokken/commit/0aed12de9d24f80dabc59d907df7566730212753))
+
 ## [2.22.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.21.4...v2.22.0) (2025-12-15)
 
 
