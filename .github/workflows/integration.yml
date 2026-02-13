@@ -1,0 +1,61 @@
+---
+"on":
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHEF_LICENSE: accept-no-persist
+  CHEF_LICENSE_SERVER: http://hosted-license-service-lb-8000-606952349.us-west-2.elb.amazonaws.com:8000/
+
+jobs:
+  chef-client:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby:
+          - 3.4
+        os:
+          - almalinux
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure Git for private repo access
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GH_PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: false
+      - name: Verify Dokken
+        run: bundle exec kitchen verify ${{ matrix.os }}
+
+  docker-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby:
+          - 3.4
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure Git for private repo access
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GH_PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Create & Validate containers
+        run: |
+          bundle exec bundle exec kitchen create hello
+          bundle exec bundle exec kitchen test helloagain
+          bundle exec bundle exec kitchen destroy hello
+        env:
+          # This needs to be set for all phases, including the verify phase
+          CHEF_LICENSE: "accept"

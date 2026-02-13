@@ -1,46 +1,110 @@
 ---
-name: "Lint, Unit & Integration Tests"
-
 "on":
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_call:
+
+permissions:
+  contents: read
 
 concurrency:
   group: lint-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-unit:
-    uses: test-kitchen/.github/.github/workflows/lint-unit.yml@main
-
-  integration:
+  cookstyle:
+    env:
+      BUNDLE_WITH: ${{ inputs.bundle_with }}
     runs-on: ubuntu-latest
-    needs: lint-unit
-    name: Kitchen Verify
     strategy:
       fail-fast: false
       matrix:
-        ruby:
-          - 3.4
+        ruby: ["3.4"]
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Check for Gemfile
+        id: check
+        run: |
+          if [ -f Gemfile ]; then
+           echo "gemfile=true" >> $GITHUB_OUTPUT
+          else
+            echo "gemfile=false" >> $GITHUB_OUTPUT
+          fi
       - name: Configure Git for private repo access
         run: |
           git config --global url."https://x-access-token:${{ secrets.GH_PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
-      - uses: ruby/setup-ruby@v1
+      - name: Setup Ruby
+        if: steps.check.outputs.gemfile == 'true'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - uses: r7kamura/rubocop-problem-matchers-action@v1
+        if: steps.check.outputs.gemfile == 'true'
+      - name: Cook Style
+        if: steps.check.outputs.gemfile == 'true'
+        run: bundle exec cookstyle --chefstyle
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run yaml Lint
+        uses: actionshub/yamllint@main
+
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: |
+            *.md
+            !CHANGELOG.md
+
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
+        with:
+          use-quiet-mode: "yes"
+          use-verbose-mode: "yes"
+          check-modified-files-only: "yes"
+          base-branch: "main"
+
+  test:
+    name: Unit Test with Ruby
+    runs-on: ubuntu-latest
+    needs: [yamllint, cookstyle]
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.4"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Check for Gemfile
+        id: check
+        run: |
+          if [ -f Gemfile ]; then
+           echo "gemfile=true" >> $GITHUB_OUTPUT
+          else
+            echo "gemfile=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Configure Git for private repo access
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GH_PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
+      - name: Setup Ruby
+        if: steps.check.outputs.gemfile == 'true'
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Setup Machine
         run: |
-          bundle add inspec-core --version ">= 5.22, < 6.6"
-      - name: Create & Validate containers
-        run: |
-          bundle exec bundle exec kitchen create hello
-          bundle exec bundle exec kitchen test helloagain
-          bundle exec bundle exec kitchen destroy hello
-        env:
-          # This needs to be set for all phases, including the verify phase
-          CHEF_LICENSE: "accept"
+          bundle install
+      - name: Rake Test
+        if: steps.check.outputs.gemfile == 'true'
+        run: bundle exec rake test
