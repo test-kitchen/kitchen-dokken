@@ -746,7 +746,7 @@ module Kitchen
       def oci_platform(platform)
         if !platform.nil? && platform.include?("/")
           os, arch = platform.split("/")
-          platform = { os: os, architecture: arch }.to_json
+          platform = { os:, architecture: arch }.to_json
         end
         platform
       end

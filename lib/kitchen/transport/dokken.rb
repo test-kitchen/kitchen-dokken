@@ -166,12 +166,14 @@ module Kitchen
           rescue Errno::ENOENT
             debug "Rsync is not installed. Falling back to SCP."
             locals.each do |local|
-              Net::SCP.upload!(ssh_ip,
-                               "root",
-                               local,
-                               remote,
-                               recursive: true,
-                               ssh: { port: ssh_port, keys: ["#{tmpdir}/id_rsa"] })
+              Net::SCP.upload!(
+                ssh_ip,
+                "root",
+                local,
+                remote,
+                recursive: true,
+                ssh: { port: ssh_port, keys: ["#{tmpdir}/id_rsa"] }
+              )
               debug "Copied #{local} to #{remote}"
             end
           end
