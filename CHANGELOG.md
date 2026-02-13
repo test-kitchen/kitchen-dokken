@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.22.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.22.1...v2.22.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* Allow Ruby 3.1 ([#376](https://github.com/test-kitchen/kitchen-dokken/issues/376)) ([b66d934](https://github.com/test-kitchen/kitchen-dokken/commit/b66d934d63e83f36ab841b45f0988e6205e2c37a))
+
 ## [2.22.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.22.0...v2.22.1) (2026-01-22)
 
 
