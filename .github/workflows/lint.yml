@@ -28,6 +28,9 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+      - name: Setup Machine
+        run: |
+          bundle add inspec-core --version ">= 5.22, < 6.6"
       - name: Create & Validate containers
         run: |
           bundle exec bundle exec kitchen create hello
