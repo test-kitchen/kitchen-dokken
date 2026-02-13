@@ -3,6 +3,13 @@ name: "Lint, Unit & Integration Tests"
 
 "on":
   pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-unit:

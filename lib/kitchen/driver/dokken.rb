@@ -39,7 +39,7 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :chef_image, "chef/chef"
+      default_config :chef_image, "chef/chef-hab"
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :data_ssh_port, nil
@@ -119,6 +119,16 @@ module Kitchen
         delete_runner_container
         delete_work_image
         dokken_delete_sandbox
+      end
+
+      # TODO: This method currently checks if the installer is a hab or omnibus based on the image name.
+      # Find a better way to determine the installer.
+      def installer
+        @installer ||= if config[:chef_image].include?("hab")
+                         "habitat"
+                       else
+                         "chef"
+                       end
       end
 
       private
@@ -409,7 +419,7 @@ module Kitchen
             debug "driver - error :#{e}:"
           end
         ensure
-          lockfile.unlock
+          lockfile.unlock if lockfile.locked?
         end
       end
 
@@ -462,7 +472,7 @@ module Kitchen
 
       def docker_creds
         @docker_creds ||= if config[:creds_file]
-                            JSON.parse(IO.read(config[:creds_file]))
+                            JSON.parse(File.read(config[:creds_file]))
                           else
                             {}
                           end
@@ -658,7 +668,7 @@ module Kitchen
       end
 
       def chef_container_name
-        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
+        config[:platform] != "" ? "#{installer}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{installer}-#{chef_version}"
       end
 
       def chef_image

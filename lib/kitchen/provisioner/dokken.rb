@@ -102,14 +102,15 @@ module Kitchen
       # patching Kitchen::Provisioner::ChefInfra#run_command
       def run_command
         validate_config
-        cmd = config[:chef_binary]
+        cmd = chef_executable
         cmd << config[:chef_options].to_s
         cmd << " -l #{config[:chef_log_level]}"
         cmd << " -F #{config[:chef_output_format]}"
-        cmd << " -c #{File.join(config[:root_path], "client.rb")}"
-        cmd << " -j #{File.join(config[:root_path], "dna.json")}"
-        cmd << "--profile-ruby" if config[:profile_ruby]
-        cmd << "--slow-report" if config[:slow_resource_report]
+        cmd << " -c /opt/kitchen/client.rb"
+        cmd << " -j /opt/kitchen/dna.json"
+        cmd << " --profile-ruby" if config[:profile_ruby]
+        cmd << " --slow-report" if config[:slow_resource_report]
+        cmd << " --chef-license-key=#{config[:chef_license_key]}" if instance.driver.installer == "habitat" && config[:chef_license_key]
 
         chef_cmd(cmd)
       end
@@ -128,6 +129,61 @@ module Kitchen
         debug("Cleaning up local sandbox in #{sandbox_path}")
         FileUtils.rmtree(Dir.glob("#{sandbox_path}/*"))
       end
+
+      def chef_executable
+        return  "#{config[:chef_binary]}" if instance.driver.installer == "chef"
+
+        hab_bin = "HAB_BIN=$(find /hab/pkgs/core/hab/ -type f -name hab | sort | tail -n1)"
+        "#{hab_bin} && HAB_LICENSE='accept-no-persist'  \"$HAB_BIN\" pkg exec chef/chef-infra-client -- chef-client "
+      end
+
+      # Override bypass_chef_licensing? hook to provide dokken-specific licensing bypass logic
+      # This method is called by ChefInfra's check_license method to determine if licensing should be bypassed
+      def bypass_chef_licensing?
+        if private_registry_detected?
+          debug("Skipping Chef license check - private registry usage detected")
+          debug("Private registry users either have existing licenses or custom-built images")
+          return true
+        end
+
+        false
+      end
+
+      # Detects if Dokken is configured to use a private Docker registry
+      # Returns true if any private registry configuration is detected
+      #
+      # Cases considered as private/internal registries:
+      # 1. driver[:docker_registry] - Explicit private registry URL configuration
+      # 2. driver[:creds_file] - Explicit credentials file for private registry authentication
+      # 3. driver[:docker_config_creds] - Using ~/.docker/config.json for authentication
+      # 4. chef_image with domain patterns:
+      #    - Domain-based: "registry.company.com/chef", "harbor.internal/image"
+      #    - IP-based: "192.168.1.100/chef", "10.0.0.50:5000/image"
+      #    - Localhost: "localhost:5000/chef", "127.0.0.1/image"
+      #    - Custom ports: "myregistry:8080/chef"
+      def private_registry_detected?
+        driver = instance.driver
+
+        # Explicit private registry configurations
+        return true if driver[:docker_registry].to_s.strip != ""  # Case 1: docker_registry set
+        return true if driver[:creds_file].to_s.strip != ""       # Case 2: creds_file provided
+        return true if driver[:docker_config_creds]               # Case 3: docker_config_creds enabled
+
+        # Detect private registries from chef_image hostname patterns
+        chef_image = driver[:chef_image].to_s.strip
+        return false if chef_image.empty? || !chef_image.include?("/")
+
+        registry_host = chef_image.split("/").first.downcase
+
+        # Case 4: chef_image contains private registry patterns
+        return true if registry_host.include?(".") ||      # Domain-based registries
+          registry_host.include?(":") ||                   # Custom port registries
+          registry_host.match?(/\A(localhost|\d{1,3}(\.\d{1,3}){3})\z/) # Localhost/IP registries
+
+        # Default: assume public registry (like 'chef/chef-hab')
+        false
+      end
+
     end
   end
 end
