@@ -62,4 +62,4 @@ If you encounter license-related errors:
 ## References
 
 - [Chef License Documentation](https://docs.chef.io/chef_license_accept/)
-- [Test Kitchen Environment Variables](https://kitchen.ci/docs/reference/environment-variables/)
+- [Test Kitchen Environment Variables](https://kitchen.ci/docs/provisioners/chef/#environment-variables/)
