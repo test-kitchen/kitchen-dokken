@@ -2,7 +2,10 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "chef-test-kitchen-enterprise", git: "https://github.com/chef/chef-test-kitchen-enterprise", branch: "main"
+gem "chef-test-kitchen-enterprise", git: "https://github.com/chef/chef-test-kitchen-enterprise", branch: "main", glob: "chef-test-kitchen-enterprise.gemspec"
+# Override transitive dependency on test-kitchen with chef-test-kitchen-enterprise
+# The git repo now includes a test-kitchen.gemspec alias to satisfy transitive dependencies
+gem "test-kitchen", git: "https://github.com/chef/chef-test-kitchen-enterprise", branch: "main", glob: "test-kitchen.gemspec"
 
 group :test do
   gem "syslog" # this is a workaround for ruby 3.4 support in berkshelf 8.0.22 and can be removed when a new version of berkshelf is released
