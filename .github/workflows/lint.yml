@@ -21,18 +21,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Configure Git for private repo access
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.GH_PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
+          bundler-cache: false
+      - name: Install cookstyle dependencies
+        run: gem install cookstyle
       - uses: r7kamura/rubocop-problem-matchers-action@v1
       - name: Cook Style
-        run: bundle exec cookstyle --chefstyle
-
+        run: cookstyle --chefstyle --display-cop-names
   yamllint:
     runs-on: ubuntu-latest
     steps:
