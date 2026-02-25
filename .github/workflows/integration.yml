@@ -24,13 +24,21 @@ jobs:
           - 3.4
         os:
           - almalinux
+    env:
+      PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
     steps:
       - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-          token: ${{ secrets.PPRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
+          bundler-cache: false
+          # token: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
+      - name: Install dependencies
+        run: |
+          if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
+            bundle config --local github.com "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE}:x-oauth-basic"
+          fi
+          bundle install
       - name: Verify Dokken
         run: bundle exec kitchen verify ${{ matrix.os }}
 
@@ -46,8 +54,14 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-          token: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
+          bundler-cache: false
+          # token: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
+      - name: Install dependencies
+        run: |
+          if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
+            bundle config --local github.com "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE}:x-oauth-basic"
+          fi
+          bundle install
       - name: Create & Validate containers
         run: |
           bundle exec bundle exec kitchen create hello
