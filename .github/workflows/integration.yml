@@ -35,6 +35,13 @@ jobs:
           # token: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
       - name: Install dependencies
         run: |
+          echo "\nTesting ORG Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE"
+          secret_value="${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
+          if [ -n "$secret_value" ]; then
+            echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is set."
+          else
+            echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is NOT set."
+          fi
           if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
             echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
             bundle config --local github.com "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
@@ -65,7 +72,7 @@ jobs:
             echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
             bundle config --local github.com "${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}:x-oauth-basic"
           else
-            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist"
           fi
           bundle install
       - name: Create & Validate containers
