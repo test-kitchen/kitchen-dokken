@@ -12,6 +12,7 @@ concurrency:
 env:
   CHEF_LICENSE: accept-no-persist
   CHEF_LICENSE_SERVER: http://hosted-license-service-lb-8000-606952349.us-west-2.elb.amazonaws.com:8000/
+  BUNDLE_GITHUB__COM: "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}" # Needed for kitchen-chef-enterprise dependency
 
 jobs:
   chef-client:
@@ -25,9 +26,6 @@ jobs:
           - almalinux
     steps:
       - uses: actions/checkout@v6
-      - name: Configure Git for private repo access
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}@github.com/".insteadOf "https://github.com/"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -44,9 +42,6 @@ jobs:
           - 3.4
     steps:
       - uses: actions/checkout@v6
-      - name: Configure Git for private repo access
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}@github.com/".insteadOf "https://github.com/"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}

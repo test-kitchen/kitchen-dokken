@@ -9,6 +9,9 @@ concurrency:
   group: lint-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  BUNDLE_GITHUB__COM: "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
+
 jobs:
   cookstyle:
     runs-on: ubuntu-latest
@@ -19,9 +22,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Configure Git for private repo access
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}@github.com/".insteadOf "https://github.com/"
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
