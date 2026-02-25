@@ -36,7 +36,10 @@ jobs:
       - name: Install dependencies
         run: |
           if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
-            bundle config --local github.com "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE}:x-oauth-basic"
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
+            bundle config --local github.com "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
+          else
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist"
           fi
           bundle install
       - name: Verify Dokken
@@ -59,7 +62,10 @@ jobs:
       - name: Install dependencies
         run: |
           if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
-            bundle config --local github.com "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE}:x-oauth-basic"
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
+            bundle config --local github.com "${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}:x-oauth-basic"
+          else
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist
           fi
           bundle install
       - name: Create & Validate containers
