@@ -9,9 +9,6 @@ concurrency:
   group: lint-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BUNDLE_GITHUB__COM: "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
-
 jobs:
   cookstyle:
     runs-on: ubuntu-latest

@@ -12,7 +12,7 @@ concurrency:
 env:
   CHEF_LICENSE: accept-no-persist
   CHEF_LICENSE_SERVER: http://hosted-license-service-lb-8000-606952349.us-west-2.elb.amazonaws.com:8000/
-  BUNDLE_GITHUB__COM: "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}" # Needed for kitchen-chef-enterprise dependency
+  # BUNDLE_GITHUB__COM: "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}" # Needed for kitchen-chef-enterprise dependency
 
 jobs:
   chef-client:
@@ -30,6 +30,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          token: ${{ secrets.PPRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
       - name: Verify Dokken
         run: bundle exec kitchen verify ${{ matrix.os }}
 
@@ -46,6 +47,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          token: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
       - name: Create & Validate containers
         run: |
           bundle exec bundle exec kitchen create hello
