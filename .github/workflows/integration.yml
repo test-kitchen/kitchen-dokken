@@ -35,7 +35,7 @@ jobs:
           # token: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
       - name: Install dependencies
         run: |
-          echo "\nTesting ORG Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE"
+          echo "Testing ORG Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:"
           secret_value="${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
           if [ -n "$secret_value" ]; then
             echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is set."

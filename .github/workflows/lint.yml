@@ -19,6 +19,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+      - name: TEST Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE
+        run: |
+          echo "Testing ORG Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:"
+          secret_value="${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
+          if [ -n "$secret_value" ]; then
+            echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is set."
+          else
+            echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is NOT set."
+          fi
+          if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
+            bundle config --local github.com "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
+          else
+            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist"
+          fi
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -27,21 +42,6 @@ jobs:
       - name: Install cookstyle dependencies
         run: gem install cookstyle
       - uses: r7kamura/rubocop-problem-matchers-action@v1
-      - name: TEST Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE
-        run: |
-          echo "\nTesting ORG Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE"
-          secret_value="${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
-          if [ -n "$secret_value" ]; then
-            echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is set.\n"
-          else
-            echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is NOT set.\n"
-          fi
-          if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
-            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
-            bundle config --local github.com "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
-          else
-            echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist"
-          fi
       - name: Cook Style
         run: cookstyle --chefstyle --display-cop-names
   yamllint:
