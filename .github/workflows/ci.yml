@@ -15,21 +15,57 @@ concurrency:
 jobs:
   test-secret-availability:
     runs-on: ubuntu-latest
+    env:
+      PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE: ${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}
+      GH_PRIVATE_REPO_TOKEN: ${{ secrets.GH_PRIVATE_REPO_TOKEN }}
     steps:
       - name: TEST Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE
         run: |
           echo "Testing ORG Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:"
           secret_value="${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
           if [ -n "$secret_value" ]; then
+            echo
             echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is set."
+            secret_exit_code=0
           else
+            echo
             echo "Secret PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE is NOT set."
+            secret_exit_code=1
           fi
           if [ -n "${PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE:-}" ]; then
+            echo
             echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Exists"
             bundle config --local github.com "x-access-token:${{ secrets.PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE }}"
+            env_exit_code=0
           else
+            echo
             echo "ENV VAR: PRIVATE_ACCESS_KITCHEN_CHEF_ENTERPRISE Does Not Exist"
+            env_exit_code=1
+          fi
+
+          echo "Testing ORG Secret GH_PRIVATE_REPO_TOKEN:"
+          secret_value="${{ secrets.GH_PRIVATE_REPO_TOKEN }}"
+          if [ -n "$secret_value" ]; then
+            echo
+            echo "Secret GH_PRIVATE_REPO_TOKEN is set."
+          else
+            echo
+            echo "Secret GH_PRIVATE_REPO_TOKEN is NOT set."
+          fi
+          if [ -n "${GH_PRIVATE_REPO_TOKEN:-}" ]; then
+            echo
+            echo "ENV VAR: GH_PRIVATE_REPO_TOKEN Exists"
+            bundle config --local github.com "x-access-token:${{ secrets.GH_PRIVATE_REPO_TOKEN }}"
+          else
+            echo
+            echo "ENV VAR: GH_PRIVATE_REPO_TOKEN Does Not Exist"
+          fi
+
+          if [ $secret_exit_code -ne 0 ] || [ $env_exit_code -ne 0 ]; then
+            echo
+            echo
+            echo "Error: Secret GH_PRIVATE_REPO_TOKEN is not properly set or accessible as an environment variable."
+            exit 1
           fi
   # lint:
   #   uses: ./.github/workflows/lint.yml
