@@ -344,6 +344,14 @@ module Kitchen
       end
 
       def call(state)
+        # CINC Auditor does not require license acceptance. Patch InSpec's
+        # dist constants so the license check in Inspec::Runner#run is
+        # skipped when running under dokken with the CINC ecosystem.
+        if defined?(Inspec::Dist::EXEC_NAME) && Inspec::Dist::EXEC_NAME != "cinc-auditor"
+          Inspec::Dist.send(:remove_const, :EXEC_NAME)
+          Inspec::Dist.const_set(:EXEC_NAME, "cinc-auditor")
+        end
+
         create_sandbox
         instance.transport.connection(state) do |conn|
           conn.execute(install_command)
