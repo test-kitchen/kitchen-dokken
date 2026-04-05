@@ -8,6 +8,7 @@ group :test do
   gem "berkshelf"
   gem "kitchen-inspec"
   gem "rake", ">= 11.0"
+  gem "rspec", "~> 3.0"
 end
 
 group :development do
