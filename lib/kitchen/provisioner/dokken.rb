@@ -55,6 +55,10 @@ module Kitchen
       end
       default_config :clean_dokken_sandbox, true
 
+      # CINC (the default image) does not require license acceptance.
+      # Override the ChefBase check_license to skip the prompt entirely.
+      def check_license; end
+
       # (see Base#call)
       def call(state)
         create_sandbox

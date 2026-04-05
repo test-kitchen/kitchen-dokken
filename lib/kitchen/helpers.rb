@@ -175,7 +175,7 @@ module Dokken
     end
 
     def instance_name
-      Dokken::Helpers.instance_name_for(instance)
+      ::Dokken::Helpers.instance_name_for(instance)
     end
 
     def exposed_ports
@@ -319,7 +319,7 @@ module Kitchen
       end
 
       def instance_name
-        Dokken::Helpers.instance_name_for(instance)
+        ::Dokken::Helpers.instance_name_for(instance)
       end
     end
   end
@@ -340,7 +340,7 @@ module Kitchen
       end
 
       def instance_name
-        Dokken::Helpers.instance_name_for(instance)
+        ::Dokken::Helpers.instance_name_for(instance)
       end
 
       def call(state)
