@@ -169,9 +169,13 @@ module Dokken
       "#{home_dir}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
-    def instance_name
+    def self.instance_name_for(instance)
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
       "#{prefix}-#{instance.name}".downcase
+    end
+
+    def instance_name
+      Dokken::Helpers.instance_name_for(instance)
     end
 
     def exposed_ports
@@ -315,8 +319,7 @@ module Kitchen
       end
 
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}".downcase
+        Dokken::Helpers.instance_name_for(instance)
       end
     end
   end
@@ -337,8 +340,7 @@ module Kitchen
       end
 
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}".downcase
+        Dokken::Helpers.instance_name_for(instance)
       end
 
       def call(state)
