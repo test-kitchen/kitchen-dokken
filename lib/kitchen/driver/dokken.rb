@@ -17,6 +17,7 @@
 
 require "digest" unless defined?(Digest)
 require "kitchen"
+require "shellwords" unless defined?(Shellwords)
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "docker"
 require "lockfile"

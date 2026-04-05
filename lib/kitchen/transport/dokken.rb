@@ -17,6 +17,7 @@
 
 require "kitchen"
 require "net/scp"
+require "shellwords" unless defined?(Shellwords)
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "digest/sha1" unless defined?(Digest::SHA1)
 require_relative "../helpers"
