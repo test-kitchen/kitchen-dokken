@@ -530,7 +530,7 @@ module Kitchen
         with_retries { @image = ::Docker::Image.get(name, { "platform" => oci_platform(config[:platform]) }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error
-        puts "Image #{name} not found. Nothing to delete."
+        debug "Image #{name} not found. Nothing to delete."
       end
 
       def container_exist?(name)
