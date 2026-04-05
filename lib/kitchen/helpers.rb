@@ -169,9 +169,13 @@ module Dokken
       "#{home_dir}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
-    def instance_name
+    def self.instance_name_for(instance)
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
       "#{prefix}-#{instance.name}".downcase
+    end
+
+    def instance_name
+      ::Dokken::Helpers.instance_name_for(instance)
     end
 
     def exposed_ports
@@ -276,7 +280,7 @@ module Dokken
     def running_inside_docker_desktop?
       Resolv.getaddress "host.docker.internal."
       true
-    rescue
+    rescue StandardError
       false
     end
 
@@ -315,8 +319,7 @@ module Kitchen
       end
 
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}".downcase
+        ::Dokken::Helpers.instance_name_for(instance)
       end
     end
   end
@@ -337,8 +340,7 @@ module Kitchen
       end
 
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}".downcase
+        ::Dokken::Helpers.instance_name_for(instance)
       end
 
       def call(state)
@@ -359,6 +361,21 @@ module Kitchen
       rescue Kitchen::Transport::TransportFailed => ex
         raise ActionFailed, ex.message
       end
+    end
+  end
+end
+
+# CINC Auditor does not require license acceptance. Patch InSpec's
+# EXEC_NAME constant so the license check in Inspec::Runner#run is
+# skipped (it gates on EXEC_NAME == "inspec").
+module Dokken
+  module CincAuditorPatch
+    def self.apply!
+      return unless defined?(Inspec::Dist::EXEC_NAME)
+      return if Inspec::Dist::EXEC_NAME == "cinc-auditor"
+
+      Inspec::Dist.send(:remove_const, :EXEC_NAME)
+      Inspec::Dist.const_set(:EXEC_NAME, "cinc-auditor")
     end
   end
 end

@@ -46,7 +46,7 @@ suites:
         - test/integration/default
     lifecycle:
       pre_create:
-        - podman create --name chef-latest --replace docker.io/chef/chef:latest sh
+        - podman create --name chef-latest --replace docker.io/cincproject/cinc:latest sh
         - podman start chef-latest
       post_destroy:
         - podman volume prune -f

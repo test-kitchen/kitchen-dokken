@@ -17,6 +17,7 @@
 
 require "kitchen"
 require "net/scp"
+require "shellwords" unless defined?(Shellwords)
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "digest/sha1" unless defined?(Digest::SHA1)
 require_relative "../helpers"
@@ -221,7 +222,7 @@ module Kitchen
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
         ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "docker-desktop"
-      rescue
+      rescue StandardError
         false
       end
 

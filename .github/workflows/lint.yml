@@ -26,6 +26,3 @@ jobs:
           bundle exec bundle exec kitchen create hello
           bundle exec bundle exec kitchen test helloagain
           bundle exec bundle exec kitchen destroy hello
-        env:
-          # This needs to be set for all phases, including the verify phase
-          CHEF_LICENSE: "accept"

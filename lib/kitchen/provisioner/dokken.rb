@@ -30,7 +30,7 @@ module Kitchen
       plugin_version Kitchen::VERSION
 
       default_config :root_path, "/opt/kitchen"
-      default_config :chef_binary, "/opt/chef/bin/chef-client"
+      default_config :chef_binary, "/opt/cinc/bin/cinc-client"
       default_config :chef_options, " -z"
       default_config :chef_log_level, "warn"
       default_config :chef_output_format, "doc"
@@ -54,6 +54,10 @@ module Kitchen
         driver[:chef_version]
       end
       default_config :clean_dokken_sandbox, true
+
+      # CINC (the default image) does not require license acceptance.
+      # Override the ChefBase check_license to skip the prompt entirely.
+      def check_license; end
 
       # (see Base#call)
       def call(state)
@@ -108,8 +112,8 @@ module Kitchen
         cmd << " -F #{config[:chef_output_format]}"
         cmd << " -c #{File.join(config[:root_path], "client.rb")}"
         cmd << " -j #{File.join(config[:root_path], "dna.json")}"
-        cmd << "--profile-ruby" if config[:profile_ruby]
-        cmd << "--slow-report" if config[:slow_resource_report]
+        cmd << " --profile-ruby" if config[:profile_ruby]
+        cmd << " --slow-report" if config[:slow_resource_report]
 
         chef_cmd(cmd)
       end
@@ -119,7 +123,7 @@ module Kitchen
       end
 
       def runner_container_name
-        instance.name.to_s
+        instance_name.to_s
       end
 
       def cleanup_dokken_sandbox

@@ -17,6 +17,7 @@
 
 require "digest" unless defined?(Digest)
 require "kitchen"
+require "shellwords" unless defined?(Shellwords)
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "docker"
 require "lockfile"
@@ -39,7 +40,7 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :chef_image, "chef/chef"
+      default_config :chef_image, "cincproject/cinc"
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :data_ssh_port, nil
@@ -78,6 +79,9 @@ module Kitchen
 
       # (see Base#create)
       def create(state)
+        # Patch InSpec for CINC (no license required)
+        ::Dokken::CincAuditorPatch.apply!
+
         # Authenticate the private registry
         authenticate!
 
@@ -529,13 +533,7 @@ module Kitchen
         with_retries { @image = ::Docker::Image.get(name, { "platform" => oci_platform(config[:platform]) }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error
-        puts "Image #{name} not found. Nothing to delete."
-      end
-
-      def container_exist?(name)
-        true if ::Docker::Container.get(name, {}, docker_connection)
-      rescue StandardError, ::Docker::Error::NotFoundError
-        false
+        debug "Image #{name} not found. Nothing to delete."
       end
 
       def parse_image_name(image)
@@ -593,7 +591,7 @@ module Kitchen
 
       def create_container(args)
         with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
-      rescue
+      rescue ::Docker::Error::NotFoundError
         with_retries do
           args["Env"] = [] if args["Env"].nil?
           args["Env"] << "TEST_KITCHEN=1"
@@ -713,11 +711,6 @@ module Kitchen
         return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => oci_platform(config[:platform]) }, docker_connection)
 
         pull_image image
-      end
-
-      # https://github.com/docker/docker/blob/4fcb9ac40ce33c4d6e08d5669af6be5e076e2574/registry/auth.go#L231
-      def parse_registry_host(val)
-        val.sub(%r{https?://}, "").split("/").first
       end
 
       def pull_image(image)
