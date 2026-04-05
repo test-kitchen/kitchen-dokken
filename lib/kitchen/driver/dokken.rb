@@ -533,12 +533,6 @@ module Kitchen
         debug "Image #{name} not found. Nothing to delete."
       end
 
-      def container_exist?(name)
-        true if ::Docker::Container.get(name, {}, docker_connection)
-      rescue StandardError, ::Docker::Error::NotFoundError
-        false
-      end
-
       def parse_image_name(image)
         parts = image.split(":")
 
@@ -714,11 +708,6 @@ module Kitchen
         return if ::Docker::Image.exist?(registry_image_path(image), { "platform" => oci_platform(config[:platform]) }, docker_connection)
 
         pull_image image
-      end
-
-      # https://github.com/docker/docker/blob/4fcb9ac40ce33c4d6e08d5669af6be5e076e2574/registry/auth.go#L231
-      def parse_registry_host(val)
-        val.sub(%r{https?://}, "").split("/").first
       end
 
       def pull_image(image)
