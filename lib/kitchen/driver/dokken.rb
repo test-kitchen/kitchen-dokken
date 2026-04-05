@@ -594,7 +594,7 @@ module Kitchen
 
       def create_container(args)
         with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
-      rescue
+      rescue ::Docker::Error::NotFoundError
         with_retries do
           args["Env"] = [] if args["Env"].nil?
           args["Env"] << "TEST_KITCHEN=1"

@@ -276,7 +276,7 @@ module Dokken
     def running_inside_docker_desktop?
       Resolv.getaddress "host.docker.internal."
       true
-    rescue
+    rescue Resolv::ResolvError, StandardError
       false
     end
 

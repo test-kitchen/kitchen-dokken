@@ -222,7 +222,7 @@ module Kitchen
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
         ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "docker-desktop"
-      rescue
+      rescue StandardError
         false
       end
 
