@@ -225,9 +225,9 @@ RSpec.describe "Kitchen::Driver::Dokken" do
 
   describe "#chef_image" do
     it "combines chef_image config with chef_version" do
-      driver.config[:chef_image] = "chef/chef"
+      driver.config[:chef_image] = "cincproject/cinc"
       driver.config[:chef_version] = "17.10.0"
-      expect(driver.chef_image).to eq("chef/chef:17.10.0")
+      expect(driver.chef_image).to eq("cincproject/cinc:17.10.0")
     end
   end
 

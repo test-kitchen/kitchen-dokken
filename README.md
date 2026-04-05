@@ -91,7 +91,7 @@ $ kitchen create
 -----> Kitchen is finished. (0m21.95s)
 ```
 
-The `kitchen create` phase of the kitchen run pulls (if missing) the `chef/chef` image from the Docker hub, then creates a volume container named `chef-<version>`. This makes `/opt/chef` available for mounting by other containers.
+The `kitchen create` phase of the kitchen run pulls (if missing) the `cincproject/cinc` image from the Docker hub, then creates a volume container named `chef-<version>`. This makes `/opt/chef` available for mounting by other containers.
 
 When talking to a local Docker host (over a socket), the driver creates and bind mounts a sandbox directory to `/opt/kitchen`. This prevents us from having to "upload" the test data.
 
@@ -107,7 +107,7 @@ Finally, the driver pulls the image specified by the suite's platform section an
 $ docker ps -a
 CONTAINER ID        IMAGE                                COMMAND                  CREATED              STATUS              PORTS               NAMES
 3489588d4470        6e1b03ab46-default-centos-7:latest   "sh -c 'trap exit ..."   About a minute ago   Up About a minute                       6e1b03ab46-default-centos-7
-f678882b1575        chef/chef:current                    "true"                   About a minute ago   Created                                 chef-current
+f678882b1575        cincproject/cinc:current              "true"                   About a minute ago   Created                                 chef-current
 ```
 
 #### List images
@@ -116,7 +116,7 @@ f678882b1575        chef/chef:current                    "true"                 
 $ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED              SIZE
 6e1b03ab46-default-centos-7   latest              2ea1040b9c10        About a minute ago   192 MB
-chef/chef                     current             01ec788610e2        6 days ago           124 MB
+cincproject/cinc              current             01ec788610e2        6 days ago           124 MB
 centos                        7                   67591570dd29        7 weeks ago          192 MB
 ```
 
@@ -174,7 +174,7 @@ $ docker ps -a
 CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                   NAMES
 c153dfd8e53d        e9fa5d3a0d0e                   "sh -c 'trap exit 0 S"   9 minutes ago       Up 9 minutes                                default-centos-7
 32c42fba4a8c        someara/kitchen-cache:latest   "/usr/sbin/sshd -D -p"   9 minutes ago       Up 9 minutes        0.0.0.0:32846->22/tcp   default-centos-7-data
-7e327add6bf2        chef/chef:12.5.1               "true"                   17 minutes ago      Created                                     chef-12.5.1
+7e327add6bf2        cincproject/cinc:12.5.1        "true"                   17 minutes ago      Created                                     chef-12.5.1
 ```
 
 #### List images
@@ -184,7 +184,7 @@ $ docker images
 REPOSITORY              TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
 default-centos-7        latest              ec1d208d77cd        8 minutes ago       172.3 MB
 someara/kitchen-cache   latest              abbdb063dff1        2 weeks ago         300.8 MB
-chef/chef               12.5.1              86245605bbe3        4 weeks ago         168.1 MB
+cincproject/cinc        12.5.1              86245605bbe3        4 weeks ago         168.1 MB
 centos                  7                   e9fa5d3a0d0e        6 weeks ago         172.3 MB
 ```
 
@@ -244,7 +244,7 @@ The `kitchen-verify` phase uses the transport to run acceptance tests, verifying
 $ docker ps -a
 CONTAINER ID        IMAGE                                COMMAND                  CREATED             STATUS              PORTS               NAMES
 84def4c49ce3        6e1b03ab46-default-centos-7:latest   "sh -c 'trap exit ..."   6 minutes ago       Up 6 minutes                            6e1b03ab46-default-centos-7
-f678882b1575        chef/chef:current                    "true"                   9 minutes ago       Created                                 chef-current
+f678882b1575        cincproject/cinc:current              "true"                   9 minutes ago       Created                                 chef-current
 ```
 
 #### List images
@@ -253,7 +253,7 @@ f678882b1575        chef/chef:current                    "true"                 
 $ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
 6e1b03ab46-default-centos-7   latest              fec1a50470ed        6 minutes ago       192 MB
-chef/chef                     current             01ec788610e2        6 days ago          124 MB
+cincproject/cinc              current             01ec788610e2        6 days ago          124 MB
 centos                        7                   67591570dd29        7 weeks ago         192 MB
 ```
 
@@ -275,7 +275,7 @@ $ kitchen destroy
 ```shell
 $ docker ps -a
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
-f678882b1575        chef/chef:current   "true"              10 minutes ago      Created                                 chef-current
+f678882b1575        cincproject/cinc:current   "true"        10 minutes ago      Created                                 chef-current
 ```
 
 #### List images
@@ -283,7 +283,7 @@ f678882b1575        chef/chef:current   "true"              10 minutes ago      
 ```shell
 $ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-chef/chef           current             01ec788610e2        6 days ago          124 MB
+cincproject/cinc    current             01ec788610e2        6 days ago          124 MB
 centos              7                   67591570dd29        7 weeks ago         192 MB
 ```
 
@@ -493,8 +493,8 @@ verifier:
 
 ### Install Chef Infra Client from current channel
 
-Chef publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/chef/chef/tags),
-including those from the "current" channel. If you wish to use pre-release versions of Chef, set your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `chef/chef`, you can overwrite `chef_image` under the [driver context](https://github.com/test-kitchen/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `someara/chef`.
+Cinc publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/cincproject/cinc/tags),
+including those from the "current" channel. If you wish to use pre-release versions of Cinc, set your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `cincproject/cinc`, you can overwrite `chef_image` under the [driver context](https://github.com/test-kitchen/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `chef/chef`.
 
 ### Chef Infra Client options
 
