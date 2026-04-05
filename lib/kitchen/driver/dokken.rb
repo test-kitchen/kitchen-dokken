@@ -79,6 +79,9 @@ module Kitchen
 
       # (see Base#create)
       def create(state)
+        # Patch InSpec for CINC (no license required)
+        ::Dokken::CincAuditorPatch.apply!
+
         # Authenticate the private registry
         authenticate!
 
