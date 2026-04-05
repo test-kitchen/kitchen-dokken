@@ -7,7 +7,7 @@ class ProvisionerTestHarness
 
   def initialize(config = {})
     @config = {
-      chef_binary: "/opt/chef/bin/chef-client",
+      chef_binary: "/opt/cinc/bin/cinc-client",
       chef_options: " -z",
       chef_log_level: "warn",
       chef_output_format: "doc",
@@ -68,9 +68,9 @@ RSpec.describe "Kitchen::Provisioner::Dokken" do
     end
 
     it "strips whitespace from chef_binary" do
-      provisioner.config[:chef_binary] = "  /opt/chef/bin/chef-client  "
+      provisioner.config[:chef_binary] = "  /opt/cinc/bin/cinc-client  "
       provisioner.validate_config
-      expect(provisioner.config[:chef_binary]).to eq("/opt/chef/bin/chef-client")
+      expect(provisioner.config[:chef_binary]).to eq("/opt/cinc/bin/cinc-client")
     end
 
     it "strips whitespace from chef_log_level" do
@@ -102,7 +102,7 @@ RSpec.describe "Kitchen::Provisioner::Dokken" do
     it "constructs the default command correctly" do
       cmd = provisioner.run_command
       expect(cmd).to eq(
-        "/opt/chef/bin/chef-client -z" \
+        "/opt/cinc/bin/cinc-client -z" \
         " -l warn" \
         " -F doc" \
         " -c /opt/kitchen/client.rb" \
@@ -160,7 +160,7 @@ RSpec.describe "Kitchen::Provisioner::Dokken" do
     it "normalizes chef_options without leading space" do
       provisioner.config[:chef_options] = "-z --no-fork"
       cmd = provisioner.run_command
-      expect(cmd).to include("chef-client -z --no-fork")
+      expect(cmd).to include("cinc-client -z --no-fork")
     end
   end
 end

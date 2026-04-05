@@ -4,7 +4,7 @@ driver:
   chef_version: latest
   privileged: true
   volumes: [ '/var/lib/docker' ]
-  env: [CHEF_LICENSE=accept]
+  env: []
 
 transport:
   name: dokken

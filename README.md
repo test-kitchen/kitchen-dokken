@@ -496,14 +496,14 @@ verifier:
 Cinc publishes all functioning builds to the [Docker Hub](https://hub.docker.com/r/cincproject/cinc/tags),
 including those from the "current" channel. If you wish to use pre-release versions of Cinc, set your `chef_version` value to "current". If you need to test older versions of `chef-client` that are not available on docker hub as `cincproject/cinc`, you can overwrite `chef_image` under the [driver context](https://github.com/test-kitchen/kitchen-dokken/blob/2.5.1/lib/kitchen/driver/dokken.rb#L40) to a custom image name such as `chef/chef`.
 
-### Chef Infra Client options
+### Cinc/Chef Infra Client options
 
 It is possible to pass several extra configs to configure the chef binary and options, for example
  to use older versions that do not have the "-z" switch or to get some debug logging.
 
 ```yaml
 provisioner:
-  chef_binary: /opt/chef/bin/chef-solo
+  chef_binary: /opt/cinc/bin/cinc-solo
   chef_options: ""
   chef_log_level: debug
   chef_output_format: minimal
