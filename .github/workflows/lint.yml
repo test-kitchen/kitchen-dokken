@@ -44,6 +44,11 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Converge with product_name=cinc
-        run: bundle exec kitchen test default-almalinux-9
+        run: bundle exec kitchen converge default-almalinux-9
+        env:
+          KITCHEN_YAML: kitchen.cinc.yml
+      - name: Destroy
+        if: always()
+        run: bundle exec kitchen destroy default-almalinux-9
         env:
           KITCHEN_YAML: kitchen.cinc.yml

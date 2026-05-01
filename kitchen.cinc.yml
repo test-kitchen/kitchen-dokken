@@ -28,7 +28,7 @@ platforms:
 suites:
   - name: default
     run_list:
-      - recipe[dokken_test::default]
-    attributes:
-      dokken_test:
-        revision: <%= `git rev-parse HEAD` %>
+      - recipe[cinc_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/cinc/inspec
