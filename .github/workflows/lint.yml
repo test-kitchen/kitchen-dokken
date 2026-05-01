@@ -29,3 +29,21 @@ jobs:
         env:
           # This needs to be set for all phases, including the verify phase
           CHEF_LICENSE: "accept"
+
+  integration-cinc:
+    runs-on: ubuntu-latest
+    needs: lint-unit
+    name: Kitchen Verify (Cinc)
+    strategy:
+      matrix:
+        ruby: ["3.1", "3.4"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Converge with product_name=cinc
+        run: bundle exec kitchen test default-almalinux-9
+        env:
+          KITCHEN_YAML: kitchen.cinc.yml

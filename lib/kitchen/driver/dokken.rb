@@ -38,7 +38,15 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :chef_image, "chef/chef"
+      default_config :product_name, "chef"
+      default_config :chef_image do |driver|
+        case driver[:product_name]
+        when "cinc"
+          "cincproject/cinc"
+        else
+          "chef/chef"
+        end
+      end
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :data_ssh_port, nil
@@ -656,7 +664,8 @@ module Kitchen
       end
 
       def chef_container_name
-        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
+        prefix = config[:product_name] == "cinc" ? "cinc" : "chef"
+        config[:platform] != "" ? "#{prefix}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{prefix}-#{chef_version}"
       end
 
       def chef_image

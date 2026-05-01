@@ -48,6 +48,44 @@ suites:
     - recipe[hello_dokken::default]
 ```
 
+## Cinc usage
+
+[Cinc Client](https://cinc.sh/) is the community distribution of Chef Infra Client. kitchen-dokken can use Cinc instead of Chef Infra by setting `product_name: cinc` on the driver — no other configuration is required:
+
+```yaml
+---
+driver:
+  name: dokken
+  product_name: cinc
+  chef_version: latest
+
+transport:
+  name: dokken
+
+provisioner:
+  name: dokken
+
+platforms:
+  - name: almalinux-9
+    driver:
+      image: dokken/almalinux-9
+      pid_one_command: /usr/lib/systemd/systemd
+
+suites:
+  - name: default
+    run_list:
+      - recipe[my_cookbook::default]
+```
+
+When `product_name: cinc` is set, kitchen-dokken will:
+
+- Pull the [`cincproject/cinc`](https://hub.docker.com/r/cincproject/cinc) image instead of `chef/chef`
+- Use a `cinc-<version>` volume container so it does not collide with Chef Infra containers
+- Run `/opt/cinc/bin/cinc-client` instead of `/opt/chef/bin/chef-client`
+- Skip Chef license-acceptance prompts (Cinc is community-built and Apache-licensed)
+
+Both `chef_image` and `chef_binary` can still be overridden explicitly if you need a custom Cinc image or non-standard install path.
+
 ## Podman usage
 
 For specific podman guidance please see [the podman documentation](documentation/PODMAN.md).
