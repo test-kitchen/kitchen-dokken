@@ -9,6 +9,13 @@ jobs:
     uses: test-kitchen/.github/.github/workflows/lint-unit.yml@main
 
   integration:
+    # TODO: re-enable once Chef Workstation 26+ licensing is sorted for GHA.
+    # The `kitchen test helloagain` invocation runs `kitchen verify` (InSpec),
+    # which now fails with "Chef Workstation cannot execute without valid
+    # licenses" — CHEF_LICENSE=accept is no longer sufficient; a real license
+    # key is required. The integration-cinc job below uses `kitchen converge`
+    # only and is unaffected.
+    if: false
     runs-on: ubuntu-latest
     needs: lint-unit
     name: Kitchen Verify
