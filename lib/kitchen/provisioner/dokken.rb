@@ -30,7 +30,14 @@ module Kitchen
       plugin_version Kitchen::VERSION
 
       default_config :root_path, "/opt/kitchen"
-      default_config :chef_binary, "/opt/chef/bin/chef-client"
+      default_config :chef_binary do |provisioner|
+        case provisioner[:product_name]
+        when "cinc"
+          "/opt/cinc/bin/cinc-client"
+        else
+          "/opt/chef/bin/chef-client"
+        end
+      end
       default_config :chef_options, " -z"
       default_config :chef_log_level, "warn"
       default_config :chef_output_format, "doc"
@@ -77,6 +84,29 @@ module Kitchen
         raise ActionFailed, ex.message
       ensure
         cleanup_dokken_sandbox if config[:clean_dokken_sandbox] # rubocop: disable Lint/EnsureReturn
+      end
+
+      # Override the parent's check_license to skip the kitchen-omnibus-chef
+      # deprecation warning. That warning concerns the omnibus *download*
+      # mechanism, which dokken does not use — the chef/cinc binary is
+      # mounted from a volume container, not downloaded via omnitruck.
+      def check_license
+        name = license_acceptance_id
+        version = product_version
+        debug("Checking if we need to prompt for license acceptance on product: #{name} version: #{version}.")
+
+        acceptor = LicenseAcceptance::Acceptor.new(logger: Kitchen.logger, provided: config[:chef_license])
+        return unless acceptor.license_required?(name, version)
+
+        debug("License acceptance required for #{name} version: #{version}. Prompting")
+        license_id = acceptor.id_from_mixlib(name)
+        begin
+          acceptor.check_and_persist(license_id, version.to_s)
+        rescue LicenseAcceptance::LicenseNotAcceptedError => e
+          error("Cannot converge without accepting the #{e.product.pretty_name} License. Set it in your kitchen.yml or using the CHEF_LICENSE environment variable")
+          raise
+        end
+        config[:chef_license] ||= acceptor.acceptance_value
       end
 
       def validate_config

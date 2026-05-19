@@ -1,0 +1,34 @@
+---
+driver:
+  name: dokken
+  chef_version: latest
+  privileged: true
+
+transport:
+  name: dokken
+
+provisioner:
+  name: dokken
+  product_name: cinc
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: almalinux-9
+    driver:
+      image: dokken/almalinux-9
+      pid_one_command: /usr/lib/systemd/systemd
+
+  - name: ubuntu-24.04
+    driver:
+      image: dokken/ubuntu-24.04
+      pid_one_command: /bin/systemd
+
+suites:
+  - name: default
+    run_list:
+      - recipe[cinc_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/cinc/inspec

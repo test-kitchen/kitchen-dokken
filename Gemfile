@@ -7,6 +7,8 @@ group :test do
   gem "csv" # this is a workaround for ruby 3.4 support in inspec-core 6.8.24 and can be removed when a new version of inspec-core is released
   gem "berkshelf"
   gem "kitchen-inspec"
+  gem "minitest"
+  gem "mocha"
   gem "rake", ">= 11.0"
 end
 

@@ -19,7 +19,6 @@ require "digest" unless defined?(Digest)
 require "kitchen"
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "docker"
-require "lockfile"
 require "base64" unless defined?(Base64)
 require_relative "../helpers"
 
@@ -39,7 +38,14 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :chef_image, "chef/chef"
+      default_config :chef_image do |driver|
+        case driver.instance.provisioner[:product_name]
+        when "cinc"
+          "cincproject/cinc"
+        else
+          "chef/chef"
+        end
+      end
       default_config :chef_version, "latest"
       default_config :data_image, "dokken/kitchen-cache:latest"
       default_config :data_ssh_port, nil
@@ -398,9 +404,7 @@ module Kitchen
       def make_dokken_network
         return unless self[:network_mode] == "dokken"
 
-        lockfile = Lockfile.new "#{home_dir}/.dokken-network.lock"
-        begin
-          lockfile.lock
+        with_file_lock("#{home_dir}/.dokken-network.lock") do
           with_retries { ::Docker::Network.get("dokken", {}, docker_connection) }
         rescue ::Docker::Error::NotFoundError
           begin
@@ -408,8 +412,6 @@ module Kitchen
           rescue ::Docker::Error => e
             debug "driver - error :#{e}:"
           end
-        ensure
-          lockfile.unlock
         end
       end
 
@@ -419,9 +421,7 @@ module Kitchen
       end
 
       def create_chef_container(state)
-        lockfile = Lockfile.new "#{home_dir}/.dokken-#{chef_container_name}.lock"
-        begin
-          lockfile.lock
+        with_file_lock("#{home_dir}/.dokken-#{chef_container_name}.lock") do
           with_retries do
             # TEMPORARY FIX - docker-api 2.0.0 has a buggy Docker::Container.get - use .all instead
             # https://github.com/swipely/docker-api/issues/566
@@ -448,8 +448,13 @@ module Kitchen
           rescue ::Docker::Error, StandardError => e
             raise "driver - #{chef_container_name} failed to create #{e}"
           end
-        ensure
-          lockfile.unlock
+        end
+      end
+
+      def with_file_lock(path)
+        File.open(path, File::RDWR | File::CREAT, 0o644) do |f|
+          f.flock(File::LOCK_EX)
+          yield
         end
       end
 
@@ -658,7 +663,8 @@ module Kitchen
       end
 
       def chef_container_name
-        config[:platform] != "" ? "chef-#{chef_version}-" + config[:platform].sub("/", "-") : "chef-#{chef_version}"
+        prefix = instance.provisioner[:product_name] == "cinc" ? "cinc" : "chef"
+        config[:platform] != "" ? "#{prefix}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{prefix}-#{chef_version}"
       end
 
       def chef_image
