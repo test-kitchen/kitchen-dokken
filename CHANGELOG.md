@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.23.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.22.2...v2.23.0) (2026-05-19)
+
+
+### Features
+
+* Add proper support for Cinc ([#381](https://github.com/test-kitchen/kitchen-dokken/issues/381)) ([430d65e](https://github.com/test-kitchen/kitchen-dokken/commit/430d65ec4ef6dde69a0d7c14c241b573663aa601))
+
 ## [2.22.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.22.1...v2.22.2) (2026-02-13)
 
 
