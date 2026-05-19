@@ -55,9 +55,7 @@ module Kitchen
       # driver and set it here. If we remove this, users will set their chef_version
       # to 14 in the driver and still get prompted for license acceptance because
       # the ChefInfra provisioner defaults product_version to 'latest'.
-      default_config :product_name do |provisioner|
-        provisioner.instance.driver[:product_name] || "chef"
-      end
+      default_config :product_name, "chef"
       default_config :product_version do |provisioner|
         driver = provisioner.instance.driver
         driver[:chef_version]

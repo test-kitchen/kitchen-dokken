@@ -38,9 +38,8 @@ module Kitchen
       default_config :cap_add, nil
       default_config :cap_drop, nil
       default_config :cgroupns_host, false
-      default_config :product_name, "chef"
       default_config :chef_image do |driver|
-        case driver[:product_name]
+        case driver.instance.provisioner[:product_name]
         when "cinc"
           "cincproject/cinc"
         else
@@ -664,7 +663,7 @@ module Kitchen
       end
 
       def chef_container_name
-        prefix = config[:product_name] == "cinc" ? "cinc" : "chef"
+        prefix = instance.provisioner[:product_name] == "cinc" ? "cinc" : "chef"
         config[:platform] != "" ? "#{prefix}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{prefix}-#{chef_version}"
       end
 

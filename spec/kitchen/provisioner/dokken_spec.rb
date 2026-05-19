@@ -27,19 +27,13 @@ describe Kitchen::Provisioner::Dokken do
   end
 
   describe "product_name" do
-    it "defaults to chef when the driver does not set it" do
+    it "defaults to chef" do
       _(provisioner[:product_name]).must_equal "chef"
     end
 
-    it "inherits cinc from the driver" do
-      driver_config[:product_name] = "cinc"
+    it "can be set to cinc" do
+      config[:product_name] = "cinc"
       _(provisioner[:product_name]).must_equal "cinc"
-    end
-
-    it "respects an explicit provisioner override" do
-      driver_config[:product_name] = "cinc"
-      config[:product_name]        = "chef"
-      _(provisioner[:product_name]).must_equal "chef"
     end
   end
 
@@ -49,13 +43,13 @@ describe Kitchen::Provisioner::Dokken do
     end
 
     it "is the cinc-client path when product_name is cinc" do
-      driver_config[:product_name] = "cinc"
+      config[:product_name] = "cinc"
       _(provisioner[:chef_binary]).must_equal "/opt/cinc/bin/cinc-client"
     end
 
     it "respects an explicit override" do
-      driver_config[:product_name] = "cinc"
-      config[:chef_binary]         = "/usr/local/bin/cinc-client"
+      config[:product_name] = "cinc"
+      config[:chef_binary]  = "/usr/local/bin/cinc-client"
       _(provisioner[:chef_binary]).must_equal "/usr/local/bin/cinc-client"
     end
   end
@@ -68,7 +62,7 @@ describe Kitchen::Provisioner::Dokken do
     end
 
     it "returns without prompting when product is cinc" do
-      driver_config[:product_name] = "cinc"
+      config[:product_name] = "cinc"
       acceptor.expects(:license_required?).with("cinc", "latest").returns(false)
       acceptor.expects(:check_and_persist).never
 

@@ -50,13 +50,12 @@ suites:
 
 ## Cinc usage
 
-[Cinc Client](https://cinc.sh/) is the community distribution of Chef Infra Client. kitchen-dokken can use Cinc instead of Chef Infra by setting `product_name: cinc` on the driver — no other configuration is required:
+[Cinc Client](https://cinc.sh/) is the community distribution of Chef Infra Client. kitchen-dokken can use Cinc instead of Chef Infra by setting `product_name: cinc` on the provisioner — no other configuration is required:
 
 ```yaml
 ---
 driver:
   name: dokken
-  product_name: cinc
   chef_version: latest
 
 transport:
@@ -64,6 +63,7 @@ transport:
 
 provisioner:
   name: dokken
+  product_name: cinc
 
 platforms:
   - name: almalinux-9

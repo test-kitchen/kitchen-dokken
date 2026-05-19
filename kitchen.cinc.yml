@@ -1,7 +1,6 @@
 ---
 driver:
   name: dokken
-  product_name: cinc
   chef_version: latest
   privileged: true
 
@@ -10,6 +9,7 @@ transport:
 
 provisioner:
   name: dokken
+  product_name: cinc
 
 verifier:
   name: inspec
