@@ -90,7 +90,17 @@ module Kitchen
       # deprecation warning. That warning concerns the omnibus *download*
       # mechanism, which dokken does not use — the chef/cinc binary is
       # mounted from a volume container, not downloaded via omnitruck.
+      #
+      # When the resolved parent is kitchen-cinc's CincInfra (which rebinds
+      # Kitchen::Provisioner::ChefInfra in Cinc Workstation 26+), there is no
+      # omnibus warning to suppress, license_acceptance_id is not defined,
+      # and the LicenseAcceptance constant is not autoloaded — delegate to
+      # super in that case so the parent's own check_license runs. We test
+      # for both because a partial drop-in shim may define
+      # license_acceptance_id without pulling in license-acceptance.
       def check_license
+        return super unless respond_to?(:license_acceptance_id, true) && defined?(LicenseAcceptance)
+
         name = license_acceptance_id
         version = product_version
         debug("Checking if we need to prompt for license acceptance on product: #{name} version: #{version}.")

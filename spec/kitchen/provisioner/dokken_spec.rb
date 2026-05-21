@@ -85,5 +85,44 @@ describe Kitchen::Provisioner::Dokken do
 
       provisioner.check_license
     end
+
+    # Helper: patch the parent's check_license to a sentinel so we can
+    # verify our override delegated via super, then restore it.
+    def with_stubbed_super
+      parent = Kitchen::Provisioner::ChefInfra
+      original = parent.instance_method(:check_license)
+      parent.define_method(:check_license) { :super_called }
+      begin
+        yield
+      ensure
+        parent.define_method(:check_license, original)
+      end
+    end
+
+    it "delegates to super when the parent doesn't define license_acceptance_id (kitchen-cinc parent)" do
+      # Simulate the kitchen-cinc rebinding where ChefInfra is an alias for
+      # CincInfra and license_acceptance_id is not defined.
+      provisioner.stubs(:respond_to?).with(any_parameters).returns(true)
+      provisioner.stubs(:respond_to?).with(:license_acceptance_id, true).returns(false)
+
+      with_stubbed_super do
+        _(provisioner.check_license).must_equal :super_called
+      end
+    end
+
+    it "delegates to super when LicenseAcceptance is not loaded (partial cinc shim)" do
+      # Simulate a partial kitchen-cinc drop-in shim: license_acceptance_id
+      # exists but the LicenseAcceptance constant isn't autoloaded — our body
+      # would crash on Acceptor.new, so the guard must delegate instead.
+      stash = LicenseAcceptance
+      Object.send(:remove_const, :LicenseAcceptance)
+      begin
+        with_stubbed_super do
+          _(provisioner.check_license).must_equal :super_called
+        end
+      ensure
+        Object.const_set(:LicenseAcceptance, stash)
+      end
+    end
   end
 end
