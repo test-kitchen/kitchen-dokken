@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.23.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.0...v2.23.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **provisioner:** guard check_license against non-omnibus parents ([#384](https://github.com/test-kitchen/kitchen-dokken/issues/384)) ([f720705](https://github.com/test-kitchen/kitchen-dokken/commit/f7207053b781620ce922045889cf441755eee2cb)), closes [#383](https://github.com/test-kitchen/kitchen-dokken/issues/383)
+
 ## [2.23.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.22.2...v2.23.0) (2026-05-19)
 
 
