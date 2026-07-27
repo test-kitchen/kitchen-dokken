@@ -16,6 +16,7 @@
 # limitations under the License.
 
 require "digest" unless defined?(Digest)
+require "json" unless defined?(JSON)
 require "kitchen"
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "docker"
@@ -370,7 +371,7 @@ module Kitchen
           config["HostConfig"]["UsernsMode"] = "host"
         end
 
-        runner_container = run_container(config)
+        runner_container = run_container(config, platform: self[:platform])
         state[:runner_container] = runner_container.json
       end
 
@@ -397,6 +398,12 @@ module Kitchen
             },
           }
         end
+        # Deliberately not pinned to config[:platform]: this container only
+        # serves kitchen's files over ssh, so its architecture is irrelevant to
+        # the system under test. The data image is built locally from
+        # almalinux:9 (see Helpers#create_data_image) and is therefore always
+        # host-architecture -- pinning it fails outright whenever the platform
+        # under test differs from the host.
         data_container = run_container(config)
         state[:data_container] = data_container.json
       end
@@ -443,7 +450,9 @@ module Kitchen
                 "NetworkMode" => self[:network_mode],
               },
             }
-            chef_container = create_container(config)
+            # /opt/chef from this container is mounted into the runner, so it
+            # has to be built for the same architecture as the runner.
+            chef_container = create_container(config, platform: self[:platform])
             state[:chef_container] = chef_container.json
           rescue ::Docker::Error, StandardError => e
             raise "driver - #{chef_container_name} failed to create #{e}"
@@ -596,18 +605,17 @@ module Kitchen
         end
       end
 
-      def create_container(args)
+      def create_container(args, platform: nil)
         with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
       rescue
         with_retries do
           args["Env"] = [] if args["Env"].nil?
           args["Env"] << "TEST_KITCHEN=1"
           args["Env"] << "CI=#{ENV["CI"]}" if ENV.include? "CI"
-          args["Platform"] = config[:platform]
           info "Creating container #{args["name"]}"
           debug "driver - create_container args #{args}"
           with_retries do
-            @container = ::Docker::Container.create(args.clone, docker_connection)
+            @container = create_container_for_platform(args.clone, platform)
           rescue ::Docker::Error::ConflictError
             debug "driver - rescue ConflictError: #{args["name"]}"
             with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
@@ -618,8 +626,25 @@ module Kitchen
         end
       end
 
-      def run_container(args)
-        create_container(args)
+      # Create a container, optionally pinned to an OCI platform.
+      #
+      # /containers/create takes `platform` as a *query* parameter, but
+      # Docker::Container.create only ever forwards `name` to the query string
+      # and dumps everything else into the request body. A "Platform" body key
+      # is therefore accepted and silently ignored by the daemon, which is why
+      # the platform config had no effect on container creation. Post directly
+      # when a platform is wanted; otherwise use the gem as before.
+      def create_container_for_platform(args, platform)
+        return ::Docker::Container.create(args, docker_connection) if platform.to_s.empty?
+
+        query = { "name" => args["name"], "platform" => platform }
+        body = args.reject { |k, _| k == "name" }
+        docker_connection.post("/containers/create", query, body: JSON.dump(body))
+        ::Docker::Container.get(args["name"], {}, docker_connection)
+      end
+
+      def run_container(args, platform: nil)
+        create_container(args, platform: platform)
         with_retries do
           @container.start
           @container = ::Docker::Container.get(args["name"], {}, docker_connection)
@@ -664,7 +689,7 @@ module Kitchen
 
       def chef_container_name
         prefix = instance.provisioner[:product_name] == "cinc" ? "cinc" : "chef"
-        config[:platform] != "" ? "#{prefix}-#{chef_version}-" + config[:platform].sub("/", "-") : "#{prefix}-#{chef_version}"
+        config[:platform] != "" ? "#{prefix}-#{chef_version}-" + config[:platform].tr("/", "-") : "#{prefix}-#{chef_version}"
       end
 
       def chef_image
@@ -739,12 +764,18 @@ module Kitchen
         end
       end
 
+      # Convert an "os/arch[/variant]" platform string into the JSON OCI
+      # platform spec the Docker API expects as an image filter. The variant
+      # matters: the daemon will not match a filter of
+      # {"os":"linux","architecture":"amd64"} against a linux/amd64/v2 image,
+      # so dropping it makes every image lookup for a variant image miss.
       def oci_platform(platform)
-        if !platform.nil? && platform.include?("/")
-          os, arch = platform.split("/")
-          platform = { os: os, architecture: arch }.to_json
-        end
-        platform
+        return platform if platform.nil? || !platform.include?("/")
+
+        os, architecture, variant = platform.split("/")
+        spec = { os: os, architecture: architecture }
+        spec[:variant] = variant unless variant.nil? || variant.empty?
+        spec.to_json
       end
 
       def runner_container_name
