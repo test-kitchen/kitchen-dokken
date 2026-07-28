@@ -204,9 +204,7 @@ module Dokken
       else
         x = Array(v).map { |a| parse_port(a) }
         x.flatten!
-        x.each_with_object({}) do |y, h|
-          h[y["container_port"]] = {}
-        end
+        x.to_h { |y| [y["container_port"], {}] }
       end
     end
 
