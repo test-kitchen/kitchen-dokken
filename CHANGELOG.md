@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.23.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.1...v2.23.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* keep the OCI platform variant so variant platforms work end to end ([#389](https://github.com/test-kitchen/kitchen-dokken/issues/389)) ([85c47b2](https://github.com/test-kitchen/kitchen-dokken/commit/85c47b2820b41cb70396a06cd44f9d222c7fc5bc))
+
 ## [2.23.1](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.0...v2.23.1) (2026-05-21)
 
 
