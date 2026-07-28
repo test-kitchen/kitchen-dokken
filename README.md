@@ -697,7 +697,11 @@ And the `creds.json` file may look like this:
 
 ### Docker config file auth
 
-Instead of using a `creds_file`, you can read authentication information from your docker config at `~/.docker/config.json`
+Instead of using a `creds_file`, authentication information is read from your
+docker config at `~/.docker/config.json`. This is enabled by default; set
+`docker_config_creds: false` to ignore that file and pull anonymously. The
+examples below set `docker_config_creds: true` explicitly, which is redundant
+but harmless.
 
 ```yaml
 platforms:
@@ -740,6 +744,15 @@ and your docker config has
 ```
 
 Then `kitchen-dokken` will run the `docker-credential-example-cloud` command to get the credentials.
+
+Credentials are scoped to the registry an image is pulled from, similarly to
+the way the `docker` CLI scopes them. An image whose registry has no entry in
+`~/.docker/config.json` is pulled anonymously rather than with some other
+registry's credentials. Images without a registry prefix (`almalinux:9`,
+`dokken/almalinux-8`) resolve to Docker Hub, so they use the
+`https://index.docker.io/v1/` entry; `docker.io` and `registry-1.docker.io`
+are also accepted as Hub aliases, which is slightly more permissive than the
+CLI.
 
 ## FAQ
 

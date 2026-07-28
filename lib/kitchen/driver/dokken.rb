@@ -81,7 +81,7 @@ module Kitchen
       default_config :write_timeout, 3600
       default_config :user_ns_mode, nil
       default_config :creds_file, nil
-      default_config :docker_config_creds, false
+      default_config :docker_config_creds, true
 
       # (see Base#create)
       def create(state)
@@ -513,20 +513,68 @@ module Kitchen
         @docker_config_creds
       end
 
+      # The `auths` key `docker login` itself writes for Docker Hub.
+      DOCKER_HUB_REGISTRY_KEY = "https://index.docker.io/v1/".freeze
+
+      # Registry hosts that all refer to Docker Hub. Docker writes the legacy
+      # v1 URL above, but hand-written and tool-generated configs use any of
+      # these. Listed in preference order.
+      DOCKER_HUB_HOSTS = %w{index.docker.io docker.io registry-1.docker.io}.freeze
+
+      # An explicit "no credentials" value. Returning nil here instead would let
+      # docker-api fall back to the process-global ::Docker.creds, which
+      # authenticate! populates from creds_file and never clears -- so another
+      # instance's private registry password would be sent to this registry,
+      # which is the very leak this scoping exists to prevent.
+      NO_DOCKER_CREDS = {}.freeze
+
+      # Return the registry host an image reference points at, or nil when the
+      # reference resolves to Docker Hub. The leading path component only names
+      # a registry when it contains a "." or a ":", or is exactly "localhost" --
+      # the same heuristic Docker uses to tell "quay.io/org/image" apart from
+      # the Hub shorthand "dokken/almalinux-8".
+      def image_registry_host(image)
+        first, remainder = image.split("/", 2)
+        return nil if remainder.nil?
+        return nil unless first.include?(".") || first.include?(":") || first == "localhost"
+
+        first
+      end
+
+      # Look up the ~/.docker/config.json entry that applies to an image's
+      # registry. Returns nil when that registry has no entry so the pull is
+      # attempted anonymously, rather than offering it another registry's
+      # credentials.
+      # Pick the config.json key that holds the Docker Hub credentials. A
+      # config may spell Hub several ways, so prefer the canonical key and then
+      # a fixed alias order rather than whichever happens to be listed first.
+      def docker_hub_creds_key
+        keys = docker_config_creds.keys.select { |k| DOCKER_HUB_HOSTS.include?(parse_registry_host(k)) }
+        return if keys.empty?
+
+        keys.find { |k| k == DOCKER_HUB_REGISTRY_KEY } ||
+          keys.min_by { |k| DOCKER_HUB_HOSTS.index(parse_registry_host(k)) }
+      end
+
+      def docker_config_creds_for_image(image)
+        host = image_registry_host(image)
+
+        key = if host.nil? || DOCKER_HUB_HOSTS.include?(host)
+                docker_hub_creds_key
+              else
+                docker_config_creds.keys.find { |k| parse_registry_host(k) == host }
+              end
+        return if key.nil?
+
+        c = docker_config_creds[key]
+        c.respond_to?(:call) ? c.call : c
+      end
+
       def docker_creds_for_image(image)
         return docker_creds if config[:creds_file]
+        return NO_DOCKER_CREDS unless config[:docker_config_creds]
 
-        image_registry = image.split("/").first
-
-        # NOTE: Try to use DockerHub auth if exact registry match isn't found
-        default_registry = "https://index.docker.io/v1/"
-        if docker_config_creds.key?(image_registry)
-          c = docker_config_creds[image_registry]
-          c.respond_to?(:call) ? c.call : c
-        elsif docker_config_creds.key?(default_registry)
-          c = docker_config_creds[default_registry]
-          c.respond_to?(:call) ? c.call : c
-        end
+        docker_config_creds_for_image(image) || NO_DOCKER_CREDS
       end
 
       def pull_platform_image
@@ -758,7 +806,7 @@ module Kitchen
             original_image = Docker::Image.get(path, { "platform" => oci_platform(config[:platform]) }, docker_connection)
           end
 
-          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(image), docker_connection)
+          new_image = Docker::Image.create({ "fromImage" => path, "platform" => config[:platform] }, docker_creds_for_image(path), docker_connection)
 
           !(original_image&.id&.start_with?(new_image.id))
         end
