@@ -1,5 +1,12 @@
 # Dokken Changelog
 
+## [2.23.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.2...v2.23.3) (2026-07-28)
+
+
+### Bug Fixes
+
+* scope registry credentials per registry and honor docker_config_creds ([#388](https://github.com/test-kitchen/kitchen-dokken/issues/388)) ([6e049e5](https://github.com/test-kitchen/kitchen-dokken/commit/6e049e5b85a5c1beb9c7cafd0af4a7c64195bf41))
+
 ## [2.23.2](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.1...v2.23.2) (2026-07-28)
 
 
