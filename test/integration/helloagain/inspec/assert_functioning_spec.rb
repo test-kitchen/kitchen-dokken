@@ -1,25 +1,37 @@
-control "Verify Hostname" do
+# Runs in the `helloagain` container while `hello` is up alongside it. Between
+# them these assertions cover the driver's networking responsibilities: naming
+# the container, registering aliases on the dokken network, and passing the
+# environment through.
+
+control "hostname" do
   impact 0.7
-  title "Hostname should be set"
-  desc "Test to see if the hostname is set correctly via kitchen.yml"
+  title "the driver sets the container hostname from kitchen.yml"
 
   describe sys_info do
     its("hostname") { should eq "helloagain.computers.biz" }
   end
 end
 
-control "Container group" do
-  impact 0.7
-  title "HelloAgain should be able to access the hello container"
+control "network-aliases" do
+  impact 1.0
+  title "peers on the dokken network resolve each other by hostname"
 
-  describe host("hello.computers.biz:1234", port: 1234, protocol: "tcp") do
-    it { should be_reachable }
+  # This is the driver's actual job: creating the dokken network and
+  # registering each container's hostname and hostname_aliases as endpoint
+  # aliases on it. Resolution is the assertion -- carrying a listener around
+  # just to open a socket would test busybox, not kitchen-dokken.
+  describe command("getent hosts hello.computers.biz") do
+    its("exit_status") { should eq 0 }
+  end
+
+  describe command("getent hosts helloagain") do
+    its("exit_status") { should eq 0 }
   end
 end
 
-control "Environment Variables" do
+control "environment" do
   impact 0.7
-  title "Environment variables should be able to be passed through"
+  title "env from kitchen.yml reaches the container"
 
   describe os_env("FOO") do
     its("content") { should eq "BAR" }

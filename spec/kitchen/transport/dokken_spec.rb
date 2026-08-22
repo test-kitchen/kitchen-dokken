@@ -310,6 +310,49 @@ describe Kitchen::Transport::Dokken do
         _(uploaded_endpoint).must_equal ["172.17.0.5", "22"]
       end
 
+      # NetworkSettings.IPAddress is only populated for the default bridge. The
+      # data container is given a NetworkingConfig endpoint on the dokken
+      # network, so the legacy field is empty and the address lives under
+      # Networks.<name>. Reading the empty one built `root@:/opt/kitchen` and
+      # rsync died with "Could not resolve hostname".
+      it "uses the network-scoped address when the container is on a user-defined network" do
+        data_container[:NetworkSettings][:IPAddress] = ""
+
+        _(uploaded_endpoint).must_equal ["172.18.0.5", "22"]
+      end
+
+      it "finds the address whatever the network is called" do
+        data_container[:NetworkSettings][:IPAddress] = ""
+        data_container[:NetworkSettings][:Networks] = { custom_net: { IPAddress: "10.9.0.7" } }
+
+        _(uploaded_endpoint).must_equal ["10.9.0.7", "22"]
+      end
+
+      it "prefers the top-level address when the daemon does populate it" do
+        _(uploaded_endpoint).must_equal ["172.17.0.5", "22"]
+      end
+
+      it "ignores a network entry that carries no address" do
+        data_container[:NetworkSettings][:IPAddress] = ""
+        data_container[:NetworkSettings][:Networks] = {
+          none: { IPAddress: "" },
+          dokken: { IPAddress: "172.18.0.5" },
+        }
+
+        _(uploaded_endpoint).must_equal ["172.18.0.5", "22"]
+      end
+
+      # Better than uploading to an empty hostname and letting ssh report it.
+      it "says so plainly when the container has no address at all" do
+        data_container[:NetworkSettings][:IPAddress] = ""
+        data_container[:NetworkSettings][:Networks] = {}
+
+        err = _ { connection.upload(["/tmp/sandbox"], "/opt/kitchen") }
+          .must_raise Kitchen::Transport::TransportFailed
+
+        _(err.message).must_include "no address on any docker network"
+      end
+
       it "uses the published host mapping over a unix socket bound to one interface" do
         data_container[:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] = "127.0.0.1"
 

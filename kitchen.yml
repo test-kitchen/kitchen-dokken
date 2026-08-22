@@ -1,104 +1,198 @@
 ---
+# The configuration CI exercises.
+#
+# Everything here runs against Cinc rather than Chef Infra, so that neither a
+# converge nor a verify needs a licence key -- which in turn means these suites
+# run on pull requests from forks, where secrets are unavailable. See
+# kitchen.chef.yml for the Chef Infra equivalent, and
+# .github/workflows/integration.yml for what runs where.
+#
+# Suites are organised by driver feature, not by distro: dokken's bugs live in
+# networking and volume plumbing rather than in distro differences.
+
 driver:
   name: dokken
   chef_version: latest
   privileged: true
-  volumes: [ '/var/lib/docker' ]
-  env: [CHEF_LICENSE=accept]
 
 transport:
   name: dokken
 
 provisioner:
   name: dokken
+  product_name: cinc
 
 verifier:
   name: inspec
 
 platforms:
-  - name: hello
+  - name: almalinux-9
+    driver:
+      image: dokken/almalinux-9
+      pid_one_command: /usr/lib/systemd/systemd
+
+  - name: ubuntu-2404
+    driver:
+      image: dokken/ubuntu-24.04
+      pid_one_command: /bin/systemd
+
+  # Deliberately tiny and init-less. Used by the suites that exercise the
+  # driver itself without converging anything, so they stay fast.
+  - name: alpine
     driver:
       image: alpine:latest
       env:
         - FOO=BAR
-      tmpfs:
-        /tmp: rw,noexec,nosuid,nodev,size=65536k
     provisioner:
       chef_binary: /bin/true
 
-  - name: centos
-    driver:
-      image: dokken/centos-7
-      pid_one_command: /usr/lib/systemd/systemd
-      volumes:
-        - <%= ENV['PWD'] %>/.git:/opt/kitchen-dokken/.git
-
 suites:
+  # --- converge and sandbox ------------------------------------------------
   - name: default
-    includes:
-      - centos
+    excludes: [alpine]
     run_list:
       - recipe[dokken_test::default]
-    attributes:
-      dokken_test:
-        revision: <%= `git rev-parse HEAD` %>
+    verifier:
+      inspec_tests:
+        - test/integration/default
 
+  # Guards the sandbox lifecycle: the same run_list has to converge twice with
+  # nothing left to change the second time.
   - name: idempotency
-    includes:
-      - centos
+    excludes: [alpine]
     provisioner:
       enforce_idempotency: true
       multiple_converge: 2
       deprecations_as_errors: true
     run_list:
       - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/default
 
-  - name: hello
-    driver:
-      entrypoint:
-        - /bin/sh
-        - -c
-        - while :; do nc -lvp 1234 -e /bin/sh -c 'echo hello'; done
-      hostname: hello.computers.biz
-      ports: '1234'
-      pid_one_command: ''
-    includes:
-      - hello
-
-  - name: helloagain
-    driver:
-      hostname: helloagain.computers.biz
-      ports:
-        - '8301'
-        - '8301:8301/udp'
-        - '127.0.0.1:8500:8500'
-    includes:
-      - hello
-
-  - name: local_image
-    includes:
-      - local_image
-
-  - name: ipv6
-    includes:
-      - centos
-    driver:
-      ipv6: true
-
+  # --- networking ----------------------------------------------------------
+  # bridge and host take the branch in start_runner_container that skips
+  # NetworkingConfig entirely, so the default profile is the assertion: the
+  # container still comes up, converges and is reachable.
   - name: bridge
+    excludes: [alpine]
     driver:
       network_mode: bridge
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/default
 
   - name: host
+    excludes: [alpine]
     driver:
       network_mode: host
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/default
 
   - name: dns
-    includes:
-      - centos
+    excludes: [alpine]
     driver:
       dns:
         - 8.8.8.8
         - 8.8.4.4
       dns_search:
         - example.com
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/dns
+
+  - name: ipv6
+    excludes: [alpine]
+    driver:
+      ipv6: true
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/ipv6
+
+  # --- storage and limits --------------------------------------------------
+  - name: tmpfs
+    excludes: [alpine]
+    driver:
+      tmpfs:
+        /mnt/dokken-tmpfs: rw,noexec,nosuid,nodev,size=65536k
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/tmpfs
+
+  - name: volumes
+    excludes: [alpine]
+    driver:
+      volumes:
+        - /var/log/dokken-volume
+      binds:
+        - <%= Dir.pwd %>/LICENSE:/mnt/license:ro
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/volumes
+
+  - name: resources
+    excludes: [alpine]
+    driver:
+      memory_limit: 536870912  # 512MiB
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/resources
+
+  # --- driver-only suites, no converge -------------------------------------
+  # `hello` is the peer `helloagain` talks to. Between them they cover the
+  # entrypoint override, published ports in all three notations, hostname
+  # aliases on the dokken network, and environment passthrough. They run as a
+  # pair, not as separate matrix cells: the point is one container resolving
+  # and reaching the other.
+  - name: hello
+    includes: [alpine]
+    driver:
+      # pid_one_command is emptied so that the entrypoint is the only thing
+      # keeping the container alive -- if the override were dropped on the
+      # floor the container would exit and the suite would fail.
+      entrypoint:
+        - /bin/sh
+        - -c
+        - trap exit 0 TERM; while :; do sleep 1; done
+      hostname: hello.computers.biz
+      ports: '1234'
+      pid_one_command: ''
+
+  - name: helloagain
+    includes: [alpine]
+    driver:
+      hostname: helloagain.computers.biz
+      hostname_aliases:
+        - helloagain
+      ports:
+        - '8301'
+        - '8301:8301/udp'
+        - '127.0.0.1:8500:8500'
+    verifier:
+      inspec_tests:
+        - test/integration/helloagain
+
+  # Pins the runner and the cinc volume container to a non-host architecture.
+  # Needs QEMU on the runner; see the `arch` job in the integration workflow.
+  - name: arch
+    includes: [alpine]
+    driver:
+      platform: linux/arm64
+    verifier:
+      inspec_tests:
+        - test/integration/arch

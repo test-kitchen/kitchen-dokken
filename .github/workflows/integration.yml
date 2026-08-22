@@ -1,0 +1,210 @@
+---
+name: Integration
+
+"on":
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every job below runs kitchen.yml, which uses Cinc for both the converge and
+# the verify. Nothing here needs CHEF_LICENSE_KEY, so these suites also run on
+# pull requests from forks, where secrets are unavailable.
+
+jobs:
+  # The bulk of the coverage: one driver feature per suite, on both supported
+  # init platforms. `kitchen test` means create -> converge -> verify ->
+  # destroy, so InSpec actually asserts behaviour rather than the job merely
+  # proving that a converge exited zero.
+  features:
+    name: ${{ matrix.suite }} / ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - default
+          - idempotency
+          - bridge
+          - host
+          - dns
+          - tmpfs
+          - volumes
+          - resources
+        os:
+          - almalinux-9
+          - ubuntu-2404
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec kitchen test ${{ matrix.suite }}-${{ matrix.os }}
+
+  # Split out because it is the one suite that needs the daemon reconfigured.
+  ipv6:
+    name: ipv6 / ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - almalinux-9
+          - ubuntu-2404
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Enable IPv6 on the Docker daemon
+        run: |
+          existing=$(sudo cat /etc/docker/daemon.json 2>/dev/null || echo '{}')
+          echo "$existing" \
+            | jq '. + {experimental: true, ip6tables: true}' \
+            | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          timeout 60 bash -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+      - run: bundle exec kitchen test ipv6-${{ matrix.os }}
+
+  # hello and helloagain are a pair, not two matrix cells: the assertion is
+  # that one container resolves and reaches the other over the dokken network.
+  # Between them they cover the entrypoint override, published ports in all
+  # three notations, hostname aliases and environment passthrough.
+  peers:
+    name: hostname aliases and published ports
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Stand up the peer container
+        run: bundle exec kitchen create hello-alpine
+      - name: Verify from its neighbour
+        run: bundle exec kitchen verify helloagain-alpine
+
+      # Asserted from the host, because a container cannot see its own
+      # published ports. Covers all three notations the driver accepts.
+      - name: Check the published ports
+        run: |
+          ports=$(docker ps --filter name=helloagain-alpine --format '{{.Ports}}')
+          echo "$ports"
+          grep -q '8301/udp' <<<"$ports"
+          grep -q '127.0.0.1:8500->8500/tcp' <<<"$ports"
+
+      - name: Destroy the neighbour
+        if: always()
+        run: bundle exec kitchen destroy helloagain-alpine
+      - name: Destroy the peer container
+        if: always()
+        run: bundle exec kitchen destroy hello-alpine
+
+  # Pins the runner and the cinc volume container to a non-host architecture.
+  arch:
+    name: linux/arm64 platform pinning
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - run: bundle exec kitchen test arch-alpine
+
+  # Runs kitchen-dokken from inside a container so that running_inside_docker?
+  # is true. That is what puts the driver on the data-container path -- the
+  # sandbox is shipped over ssh instead of bind mounted -- which is otherwise
+  # only reachable with a genuinely remote daemon. The matrix covers both
+  # transfer implementations: rsync when it is installed, and the Net::SCP
+  # fallback when it is not.
+  nested:
+    name: data container via ${{ matrix.transfer }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        transfer:
+          - rsync
+          - scp
+    steps:
+      - uses: actions/checkout@v7
+
+      # The containers kitchen-dokken creates live on the `dokken` network, so
+      # the container kitchen itself runs in has to be on that network too:
+      # Docker's isolation rules stop the default bridge routing to a
+      # user-defined one, and the upload would time out. The driver reuses an
+      # existing network and only creates one when it is missing, so making it
+      # up front is safe.
+      - name: Create the dokken network
+        run: docker network inspect dokken >/dev/null 2>&1 || docker network create dokken
+
+      - name: Converge from inside a container
+        env:
+          TRANSFER: ${{ matrix.transfer }}
+        run: |
+          docker run --rm \
+            --network dokken \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            -e TRANSFER \
+            -e BUNDLE_WITHOUT=development \
+            ruby:3.4 \
+            bash -euxo pipefail -c '
+              if [ "$TRANSFER" = "rsync" ]; then
+                apt-get update -qq
+                apt-get install -y -qq --no-install-recommends rsync openssh-client
+              else
+                # Assert we really are exercising the fallback. If the base
+                # image ever ships rsync this must fail loudly rather than
+                # silently testing the other path.
+                test ! -x /usr/bin/rsync
+              fi
+              bundle install --jobs 4 --quiet
+              bundle exec kitchen test default-almalinux-9 -l debug
+            '
+
+      # The workspace is bind mounted, so kitchen's logs outlive the container.
+      # This path only runs when the daemon cannot read the host filesystem,
+      # which makes it the hardest job here to debug from a bare exit code.
+      - name: Kitchen logs
+        if: failure()
+        run: |
+          for log in .kitchen/logs/*.log; do
+            echo "::group::$log"
+            cat "$log"
+            echo "::endgroup::"
+          done
+
+  # The plugin has to load and converge on every Ruby the gemspec allows.
+  ruby:
+    name: ruby ${{ matrix.ruby }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.1", "3.4", "4.0"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec kitchen test default-almalinux-9

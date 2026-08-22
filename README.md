@@ -14,7 +14,7 @@ containers in seconds rather than minutes.
 - [Configuration reference](#configuration-reference)
 - [Recipes](#recipes)
 - [Troubleshooting](#troubleshooting)
-- [Development](#development)
+- [Contributing](#contributing)
 - [FAQ](#faq)
 - [License](#license)
 
@@ -502,6 +502,25 @@ driver:
   data_ssh_port: 30000
 ```
 
+When Test Kitchen is the thing running in a container, that container also has
+to be able to *reach* the containers it creates. They are attached to the
+`network_mode` network — `dokken` by default — and Docker will not route from
+the default bridge to a user-defined network, so attach kitchen's own container
+to the same one:
+
+```shell
+docker network inspect dokken >/dev/null 2>&1 || docker network create dokken
+
+docker run --rm \
+  --network dokken \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$PWD:/workspace" -w /workspace \
+  ruby:3.4 bundle exec kitchen test
+```
+
+Without it the converge fails at `Transferring files` with a connection
+timeout.
+
 ### Caching downloaded packages
 
 Package downloads can be cached outside the container. On Debian and Ubuntu,
@@ -667,26 +686,15 @@ docker rm -f chef-latest
 docker network rm dokken
 ```
 
-## Development
+## Contributing
+
+Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for how to set up, run the unit and integration suites, and what CI checks.
 
 ```shell
 bundle install
-bundle exec rake unit         # unit tests
-bundle exec rake style        # cookstyle
-bundle exec rake              # both
+bundle exec rake        # cookstyle + unit tests
 ```
-
-Optional extras:
-
-```shell
-bundle exec rake coverage     # unit tests with a coverage report
-bundle exec rake doc          # generate YARD documentation into doc/
-bundle exec rake doc_stats    # report documentation coverage
-```
-
-The unit suite is hermetic — it never contacts a Docker daemon, writes only
-into a temporary directory, and does not sleep. Integration suites in
-`kitchen.yml` do require a working daemon.
 
 ## FAQ
 
