@@ -1308,6 +1308,7 @@ describe Kitchen::Driver::Dokken do
 
     it "asks the daemon for the fully qualified path and the configured platform" do
       config[:platform] = "linux/arm64"
+      driver.stubs(:docker_creds_for_image).returns({})
       ::Docker::Image.stubs(:exist?).returns(false)
       ::Docker::Image.expects(:create).with(
         { "fromImage" => "almalinux:9", "platform" => "linux/arm64" },
@@ -1316,6 +1317,34 @@ describe Kitchen::Driver::Dokken do
       ).returns(FakeImage.new)
 
       driver.send(:pull_image, "almalinux:9")
+    end
+
+    it "qualifies the image with the configured registry before pulling" do
+      config[:docker_registry] = "registry.example.com"
+      driver.stubs(:docker_creds_for_image).returns({})
+      ::Docker::Image.stubs(:exist?).returns(false)
+      ::Docker::Image.expects(:create).with { |args, _creds, _conn| args["fromImage"] == "registry.example.com/almalinux:9" }
+        .returns(FakeImage.new)
+
+      driver.send(:pull_image, "almalinux:9")
+    end
+
+    it "sends the credentials that match the image's registry" do
+      creds = { serveraddress: "quay.io", username: "quay", password: "quay-secret" }
+      driver.stubs(:docker_config_creds).returns("quay.io" => creds)
+      ::Docker::Image.stubs(:exist?).returns(false)
+      ::Docker::Image.expects(:create).with { |_args, sent, _conn| sent == creds }.returns(FakeImage.new)
+
+      driver.send(:pull_image, "quay.io/almalinuxorg/almalinux:10")
+    end
+
+    # Nothing in the suite may depend on the credentials that happen to be
+    # sitting in the home directory of whoever is running it.
+    it "pulls anonymously when the running user has no matching credentials" do
+      ::Docker::Image.stubs(:exist?).returns(false)
+      ::Docker::Image.expects(:create).with { |_args, sent, _conn| sent == {} }.returns(FakeImage.new)
+
+      driver.send(:pull_image, "quay.io/almalinuxorg/almalinux:10")
     end
 
     it "reports true when the pulled image differs from what was there before" do

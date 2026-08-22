@@ -1,9 +1,10 @@
 # Unit-test bootstrap for kitchen-dokken.
 #
-# Everything in spec/ is hermetic: no Docker daemon, no network, no writes
-# outside a per-example temporary directory, and no sleeping. Anything that
-# would reach out to the world is stubbed at the seam, and `spec/support`
-# holds the shared doubles that make those seams cheap to fake.
+# Everything in spec/ is hermetic: no Docker daemon, no network, no reads of
+# the real home directory, no writes outside a temporary directory, and no
+# sleeping. Anything that would reach out to the world is stubbed at the seam,
+# and `spec/support` holds the shared doubles that make those seams cheap to
+# fake.
 
 # Silence Ruby 3.4+'s "literal string will be frozen in the future" warnings
 # emitted by upstream gems (mixlib-shellout, test-kitchen) so that test
@@ -54,6 +55,26 @@ module Kitchen
     # `$HOME` (so sandbox helpers write somewhere disposable) and asserts that
     # no example leaks a real Docker connection.
     module SpecHelpers
+      # An empty home directory shared by the whole suite.
+      #
+      # Every example is pointed here so that nothing can read the real
+      # ~/.docker/config.json, ~/.ssh or ~/.dokken. A spec that passes only
+      # because the machine running it happens to have no Docker credentials
+      # is not a spec -- and CI runners do have them.
+      SANDBOX_HOME = Dir.mktmpdir("dokken-spec-home")
+      Minitest.after_run { FileUtils.remove_entry(SANDBOX_HOME) if File.directory?(SANDBOX_HOME) }
+
+      # Point `Dir.home` at the shared empty home before every example.
+      #
+      # Examples that need to write into a home directory call {#stub_home!},
+      # which replaces this with one they own.
+      #
+      # @return [void]
+      def setup
+        super
+        Dir.stubs(:home).returns(SANDBOX_HOME)
+      end
+
       # A disposable directory that lives for the duration of one example.
       #
       # @return [String] absolute path to the temporary directory
