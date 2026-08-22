@@ -13,7 +13,7 @@ group :test do
   # fresh resolve silently lands on the licensed line. Cinc Auditor is built
   # from this same Apache-2.0 source; there is no cinc-auditor gem to depend
   # on instead.
-  gem "inspec-core", "< 6"
+  gem "inspec-core", "< 7.1.8"
   gem "minitest"
   gem "mocha"
   gem "rake", ">= 11.0"
