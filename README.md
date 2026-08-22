@@ -64,8 +64,9 @@ The daemon is found via `DOCKER_HOST`, then `/var/run/docker.sock`, then
 ## Installation
 
 `kitchen-dokken` is bundled with
+[Cinc Workstation](https://cinc.sh/start/workstation/) and with
 [Chef Workstation](https://www.chef.io/downloads/tools/workstation), so if you
-have that installed you already have it.
+have either installed you already have it.
 
 Otherwise, add it to your cookbook's `Gemfile`:
 
@@ -76,8 +77,11 @@ gem "kitchen-dokken"
 or install the gem directly:
 
 ```shell
-chef gem install kitchen-dokken
+gem install kitchen-dokken
 ```
+
+The examples below use Cinc. Everything works identically with Chef Infra
+Client — see [Using Cinc](#using-cinc) and [Using with Chef](#using-with-chef).
 
 ## Quick start
 
@@ -94,6 +98,7 @@ transport:
 
 provisioner:
   name: dokken
+  product_name: cinc
 
 verifier:
   name: inspec
@@ -198,6 +203,7 @@ rebuilding them is the slow part.
 | `cap_add` / `cap_drop` | none | Linux capabilities to add or drop. |
 | `security_opt` | none | Values for `--security-opt`, e.g. `seccomp=unconfined`. |
 | `userns_host` | `false` | Disable user-namespace remapping for the container. |
+| `user_ns_mode` | none | Docker `UsernsMode` for the container. `privileged` is only honoured when this is `host`. |
 | `cgroupns_host` | `false` | Run in the host cgroup namespace. |
 | `volumes` | none | Anonymous volumes, or `host:container` bind mounts. |
 | `binds` | `[]` | Bind mounts, in Docker `host:container[:opts]` form. |
@@ -221,12 +227,15 @@ rebuilding them is the slow part.
 | `docker_host_url` | auto-detected | Docker daemon to talk to. |
 | `read_timeout` / `write_timeout` | `3600` | Docker API timeouts, in seconds. |
 | `api_retries` | `20` | How many times to retry a retryable Docker API call. |
+| `docker_info` | queried from the daemon | Cached `docker info` output, used to detect the daemon's operating system. Resolved automatically; set it only to override that detection. |
 
 ### Provisioner
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `product_name` | `chef` | `chef` or `cinc`. See [Using Cinc](#using-cinc). |
+| `product_version` | the driver's `chef_version` | Version of the client the provisioner reports running. Follows `chef_version` unless overridden. |
+| `chef_license` | prompted, then remembered | License acceptance value, e.g. `accept`, `accept-silent`, `accept-no-persist`. Set it to avoid an interactive prompt in CI. |
 | `chef_binary` | `/opt/chef/bin/chef-client` | Client binary to run. Defaults to the Cinc path when `product_name: cinc`. |
 | `chef_options` | `" -z"` | Options passed to the client. A leading space is added if you omit it. |
 | `chef_log_level` | `warn` | Value for `-l`. |
@@ -248,6 +257,7 @@ The provisioner inherits from `ChefInfra`, so its options — `enforce_idempoten
 | `read_timeout` / `write_timeout` | `3600` | Docker API timeouts, in seconds. |
 | `host_ip_override` | auto-detected | Address used to reach the data container's SSH service. Detected as `host.docker.internal` inside Docker Desktop, `localhost` against a Docker Desktop daemon, and unused otherwise. |
 | `docker_host_url` | auto-detected | Docker daemon to talk to. |
+| `docker_info` | queried from the daemon | Cached `docker info` output for `docker_host_url`. The driver and transport resolve this independently. |
 
 ## Recipes
 
@@ -330,6 +340,25 @@ Chef license prompt (Cinc is community-built and Apache-licensed).
 
 Override `chef_image` or `chef_binary` if you need a custom Cinc image or a
 non-standard install path.
+
+### Using with Chef
+
+The examples in this README set `product_name: cinc`. Leaving it unset, or
+setting `product_name: chef`, runs Chef Infra Client instead — that is the
+driver's default:
+
+```yaml
+provisioner:
+  name: dokken
+  product_name: chef
+```
+
+With Chef Infra Client you will need to accept the Chef licence, either by
+setting `chef_license` on the provisioner or by answering the prompt. Cinc has
+no such requirement.
+
+Nothing else differs: the same driver, transport, and verifier options apply
+either way.
 
 ### Using Podman
 
@@ -690,11 +719,6 @@ docker network rm dokken
 
 Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md)
 for how to set up, run the unit and integration suites, and what CI checks.
-
-```shell
-bundle install
-bundle exec rake        # cookstyle + unit tests
-```
 
 ## FAQ
 
