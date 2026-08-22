@@ -11,6 +11,24 @@ end
 desc "Run all unit tests"
 task test: %i{unit}
 
+desc "Run the unit tests with coverage reporting"
+task :coverage do
+  ENV["COVERAGE"] = "1"
+  Rake::Task[:unit].invoke
+end
+
+begin
+  require "yard"
+  YARD::Rake::YardocTask.new(:doc)
+
+  desc "Report YARD documentation coverage"
+  task :doc_stats do
+    sh "yard stats --list-undoc"
+  end
+rescue LoadError
+  puts "yard is not available. (sudo) gem install yard to generate documentation."
+end
+
 begin
   require "cookstyle/chefstyle"
   require "rubocop/rake_task"
