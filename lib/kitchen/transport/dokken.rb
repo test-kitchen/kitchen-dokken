@@ -19,11 +19,14 @@ require "kitchen"
 require "net/scp"
 require "tmpdir" unless defined?(Dir.mktmpdir)
 require "digest/sha1" unless defined?(Digest::SHA1)
+require "open3" unless defined?(Open3)
+require "shellwords" unless defined?(Shellwords)
 require_relative "../helpers"
 
 include Dokken::Helpers
 
 module Kitchen
+  # @see Kitchen::Transport::Dokken
   module Transport
     # Wrapped exception for any internally raised errors.
     #
@@ -32,6 +35,11 @@ module Kitchen
 
     # A Transport which uses Docker tricks to execute commands and
     # transfer files.
+    #
+    # Commands run through `docker exec` against the runner container. File
+    # transfer only happens when the daemon cannot read the host filesystem;
+    # then the files go over ssh into the data container, which shares its
+    # volumes with the runner.
     #
     # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Transport::Base
@@ -47,7 +55,7 @@ module Kitchen
       default_config :write_timeout, 3600
       default_config :login_command, "docker"
       default_config :host_ip_override do |transport|
-        if running_inside_docker_desktop?
+        if transport.running_inside_docker_desktop?
           "host.docker.internal"
         elsif transport.docker_for_mac_or_win?
           "localhost"
@@ -57,6 +65,10 @@ module Kitchen
       end
 
       # (see Base#connection)
+      #
+      # @param state [Hash] mutable instance state
+      # @yieldparam connection [Connection] the connection, if a block is given
+      # @return [Connection] a connection to the runner container
       def connection(state, &block)
         options = connection_options(config.to_hash.merge(state))
 
@@ -67,12 +79,26 @@ module Kitchen
         end
       end
 
+      # A connection to one runner container.
+      #
       # @author Sean OMeara <sean@sean.io>
-      class Connection < Kitchen::Transport::Dokken::Connection
+      class Connection < Kitchen::Transport::Base::Connection
+        # Where rsync is expected to live. Kept as a constant so the
+        # availability check and the command line cannot drift apart.
+        RSYNC_PATH = "/usr/bin/rsync".freeze
+
+        # The docker-api connection this transport talks to.
+        #
+        # @return [::Docker::Connection] a memoised connection
         def docker_connection
           @docker_connection ||= ::Docker::Connection.new(options[:docker_host_url], options[:docker_host_options])
         end
 
+        # Run a command inside the runner container.
+        #
+        # @param command [String, nil] the command to run; nil is a no-op
+        # @return [void]
+        # @raise [Kitchen::Transport::DockerExecFailed] on a non-zero exit
         def execute(command)
           return if command.nil?
 
@@ -87,119 +113,285 @@ module Kitchen
           raise Transport::DockerExecFailed.new("Docker Exec (#{@exit_code}) for command: [#{command}]", @exit_code) if @exit_code != 0
         end
 
+        # Copy the kitchen sandbox into the data container.
+        #
+        # @param locals [Array<String>] local paths to copy
+        # @param remote [String] the destination path inside the container
+        # @return [void]
+        # @raise [Kitchen::UserError] if docker_host_url is not tcp:// or unix://
+        # @raise [Kitchen::Transport::TransportFailed] if the copy fails
         def upload(locals, remote)
-          if options[:host_ip_override]
-            # Allow connecting to any ip/hostname to support sibling containers
-            ssh_ip = options[:host_ip_override]
-            ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
-
-          elsif /unix:/.match?(options[:docker_host_url])
-            if options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp] == "0.0.0.0"
-              ssh_ip = options[:data_container][:NetworkSettings][:IPAddress]
-              ssh_port = "22"
-            else
-              # we should read the proper mapped ip, since this allows us to upload the files
-              ssh_ip = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostIp]
-              ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
-            end
-
-          elsif /tcp:/.match?(options[:docker_host_url])
-            name = options[:data_container][:Name]
-
-            # DOCKER_HOST
-            docker_host_url_ip = options[:docker_host_url].split("tcp://")[1].split(":")[0]
-
-            # mapped IP of data container
-            candidate_ip = ::Docker::Container.all.find do |x|
-              x.info["Names"][0].eql?(name)
-            end.info["NetworkSettings"]["Networks"]["dokken"]["IPAddress"]
-
-            # mapped port
-            candidate_ssh_port = options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0][:HostPort]
-
-            debug "candidate_ip - #{candidate_ip}"
-            debug "candidate_ssh_port - #{candidate_ssh_port}"
-
-            if port_open?(candidate_ip, candidate_ssh_port)
-              debug "candidate_ip - #{candidate_ip}/#{candidate_ssh_port} open"
-              ssh_ip = candidate_ip
-              ssh_port = candidate_ssh_port
-
-            elsif port_open?(candidate_ip, "22")
-              ssh_ip = candidate_ip
-              ssh_port = "22"
-              debug "candidate_ip - #{candidate_ip}/22 open"
-            else
-              ssh_ip = docker_host_url_ip
-              ssh_port = candidate_ssh_port
-            end
-          else
-            raise Kitchen::UserError, "docker_host_url must be tcp:// or unix://"
-          end
+          ssh_ip, ssh_port = ssh_endpoint
 
           debug "ssh_ip : #{ssh_ip}"
           debug "ssh_port : #{ssh_port}"
 
+          upload_files(locals, remote, ssh_ip, ssh_port, write_insecure_key)
+        end
+
+        private
+
+        # Work out which address and port the data container's sshd can
+        # actually be reached on from where kitchen is running.
+        #
+        # @return [Array(String, String)] the address and port to ssh to
+        # @raise [Kitchen::UserError] if docker_host_url is not tcp:// or unix://
+        # @api private
+        def ssh_endpoint
+          if options[:host_ip_override]
+            # Allow connecting to any ip/hostname to support sibling containers
+            [options[:host_ip_override], published_ssh_port]
+          elsif /unix:/.match?(options[:docker_host_url])
+            unix_ssh_endpoint
+          elsif /tcp:/.match?(options[:docker_host_url])
+            tcp_ssh_endpoint
+          else
+            raise Kitchen::UserError, "docker_host_url must be tcp:// or unix://"
+          end
+        end
+
+        # The host port the data container's sshd is published on.
+        #
+        # @return [String] the published port
+        # @api private
+        def published_ssh_port
+          ssh_port_binding[:HostPort]
+        end
+
+        # The first host binding for the data container's ssh port.
+        #
+        # @return [Hash] the `22/tcp` port binding
+        # @api private
+        def ssh_port_binding
+          options[:data_container][:NetworkSettings][:Ports][:"22/tcp"][0]
+        end
+
+        # Pick an endpoint for a daemon reached over a unix socket.
+        #
+        # When sshd is published on every interface we can talk to the
+        # container's own address directly; otherwise we have to go through
+        # the specific host mapping the daemon set up.
+        #
+        # @return [Array(String, String)] the address and port to ssh to
+        # @api private
+        def unix_ssh_endpoint
+          if ssh_port_binding[:HostIp] == "0.0.0.0"
+            [options[:data_container][:NetworkSettings][:IPAddress], "22"]
+          else
+            # we should read the proper mapped ip, since this allows us to upload the files
+            [ssh_port_binding[:HostIp], ssh_port_binding[:HostPort]]
+          end
+        end
+
+        # Pick an endpoint for a daemon reached over tcp.
+        #
+        # The container's address on the dokken network is preferred, since it
+        # avoids a round trip through the host, but it is only usable when
+        # kitchen shares a route with the daemon. Fall back to the docker host
+        # itself when neither candidate port answers.
+        #
+        # @return [Array(String, String)] the address and port to ssh to
+        # @api private
+        def tcp_ssh_endpoint
+          name = options[:data_container][:Name]
+
+          # DOCKER_HOST
+          docker_host_url_ip = options[:docker_host_url].split("tcp://")[1].split(":")[0]
+
+          # mapped IP of data container
+          candidate_ip = ::Docker::Container.all.find do |x|
+            x.info["Names"][0].eql?(name)
+          end.info["NetworkSettings"]["Networks"]["dokken"]["IPAddress"]
+
+          # mapped port
+          candidate_ssh_port = published_ssh_port
+
+          debug "candidate_ip - #{candidate_ip}"
+          debug "candidate_ssh_port - #{candidate_ssh_port}"
+
+          if port_open?(candidate_ip, candidate_ssh_port)
+            debug "candidate_ip - #{candidate_ip}/#{candidate_ssh_port} open"
+            [candidate_ip, candidate_ssh_port]
+          elsif port_open?(candidate_ip, "22")
+            debug "candidate_ip - #{candidate_ip}/22 open"
+            [candidate_ip, "22"]
+          else
+            [docker_host_url_ip, candidate_ssh_port]
+          end
+        end
+
+        # Write the built-in insecure private key somewhere ssh will accept it.
+        #
+        # ssh refuses to use a key file other users can read, so the file is
+        # written 0600 under a per-uid directory.
+        #
+        # @return [String] the directory holding the `id_rsa` file
+        # @api private
+        def write_insecure_key
           tmpdir = Dir.tmpdir + "/dokken/"
           FileUtils.mkdir_p tmpdir.to_s, mode: 0o777
           tmpdir += Process.uid.to_s
           FileUtils.mkdir_p tmpdir.to_s
           File.write("#{tmpdir}/id_rsa", insecure_ssh_private_key)
           FileUtils.chmod(0o600, "#{tmpdir}/id_rsa")
+          tmpdir
+        end
 
-          begin
-            rsync_cmd = "/usr/bin/rsync -a -e"
-            rsync_cmd << " '"
-            rsync_cmd << "ssh -2"
-            rsync_cmd << " -i #{tmpdir}/id_rsa"
-            rsync_cmd << " -o CheckHostIP=no"
-            rsync_cmd << " -o Compression=no"
-            rsync_cmd << " -o PasswordAuthentication=no"
-            rsync_cmd << " -o StrictHostKeyChecking=no"
-            rsync_cmd << " -o UserKnownHostsFile=/dev/null"
-            rsync_cmd << " -o LogLevel=ERROR"
-            rsync_cmd << " -p #{ssh_port}"
-            rsync_cmd << "'"
-            rsync_cmd << " #{locals.join(" ")} root@#{ssh_ip}:#{remote}"
-            debug "rsync_cmd :#{rsync_cmd}:"
-            `#{rsync_cmd}`
-          rescue Errno::ENOENT
-            debug "Rsync is not installed. Falling back to SCP."
-            locals.each do |local|
-              Net::SCP.upload!(ssh_ip,
-                "root",
-                local,
-                remote,
-                recursive: true,
-                ssh: { port: ssh_port, keys: ["#{tmpdir}/id_rsa"] })
-            end
+        # Copy files into the data container, preferring rsync.
+        #
+        # @param locals [Array<String>] local paths to copy
+        # @param remote [String] the destination path inside the container
+        # @param ssh_ip [String] the address to ssh to
+        # @param ssh_port [String] the port to ssh to
+        # @param key_dir [String] directory holding the `id_rsa` file
+        # @return [void]
+        # @api private
+        def upload_files(locals, remote, ssh_ip, ssh_port, key_dir)
+          if rsync_available?
+            upload_via_rsync(locals, remote, ssh_ip, ssh_port, key_dir)
+          else
+            debug "Rsync is not installed at #{RSYNC_PATH}. Falling back to SCP."
+            upload_via_scp(locals, remote, ssh_ip, ssh_port, key_dir)
           end
         end
 
+        # Whether rsync is installed where we expect it.
+        #
+        # This is checked up front rather than inferred from a failed shell
+        # invocation: backticks run the command through /bin/sh, which reports
+        # a missing binary as exit status 127 and never raises Errno::ENOENT,
+        # so an exception-based check could never see it.
+        #
+        # @return [Boolean] true when rsync can be executed
+        # @api private
+        def rsync_available?
+          File.executable?(RSYNC_PATH)
+        end
+
+        # Build the rsync invocation used to copy the sandbox in.
+        #
+        # @param locals [Array<String>] local paths to copy
+        # @param remote [String] the destination path inside the container
+        # @param ssh_ip [String] the address to ssh to
+        # @param ssh_port [String] the port to ssh to
+        # @param key_dir [String] directory holding the `id_rsa` file
+        # @return [String] a shell command line
+        # @api private
+        def rsync_command(locals, remote, ssh_ip, ssh_port, key_dir)
+          ssh_opts = [
+            "ssh -2",
+            "-i #{key_dir}/id_rsa",
+            "-o CheckHostIP=no",
+            "-o Compression=no",
+            "-o PasswordAuthentication=no",
+            "-o StrictHostKeyChecking=no",
+            "-o UserKnownHostsFile=/dev/null",
+            "-o LogLevel=ERROR",
+            "-p #{ssh_port}",
+          ].join(" ")
+
+          "#{RSYNC_PATH} -a -e '#{ssh_opts}' #{locals.join(" ")} root@#{ssh_ip}:#{remote}"
+        end
+
+        # Copy files in with rsync.
+        #
+        # A non-zero exit is raised rather than ignored: silently continuing
+        # leaves the converge running against a container with no cookbooks in
+        # it, which then fails much further along with a confusing error.
+        #
+        # @param locals [Array<String>] local paths to copy
+        # @param remote [String] the destination path inside the container
+        # @param ssh_ip [String] the address to ssh to
+        # @param ssh_port [String] the port to ssh to
+        # @param key_dir [String] directory holding the `id_rsa` file
+        # @return [void]
+        # @raise [Kitchen::Transport::TransportFailed] if rsync exits non-zero
+        # @api private
+        def upload_via_rsync(locals, remote, ssh_ip, ssh_port, key_dir)
+          cmd = rsync_command(locals, remote, ssh_ip, ssh_port, key_dir)
+          debug "rsync_cmd :#{cmd}:"
+
+          output, status = Open3.capture2e(cmd)
+          return if status.success?
+
+          raise Kitchen::Transport::TransportFailed.new(
+            "rsync exited #{status.exitstatus} while uploading to #{ssh_ip}:#{remote}: #{output.strip}",
+            status.exitstatus
+          )
+        end
+
+        # Copy files in with scp, for hosts without rsync.
+        #
+        # @param locals [Array<String>] local paths to copy
+        # @param remote [String] the destination path inside the container
+        # @param ssh_ip [String] the address to ssh to
+        # @param ssh_port [String] the port to ssh to
+        # @param key_dir [String] directory holding the `id_rsa` file
+        # @return [void]
+        # @api private
+        def upload_via_scp(locals, remote, ssh_ip, ssh_port, key_dir)
+          locals.each do |local|
+            Net::SCP.upload!(ssh_ip,
+              "root",
+              local,
+              remote,
+              recursive: true,
+              ssh: { port: ssh_port, keys: ["#{key_dir}/id_rsa"] })
+          end
+        end
+
+        public
+
+        # Build the command `kitchen login` runs to drop the user into the
+        # runner container.
+        #
+        # `tput` reports the terminal size with a trailing newline; that has to
+        # be stripped, or bash reads the embedded newline in COLUMNS as the
+        # start of another command line.
+        #
+        # @return [Kitchen::LoginCommand] the command to exec
         def login_command
           @runner = options[:instance_name].to_s
-          cols = `tput cols`
-          lines = `tput lines`
+          cols = `tput cols`.strip
+          lines = `tput lines`.strip
           args = ["exec", "-e", "COLUMNS=#{cols}", "-e", "LINES=#{lines}", "-it", @runner, "/bin/bash", "-login", "-i"]
           LoginCommand.new(options[:login_command], args)
         end
 
         private
 
+        # The runner container's name.
+        #
+        # @return [String] the container name
+        # @api private
         def instance_name
           options[:instance_name]
         end
 
+        # The locally built image the runner was created from.
+        #
+        # @return [String] an image reference
+        # @api private
         def work_image
           return "#{image_prefix}/#{instance_name}" unless image_prefix.nil?
 
           instance_name
         end
 
+        # The configured image name prefix, if any.
+        #
+        # @return [String, nil] the prefix
+        # @api private
         def image_prefix
           options[:image_prefix]
         end
 
+        # Retry a docker API call through the errors that retrying can fix.
+        #
+        # @yield the API call to attempt
+        # @return [Object] the block's value
+        # @raise [::Docker::Error::DockerError] if every attempt failed
+        # @api private
         def with_retries
           tries = 20
           begin
@@ -258,6 +450,7 @@ module Kitchen
           @connection.close
         end
 
+        @connection_options = options
         @connection = Kitchen::Transport::Dokken::Connection.new(options, &block)
       end
 

@@ -1,30 +1,65 @@
+# Shared behaviour for the kitchen-dokken driver, provisioner and transport.
+#
+# Each of those three plugins mixes this in (at the top level, so the methods
+# also land on Object) and supplies the small contract the helpers depend on:
+# `config`, `instance`, `self[]`, `info` and `debug`.
 module Dokken
+  # @see Kitchen::Driver::Dokken
+  # @see Kitchen::Provisioner::Dokken
+  # @see Kitchen::Transport::Dokken
   module Helpers
+    require "digest" unless defined?(Digest)
+    require "fileutils" unless defined?(FileUtils)
     # https://stackoverflow.com/questions/517219/ruby-see-if-a-port-is-open
     require "socket" unless defined?(Socket)
     require "timeout" unless defined?(Timeout)
+    require "tmpdir" unless defined?(Dir.mktmpdir)
     require "resolv" unless defined?(Resolv)
 
+    # How long to wait for a TCP connect before calling a port closed.
+    PORT_PROBE_TIMEOUT = 1
+
+    # Check whether something is accepting TCP connections at `ip:port`.
+    #
+    # Used by the transport to pick a reachable address for the data
+    # container's sshd. Every failure mode -- refused, unroutable,
+    # unresolvable, timed out -- is a "no" rather than an exception, because
+    # the caller's job is to try the next candidate address, not to abort.
+    #
+    # @param ip [String] an address or hostname to probe
+    # @param port [String, Integer] the TCP port to probe
+    # @return [Boolean] true when the connection was accepted
     def port_open?(ip, port)
-      begin
-        Timeout.timeout(1) do
-          s = TCPSocket.new(ip, port)
-          s.close
-          return true
-        rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH, Errno::ENETDOWN
-          return false
-        end
-      rescue Timeout::Error
+      Timeout.timeout(PORT_PROBE_TIMEOUT) do
+        TCPSocket.new(ip, port).close
+        true
+      rescue SystemCallError, SocketError, IOError
+        false
       end
+    rescue Timeout::Error
       false
     end
 
+    # The public half of the throwaway keypair baked into the data image.
+    #
+    # It is deliberately published: the data container is only reachable on
+    # the local docker network for the life of one kitchen run, and shipping
+    # a fixed key avoids generating one per instance.
+    #
+    # @return [String] an OpenSSH `authorized_keys` line
     def insecure_ssh_public_key
       <<~EOF
         ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoJwyW7qNhw+NTuOjC4+RVpESl+JBXebXzB7JqxRgKAbymq6B39azEAiNx5NzHkWcQmOyQNhFpKFSAufegcXRS4ctS1LcElEoXe9brDAqKEBSkmnXYfZXMNIG0Enw4+5W/rZxHFCAlsUSAHYtYZEs+3CgbIWuHhZ95C8UC6nGLWHNZOjcbsYZFrnFfO0qg0ene2w8LKhxqj5X0MRSdCIn1IwyxIbl5NND5Yk1Hx8JKsJtTiNTdxssiMgmM5bvTbYQUSf8pbGrRI30VQKBgQ8/UkidZbaTfvzWXYpwcDUERSbzEYCvkUytTemZIv6uhpPxqkfjl6KEOOml/iGqquPEr test-kitchen-rsa
       EOF
     end
 
+    # The private half of the throwaway keypair.
+    #
+    # Written to disk 0600 by the transport just before it shells out to
+    # rsync or scp. See {#insecure_ssh_public_key} for why a fixed key is
+    # acceptable here.
+    #
+    # @return [String] a PEM-encoded RSA private key
     def insecure_ssh_private_key
       <<~EOF
         -----BEGIN RSA PRIVATE KEY-----
@@ -57,6 +92,15 @@ module Dokken
       EOF
     end
 
+    # The Dockerfile used to build the data image.
+    #
+    # The data image exists to hold the kitchen and verifier sandboxes and
+    # serve them over ssh, for the cases where the daemon cannot see the
+    # local filesystem: a remote docker host, or kitchen itself running in a
+    # container.
+    #
+    # @param registry [String, nil] a registry to pull the base image from
+    # @return [String] the Dockerfile contents
     def data_dockerfile(registry)
       from = "almalinux:9"
       if registry
@@ -88,6 +132,10 @@ module Dokken
       EOF
     end
 
+    # Build and tag the data image, unless it is already present.
+    #
+    # @param registry [String, nil] a registry to pull the base image from
+    # @return [void]
     def create_data_image(registry)
       return if ::Docker::Image.exist?(data_image)
 
@@ -104,6 +152,9 @@ module Dokken
       i.tag("repo" => repo(data_image), "tag" => tag(data_image), "force" => true)
     end
 
+    # Work out which docker daemon to talk to when the user has not said.
+    #
+    # @return [String] a docker host URL
     def default_docker_host
       if ENV["DOCKER_HOST"]
         ENV["DOCKER_HOST"]
@@ -117,15 +168,32 @@ module Dokken
       end
     end
 
+    # Fetch and cache the daemon's `/info` payload.
+    #
+    # The cache is keyed by host because the driver, provisioner and
+    # transport each resolve their own `:docker_info` default, and a
+    # kitchen.yml may point them at different daemons.
+    #
+    # @param docker_host [String] the docker host URL to query
+    # @return [Hash] the daemon's info payload
     def docker_info(docker_host)
       ::Docker.url = docker_host
 
-      @docker_info ||= ::Docker.info
+      # Keyed by host: the driver, provisioner and transport each resolve
+      # their own :docker_info default and a kitchen.yml may point them at
+      # different daemons. A single memo would hand the second caller the
+      # first daemon's payload, which is what remote_docker_host? keys its
+      # whole local-vs-remote decision off.
+      @docker_info ||= {}
+      @docker_info[docker_host] ||= ::Docker.info
     rescue Excon::Error::Socket
-      puts "kitchen-dokken could not connect to the docker host at #{default_docker_host}. Is docker running?"
+      puts "kitchen-dokken could not connect to the docker host at #{docker_host}. Is docker running?"
       exit!
     end
 
+    # Create the kitchen and verifier sandbox directories on the host.
+    #
+    # @return [void]
     def dokken_create_sandbox
       info("Creating kitchen sandbox at #{dokken_kitchen_sandbox}")
       FileUtils.mkdir_p(dokken_kitchen_sandbox, mode: 0o755)
@@ -134,6 +202,9 @@ module Dokken
       FileUtils.mkdir_p(dokken_verifier_sandbox, mode: 0o755)
     end
 
+    # Remove the kitchen and verifier sandbox directories from the host.
+    #
+    # @return [void]
     def dokken_delete_sandbox
       info("Deleting kitchen sandbox at #{dokken_kitchen_sandbox}")
       begin
@@ -150,6 +221,9 @@ module Dokken
       end
     end
 
+    # The home directory, in a form docker will accept in a bind mount spec.
+    #
+    # @return [String] an absolute path
     def home_dir
       # while dokken_binds avoid invalid bind mount spec "C:/Users/..." error by
       # remote docker host virtual box shared folder on boot2docker created by docker-machine in Windows
@@ -161,23 +235,41 @@ module Dokken
       Dir.home
     end
 
+    # Where the provisioner stages files for this instance.
+    #
+    # @return [String] an absolute path on the host
     def dokken_kitchen_sandbox
       "#{home_dir}/.dokken/kitchen_sandbox/#{instance_name}"
     end
 
+    # Where the verifier stages files for this instance.
+    #
+    # @return [String] an absolute path on the host
     def dokken_verifier_sandbox
       "#{home_dir}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
+    # A container-safe, collision-free name for this kitchen instance.
+    #
+    # The working directory is hashed into the prefix so that the same suite
+    # in two checkouts does not fight over one set of containers.
+    #
+    # @return [String] the instance name
     def instance_name
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
       "#{prefix}-#{instance.name}".downcase
     end
 
+    # The `ExposedPorts` value for the runner container.
+    #
+    # @return [Hash, nil] a Docker API ExposedPorts hash
     def exposed_ports
       coerce_exposed_ports(config[:ports])
     end
 
+    # Network creation options for the dokken network.
+    #
+    # @return [Hash] options for `POST /networks/create`
     def network_settings
       if self[:ipv6]
         {
@@ -193,10 +285,17 @@ module Dokken
       end
     end
 
+    # The `PortBindings` value for the runner container.
+    #
+    # @return [Hash, nil] a Docker API PortBindings hash
     def port_bindings
       coerce_port_bindings(config[:ports])
     end
 
+    # Normalise a `ports:` setting into a Docker API ExposedPorts hash.
+    #
+    # @param v [Hash, Array<String>, String, nil] the configured ports
+    # @return [Hash, nil] an ExposedPorts hash, or nil to omit the key
     def coerce_exposed_ports(v)
       case v
       when Hash, nil
@@ -208,6 +307,10 @@ module Dokken
       end
     end
 
+    # Normalise a `ports:` setting into a Docker API PortBindings hash.
+    #
+    # @param v [Hash, Array<String>, String, nil] the configured ports
+    # @return [Hash, nil] a PortBindings hash, or nil to omit the key
     def coerce_port_bindings(v)
       case v
       when Hash, nil
@@ -225,6 +328,15 @@ module Dokken
       end
     end
 
+    # Parse one docker-style port spec into its component bindings.
+    #
+    # Accepts `container`, `host:container` and `host_ip:host:container`,
+    # each optionally suffixed with `/protocol` and each allowing an
+    # inclusive `low-high` container port range.
+    #
+    # @param v [String] a port specification
+    # @return [Array<Hash>] one entry per container port
+    # @raise [Kitchen::UserError] if a port range is inverted
     def parse_port(v)
       parts = v.split(":")
       case parts.length
@@ -243,10 +355,10 @@ module Dokken
       end
       port_range, protocol = container_port.split("/")
       if port_range.include?("-")
-        port_range = container_port.split("-")
-        port_range.map!(&:to_i)
-        Chef::Log.fatal("FATAL: Invalid port range! #{container_port}") if port_range[0] > port_range[1]
-        port_range = (port_range[0]..port_range[1]).to_a
+        low, high = port_range.split("-").map(&:to_i)
+        raise Kitchen::UserError, "Invalid port range #{port_range.inspect} in port spec #{v.inspect}: the low port must not be greater than the high port" if low > high
+
+        port_range = (low..high).to_a
       end
       # qualify the port-binding protocol even when it is implicitly tcp #427.
       protocol = "tcp" if protocol.nil?
@@ -259,18 +371,33 @@ module Dokken
       end
     end
 
+    # Whether the daemon is somewhere that cannot see the local filesystem.
+    #
+    # Docker Desktop and Boot2Docker are reached over tcp but share the
+    # host's files, so they count as local no matter what the URL says.
+    #
+    # @return [Boolean] true when the sandbox must be shipped over ssh
     def remote_docker_host?
-      return false if config[:docker_info]["OperatingSystem"].include?("Docker Desktop")
-      return false if config[:docker_info]["OperatingSystem"].include?("Boot2Docker")
+      # Podman and some rootless daemons omit OperatingSystem entirely, so
+      # coerce before matching rather than calling #include? on nil.
+      operating_system = config[:docker_info].to_h["OperatingSystem"].to_s
+      return false if operating_system.include?("Docker Desktop")
+      return false if operating_system.include?("Boot2Docker")
       return true if /^tcp:/.match?(config[:docker_host_url])
 
       false
     end
 
+    # Whether kitchen itself is running inside a container.
+    #
+    # @return [Boolean] true when running in Docker
     def running_inside_docker?
       File.file?("/.dockerenv")
     end
 
+    # Whether kitchen is running inside Docker Desktop specifically.
+    #
+    # @return [Boolean] true when `host.docker.internal` resolves
     def running_inside_docker_desktop?
       Resolv.getaddress "host.docker.internal."
       true
@@ -278,14 +405,23 @@ module Dokken
       false
     end
 
+    # Where the verifier stages files for this instance.
+    #
+    # @return [String] an absolute path on the host
     def sandbox_path
       "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
+    # The entries staged in the verifier sandbox, for upload.
+    #
+    # @return [Array<String>] absolute paths
     def sandbox_dirs
       Dir.glob(File.join(sandbox_path, "*"))
     end
 
+    # Create the verifier sandbox directory if it is missing.
+    #
+    # @return [void]
     def create_sandbox
       info("Creating kitchen sandbox in #{sandbox_path}")
       unless ::Dir.exist?(sandbox_path)
@@ -293,25 +429,45 @@ module Dokken
       end
     end
 
+    # The path the kitchen sandbox is mounted at inside the container.
+    #
+    # @return [String] an absolute path inside the container
     def resolved_root_path
       instance.provisioner[:root_path] || "/opt/kitchen"
     end
   end
 end
 
+# Redirect the stock Test Kitchen sandboxes into ~/.dokken.
+#
+# Every dokken container bind-mounts (or rsyncs) these directories, so they
+# have to live at a stable, per-instance path that the docker daemon can see
+# -- not in the random tmpdir the base classes would otherwise use.
 module Kitchen
   module Provisioner
+    # @see Dokken::Helpers
     class Base
+      # Create the kitchen sandbox under ~/.dokken.
+      #
+      # @return [void]
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
         FileUtils.mkdir_p(sandbox_path, mode: 0o755)
       end
 
+      # Where the provisioner stages files for this instance.
+      #
       # this MUST be named 'sandbox_path' because ruby.
+      #
+      # @return [String] an absolute path on the host
       def sandbox_path
         "#{Dir.home}/.dokken/kitchen_sandbox/#{instance_name}"
       end
 
+      # A container-safe, collision-free name for this kitchen instance.
+      #
+      # @return [String] the instance name
+      # @see Dokken::Helpers#instance_name
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
         "#{prefix}-#{instance.name}".downcase
@@ -320,9 +476,16 @@ module Kitchen
   end
 end
 
+# Redirect the stock verifier sandbox into ~/.dokken, and teach the verifier
+# to upload it when the daemon cannot read the host filesystem.
 module Kitchen
+  # @see Kitchen::Verifier::Base
   module Verifier
+    # @see Dokken::Helpers
     class Base
+      # Create the verifier sandbox under ~/.dokken.
+      #
+      # @return [void]
       def create_sandbox
         info("Creating kitchen sandbox in #{sandbox_path}")
         unless ::Dir.exist?(sandbox_path)
@@ -330,15 +493,30 @@ module Kitchen
         end
       end
 
+      # Where the verifier stages files for this instance.
+      #
+      # @return [String] an absolute path on the host
       def sandbox_path
         "#{Dir.home}/.dokken/verifier_sandbox/#{instance_name}"
       end
 
+      # A container-safe, collision-free name for this kitchen instance.
+      #
+      # @return [String] the instance name
+      # @see Dokken::Helpers#instance_name
       def instance_name
         prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
         "#{prefix}-#{instance.name}".downcase
       end
 
+      # Run the verifier against the instance.
+      #
+      # Files are only uploaded when the driver built a data container, which
+      # it does exactly when the daemon cannot read the host filesystem.
+      #
+      # @param state [Hash] mutable instance state
+      # @return [void]
+      # @raise [Kitchen::ActionFailed] if the transport fails
       def call(state)
         create_sandbox
         instance.transport.connection(state) do |conn|

@@ -22,7 +22,15 @@ require_relative "../helpers"
 include Dokken::Helpers
 
 module Kitchen
+  # @see Kitchen::Provisioner::Dokken
   module Provisioner
+    # Provisioner for the dokken driver.
+    #
+    # Unlike its ChefInfra parent this provisioner never installs chef: the
+    # driver mounts /opt/chef into the runner from a volume container built
+    # from the requested image, so all that is left to do here is stage the
+    # sandbox and run the client.
+    #
     # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Provisioner::ChefInfra
       kitchen_provisioner_api_version 2
@@ -63,6 +71,10 @@ module Kitchen
       default_config :clean_dokken_sandbox, true
 
       # (see Base#call)
+      #
+      # @param state [Hash] mutable instance state
+      # @return [void]
+      # @raise [Kitchen::ActionFailed] if the transport fails
       def call(state)
         create_sandbox
         write_run_command(run_command)
@@ -98,6 +110,9 @@ module Kitchen
       # super in that case so the parent's own check_license runs. We test
       # for both because a partial drop-in shim may define
       # license_acceptance_id without pulling in license-acceptance.
+      #
+      # @return [void]
+      # @raise [LicenseAcceptance::LicenseNotAcceptedError] if declined
       def check_license
         return super unless respond_to?(:license_acceptance_id, true) && defined?(LicenseAcceptance)
 
@@ -119,11 +134,17 @@ module Kitchen
         config[:chef_license] ||= acceptor.acceptance_value
       end
 
+      # Normalise the chef command-line settings before they are assembled.
+      #
+      # @return [void]
       def validate_config
         # check if we have an space for the user provided options
         # or add it if not to avoid issues
+        # Assign rather than String#prepend: config values can be frozen
+        # literals, and mutating them in place edits the user's kitchen.yml
+        # data for the rest of the run.
         unless config[:chef_options].start_with? " "
-          config[:chef_options].prepend(" ")
+          config[:chef_options] = " #{config[:chef_options]}"
         end
 
         # strip spaces from all other options
@@ -139,29 +160,57 @@ module Kitchen
 
       private
 
+      # The chef-client invocation staged into the sandbox as `run_command`.
+      #
       # patching Kitchen::Provisioner::ChefInfra#run_command
+      #
+      # @return [String] a shell command line
+      # @api private
       def run_command
         validate_config
-        cmd = config[:chef_binary]
+
+        # Build into a fresh String: appending straight onto
+        # config[:chef_binary] rewrote the configured binary path, so asking
+        # for the command twice returned the arguments twice over.
+        #
+        # :profile_ruby and :slow_resource_report are deliberately not handled
+        # here -- ChefInfra#chef_args already appends both, and adding them a
+        # second time produced a duplicated (and unseparated) flag.
+        cmd = +""
+        cmd << config[:chef_binary]
         cmd << config[:chef_options].to_s
         cmd << " -l #{config[:chef_log_level]}"
         cmd << " -F #{config[:chef_output_format]}"
         cmd << " -c #{File.join(config[:root_path], "client.rb")}"
         cmd << " -j #{File.join(config[:root_path], "dna.json")}"
-        cmd << "--profile-ruby" if config[:profile_ruby]
-        cmd << "--slow-report" if config[:slow_resource_report]
 
         chef_cmd(cmd)
       end
 
+      # Stage the converge command in the kitchen sandbox.
+      #
+      # Writing a script and running `sh run_command` keeps the command line
+      # short enough for `docker exec`, which the full chef invocation is not.
+      #
+      # @param command [String] the shell command line to stage
+      # @return [void]
+      # @api private
       def write_run_command(command)
         File.write("#{dokken_kitchen_sandbox}/run_command", command, mode: "wb")
       end
 
+      # The container the converge runs in.
+      #
+      # @return [String] the container name
+      # @api private
       def runner_container_name
         instance.name.to_s
       end
 
+      # Empty the sandbox after a converge, keeping the directory itself.
+      #
+      # @return [void]
+      # @api private
       def cleanup_dokken_sandbox
         return if sandbox_path.nil?
 
