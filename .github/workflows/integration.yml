@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0.6"
           bundler-cache: true
       - run: bundle exec kitchen test ${{ matrix.suite }}-${{ matrix.os }}
 
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0.6"
           bundler-cache: true
       - name: Enable IPv6 on the Docker daemon
         run: |
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0.6"
           bundler-cache: true
       - name: Stand up the peer container
         run: bundle exec kitchen create hello-alpine
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: "4.0.6"
           bundler-cache: true
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
