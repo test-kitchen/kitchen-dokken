@@ -502,6 +502,25 @@ driver:
   data_ssh_port: 30000
 ```
 
+When Test Kitchen is the thing running in a container, that container also has
+to be able to *reach* the containers it creates. They are attached to the
+`network_mode` network — `dokken` by default — and Docker will not route from
+the default bridge to a user-defined network, so attach kitchen's own container
+to the same one:
+
+```shell
+docker network inspect dokken >/dev/null 2>&1 || docker network create dokken
+
+docker run --rm \
+  --network dokken \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$PWD:/workspace" -w /workspace \
+  ruby:3.4 bundle exec kitchen test
+```
+
+Without it the converge fails at `Transferring files` with a connection
+timeout.
+
 ### Caching downloaded packages
 
 Package downloads can be cached outside the container. On Debian and Ubuntu,

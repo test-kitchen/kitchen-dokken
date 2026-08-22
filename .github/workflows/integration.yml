@@ -144,11 +144,22 @@ jobs:
           - scp
     steps:
       - uses: actions/checkout@v7
+
+      # The containers kitchen-dokken creates live on the `dokken` network, so
+      # the container kitchen itself runs in has to be on that network too:
+      # Docker's isolation rules stop the default bridge routing to a
+      # user-defined one, and the upload would time out. The driver reuses an
+      # existing network and only creates one when it is missing, so making it
+      # up front is safe.
+      - name: Create the dokken network
+        run: docker network inspect dokken >/dev/null 2>&1 || docker network create dokken
+
       - name: Converge from inside a container
         env:
           TRANSFER: ${{ matrix.transfer }}
         run: |
           docker run --rm \
+            --network dokken \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$PWD:/workspace" \
             -w /workspace \
