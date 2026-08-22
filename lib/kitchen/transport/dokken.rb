@@ -176,11 +176,39 @@ module Kitchen
         # @api private
         def unix_ssh_endpoint
           if ssh_port_binding[:HostIp] == "0.0.0.0"
-            [options[:data_container][:NetworkSettings][:IPAddress], "22"]
+            [data_container_ip, "22"]
           else
             # we should read the proper mapped ip, since this allows us to upload the files
             [ssh_port_binding[:HostIp], ssh_port_binding[:HostPort]]
           end
+        end
+
+        # The data container's own address on the docker network.
+        #
+        # NetworkSettings.IPAddress is only populated for the default bridge.
+        # The data container is handed a NetworkingConfig endpoint whenever
+        # network_mode names a user-defined network -- which dokken's own
+        # default does -- and its address then lives under
+        # NetworkSettings.Networks.<name>, leaving the legacy field empty.
+        # Uploading to that empty value produced `root@:/opt/kitchen` and an
+        # unresolvable hostname.
+        #
+        # @return [String] the container's address
+        # @raise [Kitchen::Transport::TransportFailed] if the daemon reported none
+        # @api private
+        def data_container_ip
+          settings = options[:data_container][:NetworkSettings]
+
+          legacy = settings[:IPAddress].to_s
+          return legacy unless legacy.empty?
+
+          (settings[:Networks] || {}).each_value do |network|
+            address = network[:IPAddress].to_s
+            return address unless address.empty?
+          end
+
+          raise Kitchen::Transport::TransportFailed,
+            "The data container has no address on any docker network: #{settings[:Networks].inspect}"
         end
 
         # Pick an endpoint for a daemon reached over tcp.
