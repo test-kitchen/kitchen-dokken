@@ -1,0 +1,43 @@
+---
+# The Chef Infra equivalent of kitchen.yml, for anyone who has a licence.
+#
+# CI runs kitchen.yml (Cinc) instead: Chef Infra Client 26+ and InSpec 6+ both
+# refuse to run without a licence entitlement, which cannot be provided to
+# pull requests from forks. The driver's chef-vs-cinc branching is covered by
+# the unit suite, so nothing here is unique to Chef beyond the product itself.
+#
+#   CHEF_LICENSE_KEY=<key> KITCHEN_YAML=kitchen.chef.yml bundle exec kitchen test
+
+driver:
+  name: dokken
+  chef_version: latest
+  privileged: true
+
+transport:
+  name: dokken
+
+provisioner:
+  name: dokken
+  product_name: chef
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: almalinux-9
+    driver:
+      image: dokken/almalinux-9
+      pid_one_command: /usr/lib/systemd/systemd
+
+  - name: ubuntu-2404
+    driver:
+      image: dokken/ubuntu-24.04
+      pid_one_command: /bin/systemd
+
+suites:
+  - name: default
+    run_list:
+      - recipe[dokken_test::default]
+    verifier:
+      inspec_tests:
+        - test/integration/chef

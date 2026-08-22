@@ -684,9 +684,54 @@ bundle exec rake doc          # generate YARD documentation into doc/
 bundle exec rake doc_stats    # report documentation coverage
 ```
 
-The unit suite is hermetic — it never contacts a Docker daemon, writes only
-into a temporary directory, and does not sleep. Integration suites in
-`kitchen.yml` do require a working daemon.
+The unit suite is hermetic — it never contacts a Docker daemon, never reads
+your home directory, writes only into a temporary directory, and does not
+sleep.
+
+### Integration suites
+
+`kitchen.yml` drives kitchen-dokken against a real daemon. Its suites are
+organised by **driver feature** rather than by distro, because dokken's bugs
+live in networking and volume plumbing rather than in distro differences:
+
+| Suite | Exercises |
+| --- | --- |
+| `default` | converge, sandbox, mounted client, `pid_one_command` |
+| `idempotency` | converging twice with nothing left to change |
+| `bridge`, `host` | the network modes that skip endpoint configuration |
+| `dns` | `dns` and `dns_search` |
+| `ipv6` | the IPv6 `dokken` network |
+| `tmpfs` | `tmpfs` mounts |
+| `volumes` | anonymous volumes and read-only binds |
+| `resources` | `memory_limit` |
+| `hello` + `helloagain` | `entrypoint`, published ports, hostname aliases, `env` |
+| `arch` | `platform` pinning to a non-host architecture |
+
+```shell
+bundle exec kitchen list
+bundle exec kitchen test default-almalinux-9
+bundle exec kitchen test               # everything; needs a while
+```
+
+These run against **Cinc**, so neither the converge nor the verify needs a
+licence key — which is what lets them run on pull requests from forks. To
+exercise the Chef Infra path instead, use the parallel config (you will need a
+licence):
+
+```shell
+CHEF_LICENSE_KEY=<key> KITCHEN_YAML=kitchen.chef.yml bundle exec kitchen test
+```
+
+`inspec-core` is pinned below 6 for the same reason: from 6.6.0 the gem ships
+under a Chef EULA and refuses to run without an entitlement. That pin is the
+Apache-2.0 line Cinc Auditor is itself built from.
+
+CI runs all of this in `.github/workflows/integration.yml`, plus two jobs that
+cannot be reproduced by a suite alone: `arch` registers QEMU so a non-host
+architecture can actually boot, and `nested` runs kitchen-dokken *inside* a
+container so `running_inside_docker?` is true — the only way to reach the data
+container and its ssh upload path without a genuinely remote daemon. That job
+covers both transfer implementations, rsync and the Net::SCP fallback.
 
 ## FAQ
 

@@ -1,5 +1,5 @@
 ---
-name: "Lint, Unit & Integration Tests"
+name: "Lint & Unit Tests"
 
 "on":
   pull_request:
@@ -7,55 +7,3 @@ name: "Lint, Unit & Integration Tests"
 jobs:
   lint-unit:
     uses: test-kitchen/.github/.github/workflows/lint-unit.yml@main
-
-  integration:
-    # TODO: re-enable once Chef Workstation 26+ licensing is sorted for GHA.
-    # The `kitchen test helloagain` invocation runs `kitchen verify` (InSpec),
-    # which now fails with "Chef Workstation cannot execute without valid
-    # licenses" — CHEF_LICENSE=accept is no longer sufficient; a real license
-    # key is required. The integration-cinc job below uses `kitchen converge`
-    # only and is unaffected.
-    if: false
-    runs-on: ubuntu-latest
-    needs: lint-unit
-    name: Kitchen Verify
-    strategy:
-      matrix:
-        ruby: ["3.1", "3.4"]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-      - name: Create & Validate containers
-        run: |
-          bundle exec bundle exec kitchen create hello
-          bundle exec bundle exec kitchen test helloagain
-          bundle exec bundle exec kitchen destroy hello
-        env:
-          # This needs to be set for all phases, including the verify phase
-          CHEF_LICENSE: "accept"
-
-  integration-cinc:
-    runs-on: ubuntu-latest
-    needs: lint-unit
-    name: Kitchen Verify (Cinc)
-    strategy:
-      matrix:
-        ruby: ["3.1", "3.4"]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-      - name: Converge with product_name=cinc
-        run: bundle exec kitchen converge default-almalinux-9
-        env:
-          KITCHEN_YAML: kitchen.cinc.yml
-      - name: Destroy
-        if: always()
-        run: bundle exec kitchen destroy default-almalinux-9
-        env:
-          KITCHEN_YAML: kitchen.cinc.yml
