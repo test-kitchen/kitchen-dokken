@@ -166,8 +166,20 @@ jobs:
                 test ! -x /usr/bin/rsync
               fi
               bundle install --jobs 4 --quiet
-              bundle exec kitchen test default-almalinux-9
+              bundle exec kitchen test default-almalinux-9 -l debug
             '
+
+      # The workspace is bind mounted, so kitchen's logs outlive the container.
+      # This path only runs when the daemon cannot read the host filesystem,
+      # which makes it the hardest job here to debug from a bare exit code.
+      - name: Kitchen logs
+        if: failure()
+        run: |
+          for log in .kitchen/logs/*.log; do
+            echo "::group::$log"
+            cat "$log"
+            echo "::endgroup::"
+          done
 
   # The plugin has to load and converge on every Ruby the gemspec allows.
   ruby:
