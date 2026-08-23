@@ -39,15 +39,21 @@ module Kitchen
 
           Array.new(count) do
             container = rng.rand(1..65_535)
-            spec =
-              if rng.rand < 0.25
-                high = [container + rng.rand(0..4), 65_535].min
-                "#{container}-#{high}"
-              else
-                container.to_s
-              end
+            # Docker pairs ranges off one for one, so a container range can
+            # only be published against a host range of the same size. This
+            # generator used to emit `55876:45105-45108`, which docker
+            # rejects outright with "invalid ranges specified for container
+            # and host Ports" -- so the property tests were asserting over
+            # input no daemon would accept.
+            span = rng.rand < 0.25 ? rng.rand(0..4) : 0
+            span = [span, 65_535 - container].min
+            spec = span.zero? ? container.to_s : "#{container}-#{container + span}"
 
-            spec = "#{rng.rand(1..65_535)}:#{spec}" if rng.rand < 0.5
+            if rng.rand < 0.5
+              host = rng.rand(1..65_535 - span)
+              host_spec = span.zero? ? host.to_s : "#{host}-#{host + span}"
+              spec = "#{host_spec}:#{spec}"
+            end
             spec = "#{rng.rand(1..254)}.0.0.#{rng.rand(1..254)}:#{spec}" if spec.include?(":") && rng.rand < 0.5
             spec = "#{spec}/#{%w{tcp udp}.sample(random: rng)}" if rng.rand < 0.4
             spec
