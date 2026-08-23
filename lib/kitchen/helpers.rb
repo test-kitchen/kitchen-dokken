@@ -629,8 +629,39 @@ module Kitchen
 
       # Run the verifier against the instance.
       #
-      # Files are only uploaded when the driver built a data container, which
-      # it does exactly when the daemon cannot read the host filesystem.
+      # This replaces Kitchen::Verifier::Base#call outright, so it has to be
+      # read against the upstream version it stands in for. It diverges in
+      # three places, and each divergence is deliberate:
+      #
+      # 1. *The upload is gated on the data container.* Files are only shipped
+      #    when the driver built one, which it does exactly when the daemon
+      #    cannot read the host filesystem. Otherwise the sandboxes are
+      #    bind-mounted and are already in place. `init_command` is gated with
+      #    it because for Busser it clears the verifier root, which in
+      #    bind-mount mode is the host sandbox that was just populated.
+      #
+      # 2. *`cleanup_sandbox` is not called*, and must not be. Upstream can
+      #    `rmtree` its sandbox because a stock one is a throwaway
+      #    `Dir.mktmpdir`. Dokken's is a stable per-instance directory that
+      #    the driver bind-mounts into a long-lived container, and a bind
+      #    mount is bound to an inode rather than to a path: removing the
+      #    directory severs it permanently, and the `mkdir_p` in the next
+      #    `create_sandbox` does not restore it. Verified against Docker --
+      #    after an rmtree and a recreate, the host has the file and the
+      #    container cannot see it, until the container itself is replaced.
+      #    Kitchen::Provisioner::Dokken#cleanup_dokken_sandbox is the shape
+      #    that is safe here: empty the directory, keep the inode.
+      #
+      # 3. *`config[:downloads]` is not honoured.* Upstream downloads files
+      #    off the instance after the run command. That cannot work here yet
+      #    for a second reason as well: Transport::Dokken::Connection does not
+      #    implement `download`, so the base class would raise. Wiring both up
+      #    is worth doing, and is the one divergence here that is a gap rather
+      #    than a decision.
+      #
+      # spec/kitchen/verifier_override_contract_spec.rb pins the upstream
+      # facts this reasoning rests on, so that a test-kitchen release which
+      # invalidates any of them fails loudly rather than silently.
       #
       # @param state [Hash] mutable instance state
       # @return [void]
