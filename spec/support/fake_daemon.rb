@@ -170,6 +170,7 @@ module Kitchen
               "Image" => @create_options["Image"],
               "State" => {
                 "Running"    => @running,
+                "Status"     => docker_status,
                 "FinishedAt" => @finished_at,
                 "Error"      => @error,
                 "ExitCode"   => @exit_code,
@@ -180,6 +181,18 @@ module Kitchen
             }
           end
           alias json info
+
+          # Docker's own status vocabulary, which is what `kitchen list --live`
+          # prints. A container that has never been started is "created", not
+          # "exited" -- the driver's status check reports the difference.
+          #
+          # @return [String] one of created, running, exited
+          def docker_status
+            return "running" if @running
+            return "created" if @finished_at == NEVER_FINISHED
+
+            "exited"
+          end
 
           # Start the container.
           #

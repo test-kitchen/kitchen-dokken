@@ -237,6 +237,82 @@ describe Kitchen::Driver::Dokken do
     end
   end
 
+  # `kitchen list --live` asks the driver whether the instance is really there
+  # rather than trusting the last recorded action. The driver used to inherit
+  # Base's "unknown", so a container that was plainly `Up` still listed as
+  # unknown -- for a driver talking to a daemon that knows the answer exactly.
+  describe "#status" do
+    def status
+      driver.status(state)
+    end
+
+    it "is not created before anything has been created" do
+      _(status[:live]).must_equal false
+      _(status[:state]).must_equal "not created"
+    end
+
+    it "is live and running after a create" do
+      driver.create(state)
+
+      _(status[:live]).must_equal true
+      _(status[:state]).must_equal "running"
+    end
+
+    it "reports docker's own vocabulary once the runner has exited" do
+      driver.create(state)
+      ::Docker::Container.get(driver.send(:runner_container_name), {}, nil).stop
+
+      _(status[:live]).must_equal false
+      _(status[:state]).must_equal "exited"
+    end
+
+    it "goes back to not created after a destroy" do
+      driver.create(state)
+      driver.destroy(state)
+
+      _(status[:state]).must_equal "not created"
+    end
+
+    it "carries the container id so the answer can be checked by hand" do
+      driver.create(state)
+      runner = daemon.containers[driver.send(:runner_container_name)]
+
+      _(status[:resource_id]).must_equal runner.info["Id"]
+    end
+
+    it "attributes the answer to the driver" do
+      _(status[:source]).must_equal "driver"
+    end
+
+    # The runner is the instance. The chef container is shared between every
+    # instance on the same chef version, so reading its state would report
+    # every instance as up the moment any one of them had been created.
+    it "answers about the runner, not the shared chef container" do
+      driver.create(state)
+      driver.destroy(state)
+
+      _(daemon.containers).must_include driver.send(:chef_container_name)
+      _(status[:state]).must_equal "not created"
+    end
+
+    # Kitchen catches whatever escapes and reports the exception class, which
+    # names Excon rather than the daemon that could not be reached.
+    describe "when the daemon cannot be reached" do
+      before do
+        ::Docker::Container.stubs(:get).raises(Excon::Error::Socket, "connect refused")
+      end
+
+      it "is unknown rather than an exception" do
+        _(status[:state]).must_equal "unknown"
+        _(status[:live]).must_be_nil
+      end
+
+      it "names the daemon it could not ask" do
+        _(status[:message]).must_include driver[:docker_host_url]
+      end
+    end
+  end
+
   describe "#destroy" do
     it "removes the runner container it created" do
       driver.create(state)
