@@ -285,6 +285,18 @@ describe Kitchen::Provisioner::Dokken do
     let(:state)      { { instance_name: "abc123-default-almalinux-9" } }
     let(:connection) { mock("connection") }
 
+    # What the driver records in state when it builds a data container.
+    let(:data_container_state) do
+      {
+        Name: "/abc123-default-almalinux-9-data",
+        NetworkSettings: {
+          IPAddress: "172.17.0.5",
+          Ports: { "22/tcp": [{ HostIp: "0.0.0.0", HostPort: "32768" }] },
+          Networks: { dokken: { IPAddress: "172.18.0.5" } },
+        },
+      }
+    end
+
     before do
       stub_home!
       FileUtils.stubs(:pwd).returns("/some/project")
@@ -323,6 +335,7 @@ describe Kitchen::Provisioner::Dokken do
     end
 
     it "uploads the sandbox for a remote docker host" do
+      state[:data_container] = data_container_state
       provisioner.stubs(:remote_docker_host?).returns(true)
       provisioner.stubs(:sandbox_dirs).returns(["/tmp/sandbox/dna.json"])
       connection.expects(:upload).with(["/tmp/sandbox/dna.json"], "/opt/kitchen")
@@ -331,7 +344,35 @@ describe Kitchen::Provisioner::Dokken do
     end
 
     it "uploads the sandbox when kitchen itself runs in a container" do
+      state[:data_container] = data_container_state
       provisioner.stubs(:running_inside_docker?).returns(true)
+      provisioner.stubs(:sandbox_dirs).returns([])
+      connection.expects(:upload)
+
+      provisioner.call(state)
+    end
+
+    # Whether to upload is not a question to re-derive: the driver already
+    # answered it at create time by either building a data container or not,
+    # and recorded the answer in state. Re-probing the daemon here means the
+    # two can disagree -- change DOCKER_HOST between `kitchen create` and
+    # `kitchen converge` and they will -- and then upload runs against a data
+    # container that does not exist and dies with
+    # `undefined method '[]' for nil` from inside the transport.
+    #
+    # Kitchen::Verifier::Base#call has always gated on the recorded state.
+    # This is the provisioner catching up.
+    it "does not upload when the driver recorded no data container" do
+      provisioner.stubs(:remote_docker_host?).returns(true)
+      connection.expects(:upload).never
+
+      provisioner.call(state)
+    end
+
+    it "uploads whenever the driver did record one, however the daemon looks now" do
+      state[:data_container] = data_container_state
+      provisioner.stubs(:remote_docker_host?).returns(false)
+      provisioner.stubs(:running_inside_docker?).returns(false)
       provisioner.stubs(:sandbox_dirs).returns([])
       connection.expects(:upload)
 
