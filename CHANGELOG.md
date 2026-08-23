@@ -11,6 +11,15 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.23.8](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.7...v2.23.8) (2026-08-23)
+
+
+### Bug Fixes
+
+* pair host and container port ranges, and accept numeric ports ([#412](https://github.com/test-kitchen/kitchen-dokken/issues/412)) ([29cd919](https://github.com/test-kitchen/kitchen-dokken/commit/29cd9190a3452fac8d9a46f529467c04c67b8e1e))
+* report why the daemon refused to create or start a container ([#411](https://github.com/test-kitchen/kitchen-dokken/issues/411)) ([2397cf3](https://github.com/test-kitchen/kitchen-dokken/commit/2397cf3b9e2396ec395a7b34664ac418c6addbc1))
+* stop the parent's --log_level from overriding chef_log_level ([#410](https://github.com/test-kitchen/kitchen-dokken/issues/410)) ([d7bed60](https://github.com/test-kitchen/kitchen-dokken/commit/d7bed606398569c312dd08dd71bdc3dc6f9933df))
+
 ## [2.23.7](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.6...v2.23.7) (2026-08-23)
 
 
