@@ -11,6 +11,13 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.23.5](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.4...v2.23.5) (2026-08-23)
+
+
+### Bug Fixes
+
+* repair three crashes in the remote-daemon upload and create paths ([#403](https://github.com/test-kitchen/kitchen-dokken/issues/403)) ([7696b50](https://github.com/test-kitchen/kitchen-dokken/commit/7696b5026e0ad42ec8fd1fb1859870f26f0ed206))
+
 ## [2.23.4](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.3...v2.23.4) (2026-08-23)
 
 
