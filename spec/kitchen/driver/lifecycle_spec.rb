@@ -144,6 +144,58 @@ describe Kitchen::Driver::Dokken do
 
         _(err.message).must_include "pid_one_command"
       end
+
+      it "reports the exit code pid 1 left behind" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).must_include "exit code 1"
+      end
+    end
+
+    # A container the daemon refuses outright is a different failure from one
+    # whose pid 1 exits, and it used to be reported as the second: docker-api
+    # defines `Container#start` as "the same as #start!, but rescue from
+    # ServerErrors", so the reason never left the gem. `kitchen create` blamed
+    # `pid_one_command` and sent the user to read `docker logs`, which for a
+    # container that never ran is empty.
+    describe "when the daemon refuses to start the runner container" do
+      let(:refusal) do
+        "driver failed programming external connectivity on endpoint: " \
+          "Bind for 0.0.0.0:8080 failed: port is already allocated"
+      end
+
+      before { daemon.refuses_start(driver.send(:runner_container_name), refusal) }
+
+      it "fails the create rather than reporting success" do
+        _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+      end
+
+      it "reports the daemon's reason" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).must_include "port is already allocated"
+      end
+
+      it "names the container, so the error is about the instance not an id" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).must_include driver.send(:runner_container_name)
+      end
+
+      # The old message sent the user to a log file that cannot exist.
+      it "does not blame pid 1 for a container that never ran" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).wont_include "pid_one_command"
+      end
+
+      # docker-api wraps the daemon's JSON body as the exception message, so
+      # reporting it verbatim leaks `{"message":"..."}` at the user.
+      it "unwraps the daemon's JSON envelope" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).wont_include %({"message")
+      end
     end
 
     describe "when the data container will not stay running" do

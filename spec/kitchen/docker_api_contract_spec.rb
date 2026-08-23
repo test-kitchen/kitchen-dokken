@@ -83,7 +83,7 @@ describe "the docker-api contract" do
   ].freeze
 
   INSTANCE_SEAMS = [
-    [::Docker::Container, :start,           0, "driver - start_container"],
+    [::Docker::Container, :start!,          0, "driver - start_container!"],
     [::Docker::Container, :stop,            1, "driver - stop_container(force: false)"],
     [::Docker::Container, :delete,          1, "driver - delete_container(force: true, v: true)"],
     [::Docker::Container, :info,            0, "driver - container_state"],

@@ -863,6 +863,46 @@ describe Kitchen::Driver::Dokken do
 
       _(err.message).must_include "runner"
     end
+
+    # The daemon's reason used to reach `debug` and nowhere else, so a failed
+    # `kitchen create` said only "failed to create_container <name>". Finding
+    # out why -- a platform the image does not provide, a network that does
+    # not exist -- meant knowing to re-run the whole thing at `-l debug`.
+    it "reports why the daemon refused" do
+      ::Docker::Container.stubs(:get).raises(::Docker::Error::NotFoundError)
+      driver.stubs(:create_container_for_platform).raises(
+        ::Docker::Error::ClientError,
+        %({"message":"image with reference img:latest was found but does not provide the specified platform (linux/amd64)"})
+      )
+
+      err = _ { driver.send(:create_container, args) }.must_raise RuntimeError
+
+      _(err.message).must_include "does not provide the specified platform"
+    end
+
+    it "unwraps the daemon's JSON envelope rather than pasting it in" do
+      ::Docker::Container.stubs(:get).raises(::Docker::Error::NotFoundError)
+      driver.stubs(:create_container_for_platform).raises(
+        ::Docker::Error::ClientError, %({"message":"no such network: nope"})
+      )
+
+      err = _ { driver.send(:create_container, args) }.must_raise RuntimeError
+
+      _(err.message).must_include "no such network: nope"
+      _(err.message).wont_include %({"message")
+    end
+
+    # A proxy or a plain-text 500 does not answer in JSON, and a
+    # JSON::ParserError raised while building the error message would bury the
+    # failure it was meant to explain.
+    it "falls back to the raw response when it is not JSON" do
+      ::Docker::Container.stubs(:get).raises(::Docker::Error::NotFoundError)
+      driver.stubs(:create_container_for_platform).raises(::Docker::Error::ClientError, "502 Bad Gateway")
+
+      err = _ { driver.send(:create_container, args) }.must_raise RuntimeError
+
+      _(err.message).must_include "502 Bad Gateway"
+    end
   end
 
   describe "#create_container_for_platform" do

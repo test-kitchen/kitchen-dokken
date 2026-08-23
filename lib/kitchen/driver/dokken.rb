@@ -240,17 +240,41 @@ module Kitchen
 
       # Pull the human-readable reason out of a failed build response.
       #
-      # The daemon usually answers with a JSON document carrying an "error"
-      # key, but a proxy or a plain-text 500 does not -- and a JSON::ParserError
-      # raised from inside the rescue clause would bury the real failure.
-      #
       # @param error [Exception] the error docker-api raised
       # @return [String] the daemon's explanation, or the raw response
       def build_error_detail(error)
-        last_line = error.to_s.split("\r\n").last.to_s
-        JSON.parse(last_line)["error"].to_s
+        daemon_message(error.to_s.split("\r\n").last.to_s)
+      end
+
+      # Pull the human-readable reason out of a docker-api error.
+      #
+      # docker-api raises with the daemon's response body as the message, so
+      # what reaches a rescue clause is a JSON document rather than a sentence:
+      # `{"message":"driver failed programming external connectivity ..."}`.
+      # Reporting that verbatim is barely better than reporting nothing.
+      #
+      # @param error [Exception] the error docker-api raised
+      # @return [String] the daemon's explanation, or the raw response
+      def docker_error_detail(error)
+        daemon_message(error.to_s)
+      end
+
+      # The explanation carried in a docker daemon response body.
+      #
+      # Most endpoints answer with a "message" key and the /build stream with
+      # an "error" one. A proxy or a plain-text 500 answers with neither -- and
+      # a JSON::ParserError raised from inside a rescue clause would bury the
+      # very failure it was called on to explain -- so anything unparseable
+      # comes back unchanged.
+      #
+      # @param body [String] a response body
+      # @return [String] the explanation, or the body unchanged
+      def daemon_message(body)
+        parsed = JSON.parse(body)
+        detail = parsed["message"] || parsed["error"]
+        detail.nil? ? body : detail.to_s
       rescue JSON::ParserError, TypeError
-        last_line
+        body
       end
 
       # The Dockerfile for the work image.
@@ -899,7 +923,11 @@ module Kitchen
           end
         rescue ::Docker::Error::DockerError => e
           debug "driver - error :#{e}:"
-          raise "driver - failed to create_container #{args["name"]}"
+          # The daemon's reason used to be dropped here, leaving `kitchen
+          # create` to report a bare "failed to create_container <name>" with
+          # nothing to act on -- the explanation existed, but only for someone
+          # who already knew to re-run at `-l debug`.
+          raise "driver - failed to create_container #{args["name"]}: #{docker_error_detail(e)}"
         end
       end
 
@@ -943,13 +971,33 @@ module Kitchen
       # @raise [Kitchen::ActionFailed] if the container will not stay running
       def run_container(args, platform: nil)
         @container = create_container(args, platform: platform)
-        with_retries do
-          @container.start
-          @container = ::Docker::Container.get(args["name"], {}, docker_connection)
-          wait_running_state(args["name"], true)
-        end
+        start_container!(args["name"])
         assert_running!(args["name"])
         @container
+      end
+
+      # Start a container and wait for it to be running.
+      #
+      # `start!`, not `start`: docker-api defines the unsuffixed form as "the
+      # same, but rescue from ServerErrors", so every reason the daemon
+      # refused -- a port already bound, an invalid mount, a capability the
+      # kernel will not grant -- was swallowed on the way past. `with_retries`
+      # then had nothing to retry and `assert_running!` was left to report a
+      # container that "exited immediately" when in truth it had never
+      # started, sending the user off to read `docker logs` output that does
+      # not exist.
+      #
+      # @param name [String] the container name
+      # @return [void]
+      # @raise [Kitchen::ActionFailed] if the daemon would not start it
+      def start_container!(name)
+        with_retries do
+          @container.start!
+          @container = ::Docker::Container.get(name, {}, docker_connection)
+          wait_running_state(name, true)
+        end
+      rescue ::Docker::Error::DockerError => e
+        raise ActionFailed, "The #{name} container could not be started: #{docker_error_detail(e)}"
       end
 
       # Fail the action when a container that has to run is not running.
@@ -970,10 +1018,25 @@ module Kitchen
       def assert_running!(name)
         return if container_state["Running"]
 
-        raise ActionFailed,
-          "The #{name} container exited immediately after being started. " \
-          "Its pid 1 did not stay up: check `pid_one_command`, `entrypoint`, " \
-          "and that the image can boot (`docker logs #{name}` shows why)."
+        raise ActionFailed, "The #{name} container is not running. #{not_running_reason(name)}"
+      end
+
+      # Why a container that should be running is not.
+      #
+      # The daemon records its own refusal in `State.Error` and leaves
+      # `FinishedAt` unset, which is a different failure from a pid 1 that
+      # started and exited -- and pointing at `docker logs` for the first kind
+      # sends the user to an empty file.
+      #
+      # @param name [String] the container name
+      # @return [String] a sentence naming the likely cause
+      def not_running_reason(name)
+        daemon_error = container_state["Error"].to_s
+        return "The docker daemon refused to start it: #{daemon_error}" unless daemon_error.empty?
+
+        "Its pid 1 exited immediately (exit code #{container_state["ExitCode"]}): " \
+          "check `pid_one_command`, `entrypoint`, and that the image can boot " \
+          "(`docker logs #{name}` shows why)."
       end
 
       # The current container's `State` payload.
