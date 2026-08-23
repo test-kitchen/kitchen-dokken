@@ -11,6 +11,13 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.23.4](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.3...v2.23.4) (2026-08-23)
+
+
+### Bug Fixes
+
+* reject malformed port specs and report an unreachable daemon properly ([#402](https://github.com/test-kitchen/kitchen-dokken/issues/402)) ([3565f4f](https://github.com/test-kitchen/kitchen-dokken/commit/3565f4f9e6c17656c333dbaeffac5237025e2f79))
+
 ## [2.23.3](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.2...v2.23.3) (2026-07-28)
 
 ### Bug Fixes
