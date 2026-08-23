@@ -11,6 +11,13 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.23.6](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.5...v2.23.6) (2026-08-23)
+
+
+### Bug Fixes
+
+* warn when the shared dokken network cannot honour ipv6 ([#406](https://github.com/test-kitchen/kitchen-dokken/issues/406)) ([1f1e11c](https://github.com/test-kitchen/kitchen-dokken/commit/1f1e11cd2b8d6de6887f1de7accf0eed9872cb37))
+
 ## [2.23.5](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.4...v2.23.5) (2026-08-23)
 
 
