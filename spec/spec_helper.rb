@@ -30,6 +30,20 @@ end
 
 require "minitest/autorun"
 require "mocha/minitest"
+
+# Refuse to stub a method that does not exist on the object being stubbed.
+#
+# Without this a spec can stub `::Docker::Image.exist` (no `?`), assert
+# happily against its own typo, and stay green while the real call fails for
+# every user. It is the only thing standing between this suite and a
+# docker-api upgrade that renames a method we depend on.
+#
+# Note the value: mocha's `check` silently treats an unrecognised value as
+# `:allow`, so `:prohibit` or `:strict` would look configured and enforce
+# nothing. `spec/mocha_configuration_spec.rb` proves this setting is live.
+Mocha.configure do |c|
+  c.stubbing_non_existent_method = :prevent
+end
 require "tmpdir"
 require "fileutils"
 require "json"
@@ -91,10 +105,30 @@ module Kitchen
         tmphome
       end
 
-      # Remove the scratch home directory, if one was created.
+      # An in-memory Docker daemon, installed over the real docker-api entry
+      # points for the duration of this example.
+      #
+      # Unlike a per-call stub, this holds state: containers exist or they do
+      # not, a stopped container reports itself stopped, and a `get` for
+      # something that was never created raises the way the daemon does. Use
+      # it for anything that exercises a sequence of operations rather than a
+      # single call.
+      #
+      # @param images [Array<String>] image references that already exist
+      # @return [Kitchen::Dokken::Spec::FakeDaemon]
+      def fake_daemon(images: [])
+        @fake_daemon ||= Kitchen::Dokken::Spec::FakeDaemon.new(images: images).install!
+      end
+
+      # Remove the scratch home directory and uninstall the fake daemon.
+      #
+      # The daemon replaces singleton methods on the real docker-api classes,
+      # so leaving one installed would leak into every example that ran after
+      # it -- in a randomly ordered suite, that is a heisenbug generator.
       #
       # @return [void]
       def teardown
+        @fake_daemon&.uninstall!
         FileUtils.remove_entry(@tmphome) if @tmphome && File.directory?(@tmphome)
         super
       end

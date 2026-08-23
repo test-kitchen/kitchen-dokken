@@ -55,7 +55,50 @@ stubbing the `docker-api` gem globally, so a failing expectation points at
 kitchen-dokken rather than at a fake.
 
 Coverage is reported but **not gated** — it is a tool for finding gaps, not a
-number to defend.
+number to defend. The suite is built around what each layer can actually
+catch, not around a percentage.
+
+### The layers, and what each one is for
+
+Most specs test one method against per-call stubs, which is the right tool for
+"does this method do the right thing". Four other layers exist because that
+style is structurally blind to certain bugs:
+
+| Layer | File | Catches |
+| ----- | ---- | ------- |
+| Seam contract | `spec/kitchen/docker_api_contract_spec.rb` | a `docker-api` upgrade renaming a method, changing its arity, or dropping an error class we rescue — and doubles that have drifted from the real classes |
+| Lifecycle | `spec/kitchen/driver/lifecycle_spec.rb` | bugs that need daemon *state* to show up: create-twice, destroy-after-partial-create, stop-before-delete ordering |
+| Handoff | `spec/kitchen/plugin_handoff_spec.rb` | the driver and transport disagreeing about kitchen state, which no single-plugin spec can see |
+| Properties | `spec/kitchen/port_parsing_properties_spec.rb` | parser input nobody thought to write an example for |
+
+Two supporting pieces are worth knowing about before you write a spec:
+
+**`spec/support/fake_daemon.rb`** is an in-memory Docker daemon that holds
+state and enforces the real one's invariants — `get` on an unknown name
+raises `NotFoundError`, a duplicate `create` raises `ConflictError`, a
+container is created stopped. Reach for it (`fake_daemon`) whenever a spec
+exercises a *sequence* of operations; per-call stubs cannot express "and then
+the container was gone". It replaces singleton methods on the `docker-api`
+classes and `spec_helper.rb` uninstalls it after every example.
+
+**Payload snapshots** in `spec/fixtures/payloads/` capture the whole container
+create request for six representative configs. They sit alongside explicit
+assertions rather than replacing them: the explicit ones say what must be
+true, the snapshot notices everything else that moved. Regenerate with
+`UPDATE_SNAPSHOTS=1 bundle exec rake unit` and **read the diff** — it names
+the keys that changed, not the lines. A rubber-stamped snapshot update is
+worse than no snapshot.
+
+Mocha is configured to refuse a stub for a method that does not exist
+(`stubbing_non_existent_method = :prevent`), so a typo like
+`Docker::Image.stubs(:exist)` fails at stub time instead of quietly passing.
+`spec/mocha_configuration_spec.rb` deliberately breaks that rule to prove the
+setting is live — mocha treats an unrecognised value as "allow", so a
+plausible-looking `:prohibit` would enforce nothing.
+
+The property tests use a fixed seed so failures reproduce. Set `PORT_SEED` to
+explore a different slice of the input space; the failure message tells you
+which seed to reuse.
 
 ## Integration tests
 
@@ -192,6 +235,8 @@ lib/kitchen/provisioner/dokken.rb   the sandbox and the chef-client invocation
 lib/kitchen/transport/dokken.rb     docker exec, and file upload to the data container
 lib/kitchen/helpers.rb              shared helpers, plus patches to Kitchen's base classes
 spec/                               unit tests; spec/support holds the shared doubles
+spec/support/fake_daemon.rb         an in-memory Docker daemon for lifecycle specs
+spec/fixtures/payloads/             container create-request snapshots
 test/cookbooks/                     the cookbook the integration suites converge
 test/integration/                   one InSpec profile per suite
 ```
