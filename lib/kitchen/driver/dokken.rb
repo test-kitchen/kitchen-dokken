@@ -143,7 +143,64 @@ module Kitchen
         dokken_delete_sandbox
       end
 
+      # (see Base#status)
+      #
+      # `kitchen list --live` asks the driver whether the instance is really
+      # there rather than trusting the last recorded action, which is exactly
+      # the question a docker daemon can answer precisely. Without this the
+      # driver inherited Base's "unknown", so a container that was plainly
+      # `Up` still listed as `unknown`.
+      #
+      # The runner *is* the instance. The chef container is a shared volume
+      # and the data container only exists on the remote-daemon path, so
+      # neither says anything about whether this instance is up.
+      #
+      # Deliberately not wrapped in {#with_retries}: this backs a listing, and
+      # a slow answer is worse than an honest "unknown".
+      #
+      # @param _state [Hash] mutable instance state
+      # @return [Hash] normalized status data
+      def status(_state)
+        container_status(::Docker::Container.get(runner_container_name, {}, docker_connection))
+      rescue ::Docker::Error::NotFoundError
+        { live: false, state: "not created", source: "driver" }
+      # Every other failure -- an unreachable daemon most of all -- is an
+      # unknown rather than an exception. Kitchen would catch it either way,
+      # but it would then report the exception class instead of the daemon
+      # url that could not be reached.
+      rescue ::StandardError => e
+        {
+          live: nil,
+          state: "unknown",
+          source: "driver",
+          message: "could not ask the docker daemon at #{config[:docker_host_url]}: #{e.message}",
+        }
+      end
+
       private
+
+      # Translate a container's `State` into kitchen's status shape.
+      #
+      # @param container [::Docker::Container] the runner container
+      # @return [Hash] normalized status data
+      def container_status(container)
+        state = container.info["State"] || {}
+        running = state["Running"] == true
+
+        status = {
+          # Docker's own vocabulary -- created, running, paused, exited,
+          # restarting, dead -- says more than a boolean, and `kitchen list`
+          # prints it verbatim.
+          live: running,
+          state: state["Status"] || (running ? "running" : "stopped"),
+          source: "driver",
+          resource_id: container.info["Id"],
+        }
+
+        error = state["Error"].to_s
+        status[:message] = error unless error.empty?
+        status
+      end
 
       # Attach DNS settings to a network endpoint configuration, in place.
       #
