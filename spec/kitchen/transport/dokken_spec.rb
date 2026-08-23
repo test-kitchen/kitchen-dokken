@@ -388,6 +388,74 @@ describe Kitchen::Transport::Dokken do
 
           _(uploaded_endpoint).must_equal ["10.0.0.1", "32768"]
         end
+
+        # The data container only joins the dokken network when network_mode
+        # is left at its default: start_data_container attaches a
+        # NetworkingConfig endpoint "unless %w{host bridge}.include?", and
+        # names it after network_mode. So with `network_mode: bridge`, `host`,
+        # or any custom network there is no Networks["dokken"] entry at all,
+        # and looking the address up there found nil and died with
+        # `undefined method '[]' for nil`.
+        #
+        # The unix path never had this problem -- it reads the address out of
+        # kitchen state with #data_container_ip, which walks whatever networks
+        # are actually attached. These examples hold the tcp path to the same
+        # behaviour.
+        # The daemon really does report the container this way when
+        # network_mode names a network other than dokken -- stubbing
+        # Container.all with a dokken entry, as the happy-path example above
+        # does, describes a container the driver would never have created
+        # under this configuration.
+        def daemon_reports(networks)
+          ::Docker::Container.stubs(:all).returns(
+            [stub(info: {
+              "Names" => ["/abc123-default-almalinux-9-data"],
+              "NetworkSettings" => { "Networks" => networks },
+            })]
+          )
+        end
+
+        it "finds the address on a user-defined network that is not called dokken" do
+          data_container[:NetworkSettings][:IPAddress] = ""
+          data_container[:NetworkSettings][:Networks] = { mynet: { IPAddress: "172.20.0.7" } }
+          daemon_reports("bridge" => { "IPAddress" => "172.17.0.9" },
+                         "mynet"  => { "IPAddress" => "172.20.0.7" })
+          connection.stubs(:port_open?).with("172.20.0.7", "32768").returns(true)
+
+          _(uploaded_endpoint).must_equal ["172.20.0.7", "32768"]
+        end
+
+        it "finds the address when only the default bridge is attached" do
+          data_container[:NetworkSettings][:Networks] = { bridge: { IPAddress: "172.17.0.9" } }
+          daemon_reports("bridge" => { "IPAddress" => "172.17.0.9" })
+          connection.stubs(:port_open?).with("172.17.0.9", "32768").returns(true)
+
+          _(uploaded_endpoint).must_equal ["172.17.0.9", "32768"]
+        end
+
+        # A host-networked data container has no address of its own. The
+        # docker host is the right endpoint in that case, and it is already
+        # the method's own fallback -- but the lookup crashed before ever
+        # reaching it.
+        it "falls back to the docker host when the container has no address anywhere" do
+          data_container[:NetworkSettings][:IPAddress] = ""
+          data_container[:NetworkSettings][:Networks] = {}
+
+          _(uploaded_endpoint).must_equal ["10.0.0.1", "32768"]
+        end
+
+        # The address is already in kitchen state, put there by the driver
+        # after it started the container. Asking the daemon for it again is a
+        # round trip that can also come back empty: Docker::Container.all
+        # lists only running containers, so a data container that had exited
+        # produced `undefined method 'info' for nil` rather than anything a
+        # user could act on.
+        it "does not need to ask the daemon which containers exist" do
+          ::Docker::Container.stubs(:all).returns([])
+          connection.stubs(:port_open?).with("172.18.0.5", "32768").returns(true)
+
+          _(uploaded_endpoint).must_equal ["172.18.0.5", "32768"]
+        end
       end
 
       it "raises a helpful error for a docker_host_url it cannot route" do

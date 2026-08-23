@@ -211,6 +211,31 @@ module Kitchen
             "The data container has no address on any docker network: #{settings[:Networks].inspect}"
         end
 
+        # Every address the data container has, best candidate first.
+        #
+        # A user-defined network comes before the default bridge. That order
+        # matters when kitchen is itself a container: a sibling on the dokken
+        # network can reach the container there but has no route to its
+        # bridge address, and preferring the bridge would send every upload
+        # to the docker host instead.
+        #
+        # The legacy top-level `IPAddress` is the default bridge's, so it
+        # sorts with the bridge and is deduplicated against it.
+        #
+        # @return [Array<String>] addresses, most specific network first
+        # @api private
+        def data_container_addresses
+          settings = options[:data_container][:NetworkSettings]
+          networks = settings[:Networks] || {}
+
+          user_defined, default_bridge = networks.partition { |name, _| name.to_s != "bridge" }
+
+          addresses = (user_defined + default_bridge).map { |_, network| network[:IPAddress].to_s }
+          addresses << settings[:IPAddress].to_s
+
+          addresses.reject(&:empty?).uniq
+        end
+
         # Pick an endpoint for a daemon reached over tcp.
         #
         # The container's address on the dokken network is preferred, since it
@@ -221,31 +246,42 @@ module Kitchen
         # @return [Array(String, String)] the address and port to ssh to
         # @api private
         def tcp_ssh_endpoint
-          name = options[:data_container][:Name]
-
           # DOCKER_HOST
           docker_host_url_ip = options[:docker_host_url].split("tcp://")[1].split(":")[0]
-
-          # mapped IP of data container
-          candidate_ip = ::Docker::Container.all.find do |x|
-            x.info["Names"][0].eql?(name)
-          end.info["NetworkSettings"]["Networks"]["dokken"]["IPAddress"]
 
           # mapped port
           candidate_ssh_port = published_ssh_port
 
-          debug "candidate_ip - #{candidate_ip}"
-          debug "candidate_ssh_port - #{candidate_ssh_port}"
+          # The addresses come from the state the driver recorded after it
+          # started the container. This used to ask the daemon instead --
+          # Docker::Container.all, find ours by name, then read
+          # Networks["dokken"]["IPAddress"] -- which was wrong twice over.
+          #
+          # Container.all lists only *running* containers, so a data container
+          # that had exited made `find` return nil and the chained `.info`
+          # raise `undefined method 'info' for nil`. And the dokken network is
+          # only attached when network_mode is left at its default:
+          # start_data_container adds the endpoint
+          # "unless %w{host bridge}.include?" and names it after network_mode,
+          # so `bridge`, `host` and every custom network name produced
+          # `undefined method '[]' for nil` on a remote daemon.
+          data_container_addresses.each do |candidate_ip|
+            debug "candidate_ip - #{candidate_ip}"
+            debug "candidate_ssh_port - #{candidate_ssh_port}"
 
-          if port_open?(candidate_ip, candidate_ssh_port)
-            debug "candidate_ip - #{candidate_ip}/#{candidate_ssh_port} open"
-            [candidate_ip, candidate_ssh_port]
-          elsif port_open?(candidate_ip, "22")
-            debug "candidate_ip - #{candidate_ip}/22 open"
-            [candidate_ip, "22"]
-          else
-            [docker_host_url_ip, candidate_ssh_port]
+            if port_open?(candidate_ip, candidate_ssh_port)
+              debug "candidate_ip - #{candidate_ip}/#{candidate_ssh_port} open"
+              return [candidate_ip, candidate_ssh_port]
+            elsif port_open?(candidate_ip, "22")
+              debug "candidate_ip - #{candidate_ip}/22 open"
+              return [candidate_ip, "22"]
+            end
           end
+
+          # Nothing answered, or -- with host networking -- the container has
+          # no address of its own to try. The docker host is the endpoint.
+          debug "no data container address answered; falling back to the docker host"
+          [docker_host_url_ip, candidate_ssh_port]
         end
 
         # Write the built-in insecure private key somewhere ssh will accept it.

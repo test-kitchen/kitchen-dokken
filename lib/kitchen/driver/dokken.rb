@@ -907,6 +907,7 @@ module Kitchen
       # @param args [Hash] the `/containers/create` body
       # @param platform [String, nil] an OCI platform to pin the container to
       # @return [::Docker::Container] the running container
+      # @raise [Kitchen::ActionFailed] if the container will not stay running
       def run_container(args, platform: nil)
         @container = create_container(args, platform: platform)
         with_retries do
@@ -914,7 +915,32 @@ module Kitchen
           @container = ::Docker::Container.get(args["name"], {}, docker_connection)
           wait_running_state(args["name"], true)
         end
+        assert_running!(args["name"])
         @container
+      end
+
+      # Fail the action when a container that has to run is not running.
+      #
+      # wait_running_state stops polling as soon as `FinishedAt` is set, which
+      # is precisely the case for a container whose pid 1 exited -- so without
+      # this check `kitchen create` reported success and exited 0, leaving the
+      # user to discover the problem at converge as a bare docker API message:
+      # "container dd55d579... is not running". A container id, no instance
+      # name, and no clue that pid 1 was the cause.
+      #
+      # Only containers that must actually run reach here; the chef container
+      # is a volume and is never started.
+      #
+      # @param name [String] the container name
+      # @return [void]
+      # @raise [Kitchen::ActionFailed] if the container is not running
+      def assert_running!(name)
+        return if container_state["Running"]
+
+        raise ActionFailed,
+          "The #{name} container exited immediately after being started. " \
+          "Its pid 1 did not stay up: check `pid_one_command`, `entrypoint`, " \
+          "and that the image can boot (`docker logs #{name}` shows why)."
       end
 
       # The current container's `State` payload.

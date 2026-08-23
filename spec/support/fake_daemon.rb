@@ -51,13 +51,31 @@ module Kitchen
 
         # @param images [Array<String>] image references that already exist
         # @param exposed_ports [Hash{String => Array<String>}] image EXPOSEs
-        def initialize(images: [], exposed_ports: {})
-          @containers     = {}
-          @images         = images.dup
-          @networks       = {}
-          @calls          = []
-          @next_id        = 0
-          @exposed_ports  = EXPOSED_PORTS.merge(exposed_ports)
+        # @param exits_on_start [Array<String>] names of containers whose pid 1
+        #   exits the moment they are started, the way a container with a
+        #   `pid_one_command` of `/bin/true` really does
+        def initialize(images: [], exposed_ports: {}, exits_on_start: [])
+          @containers      = {}
+          @images          = images.dup
+          @networks        = {}
+          @calls           = []
+          @next_id         = 0
+          @exposed_ports   = EXPOSED_PORTS.merge(exposed_ports)
+          @exits_on_start  = exits_on_start.dup
+        end
+
+        # Make a container exit as soon as it is started.
+        #
+        # @param name [String] the container name
+        # @return [void]
+        def exits_on_start(name)
+          @exits_on_start << name
+        end
+
+        # @param name [String] the container name
+        # @return [Boolean] whether starting it leaves it stopped
+        def exits_on_start?(name)
+          @exits_on_start.include?(name)
         end
 
         # The ports an image declares with EXPOSE.
@@ -146,8 +164,20 @@ module Kitchen
             raise ::Docker::Error::NotFoundError, "No such container: #{@name}" if @deleted
 
             @start_count += 1
-            @running = true
             @daemon.record(:start, @name)
+
+            # A container whose pid 1 exits immediately -- `/bin/true` as a
+            # pid_one_command, an entrypoint that returns, an image that
+            # cannot boot -- accepts the start and is stopped by the time
+            # anyone looks. Docker stamps FinishedAt in that case, which is
+            # what makes this different from "never started".
+            if @daemon.exits_on_start?(@name)
+              @running = false
+              @finished_at = "2024-01-01T00:00:00Z"
+            else
+              @running = true
+            end
+
             self
           end
 

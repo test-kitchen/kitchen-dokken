@@ -115,6 +115,58 @@ describe Kitchen::Driver::Dokken do
 
       _(daemon.containers.keys).wont_include "dokken-data-default-almalinux-9"
     end
+
+    # A container whose pid 1 exits -- a `pid_one_command` of `/bin/true`, an
+    # entrypoint that returns, an image that cannot boot -- used to make
+    # `kitchen create` report success and exit 0. wait_running_state breaks
+    # out of its poll loop as soon as FinishedAt is set, which is exactly the
+    # case for a container that has just exited, and nothing checked the
+    # outcome afterwards.
+    #
+    # The user found out at converge, from the docker API rather than from
+    # kitchen: `container dd55d579... is not running` -- a container id, no
+    # instance name, and no hint that pid 1 was the problem.
+    describe "when the runner container will not stay running" do
+      before { daemon.exits_on_start(driver.send(:runner_container_name)) }
+
+      it "fails the create rather than reporting success" do
+        _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+      end
+
+      it "names the container, so the error is about the instance not an id" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).must_include driver.send(:runner_container_name)
+      end
+
+      it "points at the settings that decide whether pid 1 survives" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).must_include "pid_one_command"
+      end
+    end
+
+    describe "when the data container will not stay running" do
+      before do
+        driver.stubs(:remote_docker_host?).returns(true)
+        driver.stubs(:make_data_image)
+        daemon.exits_on_start(driver.send(:data_container_name))
+      end
+
+      it "fails the create, since the transport uploads through it" do
+        err = _ { driver.create(state) }.must_raise Kitchen::ActionFailed
+
+        _(err.message).must_include driver.send(:data_container_name)
+      end
+    end
+
+    # The chef container is a volume, not a service: it is created and never
+    # started, so the running check must not be applied to it.
+    it "does not require the chef container to be running" do
+      driver.create(state)
+
+      _(daemon.containers[driver.send(:chef_container_name)].running?).must_equal false
+    end
   end
 
   describe "#create against a remote daemon" do
