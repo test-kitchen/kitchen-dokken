@@ -1,6 +1,7 @@
 require_relative "../../spec_helper"
 
 require "kitchen/provisioner/dokken"
+require "kitchen/driver/dokken"
 
 describe Kitchen::Provisioner::Dokken do
   let(:logged_output) { StringIO.new }
@@ -466,8 +467,23 @@ describe Kitchen::Provisioner::Dokken do
   end
 
   describe "#runner_container_name" do
-    it "is the kitchen instance name" do
-      _(provisioner.send(:runner_container_name)).must_equal "default-almalinux-9"
+    # It used to return `instance.name` -- "default-almalinux-9" -- which is
+    # not what the runner container is called. The driver names it
+    # `instance_name`: the same thing prefixed with a hash of the working
+    # directory, so two checkouts of the same suite do not collide. A method
+    # called runner_container_name that returns a name no container has is a
+    # trap for the next caller, and there is no current caller to break.
+    it "is the name the driver actually gives the runner container" do
+      digest = Digest::SHA2.hexdigest(FileUtils.pwd)[0, 10]
+
+      _(provisioner.send(:runner_container_name)).must_equal "#{digest}-default-almalinux-9"
+    end
+
+    it "agrees with the driver, which is the whole point of the name" do
+      driver = Kitchen::Driver::Dokken.new(docker_info: Kitchen::Dokken::Spec.docker_info)
+        .finalize_config!(instance)
+
+      _(provisioner.send(:runner_container_name)).must_equal driver.send(:runner_container_name)
     end
   end
 end
