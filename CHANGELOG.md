@@ -11,6 +11,18 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.24.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.8...v2.24.0) (2026-08-23)
+
+
+### Features
+
+* answer `kitchen list --live` from the docker daemon ([#414](https://github.com/test-kitchen/kitchen-dokken/issues/414)) ([91de774](https://github.com/test-kitchen/kitchen-dokken/commit/91de774feefffab32f326d1621faf9f5b88423a3))
+
+
+### Bug Fixes
+
+* report kitchen-dokken's own version, and raise the test-kitchen floor ([#413](https://github.com/test-kitchen/kitchen-dokken/issues/413)) ([1fd2c3a](https://github.com/test-kitchen/kitchen-dokken/commit/1fd2c3af9a37d2ebd9d564e55e7a8ea787f40a9d))
+
 ## [2.23.8](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.7...v2.23.8) (2026-08-23)
 
 
