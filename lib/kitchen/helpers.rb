@@ -253,15 +253,28 @@ module Dokken
       "#{home_dir}/.dokken/verifier_sandbox/#{instance_name}"
     end
 
-    # A container-safe, collision-free name for this kitchen instance.
+    # A container-safe, collision-free name for a kitchen instance.
     #
     # The working directory is hashed into the prefix so that the same suite
     # in two checkouts does not fight over one set of containers.
     #
+    # Defined on the module itself because Kitchen's Provisioner and Verifier
+    # base classes need the same answer but do not mix this module in -- they
+    # used to carry their own copies of these two lines, and three copies of
+    # a container-naming rule is three chances for them to drift apart.
+    #
+    # @param instance [Object] the kitchen instance
     # @return [String] the instance name
-    def instance_name
+    def self.instance_name_for(instance)
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
       "#{prefix}-#{instance.name}".downcase
+    end
+
+    # (see Dokken::Helpers.instance_name_for)
+    #
+    # @return [String] the instance name
+    def instance_name
+      ::Dokken::Helpers.instance_name_for(instance)
     end
 
     # The `ExposedPorts` value for the runner container.
@@ -526,8 +539,7 @@ module Kitchen
       # @return [String] the instance name
       # @see Dokken::Helpers#instance_name
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}".downcase
+        ::Dokken::Helpers.instance_name_for(instance)
       end
     end
   end
@@ -562,8 +574,7 @@ module Kitchen
       # @return [String] the instance name
       # @see Dokken::Helpers#instance_name
       def instance_name
-        prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
-        "#{prefix}-#{instance.name}".downcase
+        ::Dokken::Helpers.instance_name_for(instance)
       end
 
       # Run the verifier against the instance.
