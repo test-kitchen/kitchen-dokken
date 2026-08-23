@@ -351,10 +351,15 @@ module Dokken
     # each optionally suffixed with `/protocol` and each allowing an
     # inclusive `low-high` container port range.
     #
-    # @param v [String] a port specification
+    # @param v [String, Integer] a port specification
     # @return [Array<Hash>] one entry per container port
-    # @raise [Kitchen::UserError] if a port range is inverted
+    # @raise [Kitchen::UserError] if a port range is inverted or unpairable
     def parse_port(v)
+      # `ports: [8080]` is a perfectly natural thing to write, and YAML hands
+      # it over as an Integer. That used to reach String#split and abort the
+      # create with `undefined method 'split' for an instance of Integer`,
+      # which names a type rather than the line of kitchen.yml at fault.
+      v = v.to_s
       parts = v.split(":")
       case parts.length
       when 3
@@ -390,16 +395,61 @@ module Dokken
           "Invalid port spec #{v.inspect}: no container port"
       end
 
-      port_range = expand_port_range(port_range, v) if port_range.include?("-")
+      container_ports = port_range.include?("-") ? expand_port_range(port_range, v) : [port_range]
       # qualify the port-binding protocol even when it is implicitly tcp #427.
       protocol = "tcp" if protocol.nil?
-      Array(port_range).map do |port|
+      host_ports = expand_host_ports(host_port, container_ports.length, v)
+
+      container_ports.each_with_index.map do |port, i|
         {
           "host_ip" => host_ip,
-          "host_port" => host_port,
+          "host_port" => host_ports[i],
           "container_port" => "#{port}/#{protocol}",
         }
       end
+    end
+
+    # Work out the host port that pairs with each container port.
+    #
+    # Docker pairs ranges off one for one -- `8080-8082:9090-9092` publishes
+    # 9090 on 8080, 9091 on 8081 and 9092 on 8082 -- but only the container
+    # side used to be expanded here, so every binding was handed the whole
+    # host range as its `HostPort`. That reads as "any free port in this
+    # range" to the daemon, which meant the mapping was only correct while the
+    # whole range happened to be free, and otherwise came out shifted or
+    # failed outright with "all ports are allocated" rather than naming the
+    # port that was taken.
+    #
+    # @param host_port [String] the host half of the spec
+    # @param count [Integer] how many container ports were asked for
+    # @param spec [String] the whole port spec, for the error message
+    # @return [Array<String>] one host port per container port
+    # @raise [Kitchen::UserError] if the two sides cannot be paired
+    def expand_host_ports(host_port, count, spec)
+      # `ports: '8080'` names no host port at all; the daemon picks one.
+      return Array.new(count, host_port) if host_port.empty?
+
+      unless host_port.include?("-")
+        return [host_port] if count == 1
+
+        raise Kitchen::UserError,
+          "Invalid port spec #{spec.inspect}: a single host port cannot be paired with " \
+          "a range of #{count} container ports. Give a host range of the same size, " \
+          "as in 8080-8082:9090-9092."
+      end
+
+      # A host range against a single container port is docker's "publish this
+      # on any free port in the range". The daemon does the choosing, so the
+      # range is handed over untouched.
+      return [host_port] if count == 1
+
+      host_ports = expand_port_range(host_port, spec)
+      return host_ports.map(&:to_s) if host_ports.length == count
+
+      raise Kitchen::UserError,
+        "Invalid port spec #{spec.inspect}: the host range covers #{host_ports.length} " \
+        "ports and the container range covers #{count}. Docker pairs them off one for " \
+        "one, so both ranges have to be the same size."
     end
 
     # Expand an inclusive `low-high` container port range.

@@ -359,10 +359,82 @@ describe Dokken::Helpers do
     end
 
     it "expands a bound port range" do
-      parsed = host.parse_port("0.0.0.0:9000:9000-9001")
+      parsed = host.parse_port("0.0.0.0:9000-9001:9000-9001")
 
       _(parsed.map { |p| p["container_port"] }).must_equal %w{9000/tcp 9001/tcp}
       _(parsed.map { |p| p["host_ip"] }.uniq).must_equal ["0.0.0.0"]
+    end
+
+    # Docker pairs the two sides off one for one -- `19300-19302:29300-29302`
+    # publishes 29300 on 19300, 29301 on 19301 and 29302 on 19302. Only the
+    # container side used to be expanded, so each binding was handed the whole
+    # host range as its HostPort. The daemon reads that as "any free port in
+    # this range", so the mapping came out right only while the entire range
+    # was free, and otherwise came out shifted -- or failed with "all ports
+    # are allocated" instead of naming the port that was taken.
+    describe "pairing a host range with a container range" do
+      it "gives each container port its own host port" do
+        parsed = host.parse_port("8080-8082:8080-8082")
+
+        _(parsed.map { |p| p["host_port"] }).must_equal %w{8080 8081 8082}
+      end
+
+      it "pairs positionally when the ranges do not share a base" do
+        parsed = host.parse_port("19300-19302:29300-29302")
+
+        _(parsed.map { |p| [p["host_port"], p["container_port"]] }).must_equal(
+          [%w{19300 29300/tcp}, %w{19301 29301/tcp}, %w{19302 29302/tcp}]
+        )
+      end
+
+      it "carries the host ip onto every pair" do
+        parsed = host.parse_port("127.0.0.1:19110-19111:19110-19111")
+
+        _(parsed.map { |p| p["host_ip"] }.uniq).must_equal ["127.0.0.1"]
+        _(parsed.map { |p| p["host_port"] }).must_equal %w{19110 19111}
+      end
+
+      # docker: "invalid ranges specified for container and host Ports".
+      it "rejects ranges of different sizes" do
+        err = _ { host.parse_port("8080-8082:9090-9091") }.must_raise Kitchen::UserError
+
+        _(err.message).must_include "8080-8082:9090-9091"
+        _(err.message).must_include "same size"
+      end
+
+      it "rejects a single host port against a container range" do
+        err = _ { host.parse_port("8080:9090-9092") }.must_raise Kitchen::UserError
+
+        _(err.message).must_include "8080:9090-9092"
+      end
+
+      # `-p 19100-19102:19100` is docker's "publish this on any free port in
+      # the range", and the daemon does the choosing.
+      it "leaves a host range against a single container port to the daemon" do
+        parsed = host.parse_port("19100-19102:19100")
+
+        _(parsed.length).must_equal 1
+        _(parsed.first["host_port"]).must_equal "19100-19102"
+      end
+    end
+
+    # `ports: [8080]` is a perfectly natural thing to write, and YAML hands it
+    # over as an Integer -- which used to abort the create with `undefined
+    # method 'split' for an instance of Integer`.
+    describe "a port given as a number rather than a string" do
+      it "parses a bare integer container port" do
+        _(host.parse_port(8080).map { |p| p["container_port"] }).must_equal ["8080/tcp"]
+      end
+
+      it "coerces integers through ExposedPorts" do
+        _(host.coerce_exposed_ports([8080])).must_equal({ "8080/tcp" => {} })
+      end
+
+      it "coerces integers through PortBindings" do
+        _(host.coerce_port_bindings([8080])).must_equal(
+          { "8080/tcp" => [{ "HostIp" => "", "HostPort" => "" }] }
+        )
+      end
     end
 
     # An inverted range used to reach for Chef::Log, a constant kitchen-dokken

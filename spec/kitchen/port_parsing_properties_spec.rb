@@ -166,12 +166,25 @@ describe "port parsing properties" do
       end
     end
 
-    it "gives every port in a range the same host binding" do
-      parsed = host.parse_port("0.0.0.0:9000:9000-9002")
+    # Docker pairs the two ranges off one for one. Only the container side
+    # used to be expanded, so all three bindings were handed the whole host
+    # range as their HostPort -- which the daemon reads as "any free port in
+    # this range", making the mapping correct only while every port in it
+    # happened to be free.
+    it "pairs each container port with its own host port" do
+      parsed = host.parse_port("0.0.0.0:9000-9002:9000-9002")
 
       _(parsed.map { |p| p["host_ip"] }.uniq).must_equal ["0.0.0.0"]
-      _(parsed.map { |p| p["host_port"] }.uniq).must_equal ["9000"]
+      _(parsed.map { |p| p["host_port"] }).must_equal %w{9000 9001 9002}
       _(parsed.map { |p| p["container_port"] }).must_equal %w{9000/tcp 9001/tcp 9002/tcp}
+    end
+
+    it "pairs ranges positionally when the two sides do not share a base" do
+      parsed = host.parse_port("19300-19302:29300-29302")
+
+      _(parsed.map { |p| [p["host_port"], p["container_port"]] }).must_equal(
+        [%w{19300 29300/tcp}, %w{19301 29301/tcp}, %w{19302 29302/tcp}]
+      )
     end
   end
 end
