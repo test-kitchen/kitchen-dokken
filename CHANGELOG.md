@@ -11,6 +11,14 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.23.7](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.6...v2.23.7) (2026-08-23)
+
+
+### Bug Fixes
+
+* decide whether to upload from recorded state, not a fresh probe ([#405](https://github.com/test-kitchen/kitchen-dokken/issues/405)) ([f57d638](https://github.com/test-kitchen/kitchen-dokken/commit/f57d6385f85ad39390343b41324ee5b0c7ecd19b))
+* narrow rescues, fix logging, and de-duplicate the instance-naming rule ([#379](https://github.com/test-kitchen/kitchen-dokken/issues/379)) ([73ae3be](https://github.com/test-kitchen/kitchen-dokken/commit/73ae3be0446880b1e4aa0afb9f7a61448dd62f83))
+
 ## [2.23.6](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.5...v2.23.6) (2026-08-23)
 
 
