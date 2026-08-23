@@ -1,0 +1,44 @@
+{
+  "name": "a0317725f2-default-almalinux-9",
+  "Cmd": [
+    "sh",
+    "-c",
+    "trap exit 0 SIGTERM; while :; do sleep 1; done"
+  ],
+  "Image": "registry.example.com/a0317725f2-default-almalinux-9:latest",
+  "Hostname": "dokken",
+  "Env": [
+    "TEST_KITCHEN=1"
+  ],
+  "ExposedPorts": null,
+  "Volumes": {},
+  "HostConfig": {
+    "Privileged": false,
+    "VolumesFrom": [
+      "chef-latest"
+    ],
+    "Binds": [
+      "<HOME>/.dokken/kitchen_sandbox/a0317725f2-default-almalinux-9:/opt/kitchen",
+      "<HOME>/.dokken/verifier_sandbox/a0317725f2-default-almalinux-9:/opt/verifier"
+    ],
+    "Dns": null,
+    "DnsSearch": null,
+    "Links": [],
+    "CapAdd": [],
+    "CapDrop": [],
+    "SecurityOpt": [],
+    "NetworkMode": "dokken",
+    "PortBindings": null,
+    "Tmpfs": {},
+    "Memory": 536870912
+  },
+  "NetworkingConfig": {
+    "EndpointsConfig": {
+      "dokken": {
+        "Aliases": [
+          "dokken"
+        ]
+      }
+    }
+  }
+}

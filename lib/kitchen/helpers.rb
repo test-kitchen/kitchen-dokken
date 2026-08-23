@@ -186,9 +186,16 @@ module Dokken
       # whole local-vs-remote decision off.
       @docker_info ||= {}
       @docker_info[docker_host] ||= ::Docker.info
-    rescue Excon::Error::Socket
-      puts "kitchen-dokken could not connect to the docker host at #{docker_host}. Is docker running?"
-      exit!
+    rescue Excon::Error::Socket => e
+      # Deliberately a UserError rather than `exit!`. This runs from inside a
+      # `default_config` block, so an `exit!` here takes the whole kitchen
+      # process down mid-resolve: no error banner, no `.kitchen/logs`, and
+      # every other instance in the run abandoned without being destroyed.
+      # A UserError is the failure mode Test Kitchen already knows how to
+      # report, and it leaves the memo empty so a later caller can retry.
+      raise Kitchen::UserError,
+        "kitchen-dokken could not connect to the docker host at #{docker_host}. " \
+        "Is docker running? (#{e.class}: #{e.message})"
     end
 
     # Create the kitchen and verifier sandbox directories on the host.
@@ -204,21 +211,18 @@ module Dokken
 
     # Remove the kitchen and verifier sandbox directories from the host.
     #
+    # `rm_rf` already tolerates a path that is not there, so a sandbox that
+    # was never created -- or that a previous destroy already removed -- is a
+    # no-op rather than an error. The Errno::ENOENT rescues that used to wrap
+    # these calls could never fire.
+    #
     # @return [void]
     def dokken_delete_sandbox
       info("Deleting kitchen sandbox at #{dokken_kitchen_sandbox}")
-      begin
-        FileUtils.rm_rf(dokken_kitchen_sandbox)
-      rescue Errno::ENOENT
-        debug("Cannot delete #{dokken_kitchen_sandbox}. Does not exist")
-      end
+      FileUtils.rm_rf(dokken_kitchen_sandbox)
 
       info("Deleting verifier sandbox at #{dokken_verifier_sandbox}")
-      begin
-        FileUtils.rm_rf(dokken_verifier_sandbox)
-      rescue Errno::ENOENT
-        debug("Cannot delete #{dokken_verifier_sandbox}. Does not exist")
-      end
+      FileUtils.rm_rf(dokken_verifier_sandbox)
     end
 
     # The home directory, in a form docker will accept in a bind mount spec.
@@ -352,14 +356,28 @@ module Dokken
         host_ip = ""
         host_port = ""
         container_port = parts[0]
+      else
+        # Without this the case fell through leaving container_port nil and
+        # the user got `undefined method 'split' for nil` from the line below.
+        # An IPv6 host address is how this gets hit in the wild:
+        # "[::1]:8500:8500" splits on ":" into five parts, not three.
+        raise Kitchen::UserError,
+          "Invalid port spec #{v.inspect}: expected container, host:container " \
+          "or host_ip:host:container. An IPv6 host address cannot be used here."
       end
+      # `split` drops trailing empty fields, so several plausible typos leave
+      # nil where a port should be and only fail further down with an error
+      # naming a type instead of a port: "/" splits to [], "8080-" to
+      # ["8080"], "-" to []. Each of those used to surface as
+      # `undefined method 'include?' for nil` or `comparison of Integer with
+      # nil failed` in front of a user who simply mistyped kitchen.yml.
       port_range, protocol = container_port.split("/")
-      if port_range.include?("-")
-        low, high = port_range.split("-").map(&:to_i)
-        raise Kitchen::UserError, "Invalid port range #{port_range.inspect} in port spec #{v.inspect}: the low port must not be greater than the high port" if low > high
-
-        port_range = (low..high).to_a
+      if port_range.nil? || port_range.empty?
+        raise Kitchen::UserError,
+          "Invalid port spec #{v.inspect}: no container port"
       end
+
+      port_range = expand_port_range(port_range, v) if port_range.include?("-")
       # qualify the port-binding protocol even when it is implicitly tcp #427.
       protocol = "tcp" if protocol.nil?
       Array(port_range).map do |port|
@@ -369,6 +387,40 @@ module Dokken
           "container_port" => "#{port}/#{protocol}",
         }
       end
+    end
+
+    # Expand an inclusive `low-high` container port range.
+    #
+    # @param range [String] the range, e.g. "8080-8082"
+    # @param spec [String] the whole port spec, for the error message
+    # @return [Array<Integer>] every port in the range
+    # @raise [Kitchen::UserError] if either end is missing or not a number,
+    #   or if the range is inverted
+    def expand_port_range(range, spec)
+      low, high = range.split("-")
+
+      unless numeric_port?(low) && numeric_port?(high)
+        raise Kitchen::UserError,
+          "Invalid port range #{range.inspect} in port spec #{spec.inspect}: " \
+          "expected two port numbers separated by a dash, as in 8080-8082"
+      end
+
+      low = low.to_i
+      high = high.to_i
+
+      if low > high
+        raise Kitchen::UserError,
+          "Invalid port range #{range.inspect} in port spec #{spec.inspect}: " \
+          "the low port must not be greater than the high port"
+      end
+
+      (low..high).to_a
+    end
+
+    # @param value [String, nil] a candidate port number
+    # @return [Boolean] whether it is a bare, non-empty run of digits
+    def numeric_port?(value)
+      !value.nil? && value.match?(/\A\d+\z/)
     end
 
     # Whether the daemon is somewhere that cannot see the local filesystem.

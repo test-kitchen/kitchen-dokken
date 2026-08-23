@@ -191,6 +191,40 @@ describe Dokken::Helpers do
       _(host.docker_info("unix:///var/run/docker.sock")["OperatingSystem"]).must_equal "Docker Desktop"
       _(host.docker_info("tcp://10.0.0.1:2376")["OperatingSystem"]).must_equal "Ubuntu 24.04"
     end
+
+    # An unreachable daemon used to `puts` and then `exit!`, which takes the
+    # whole kitchen process down from inside a default_config block: no
+    # kitchen error banner, no `.kitchen/logs`, every other instance in the
+    # run abandoned, and nothing a spec could assert on. A UserError is what
+    # Test Kitchen already knows how to report.
+    it "raises a Kitchen error when the daemon refuses the connection" do
+      ::Docker.stubs(:info).raises(Excon::Error::Socket)
+
+      err = _ { host.docker_info("tcp://10.0.0.1:2376") }.must_raise Kitchen::UserError
+
+      _(err.message).must_include "tcp://10.0.0.1:2376"
+    end
+
+    it "says how to fix an unreachable daemon rather than just that it failed" do
+      ::Docker.stubs(:info).raises(Excon::Error::Socket)
+
+      err = _ { host.docker_info("unix:///var/run/docker.sock") }.must_raise Kitchen::UserError
+
+      _(err.message.downcase).must_include "is docker running"
+    end
+
+    # The memo must not cache the failure. A daemon that was down when the
+    # driver resolved its default and is up by the time the transport resolves
+    # its own should work.
+    it "does not cache a failed lookup" do
+      ::Docker.stubs(:info)
+        .raises(Excon::Error::Socket)
+        .then.returns({ "OperatingSystem" => "Ubuntu 24.04" })
+
+      _ { host.docker_info("unix:///var/run/docker.sock") }.must_raise Kitchen::UserError
+
+      _(host.docker_info("unix:///var/run/docker.sock")["OperatingSystem"]).must_equal "Ubuntu 24.04"
+    end
   end
 
   describe "the kitchen and verifier sandboxes" do
@@ -242,7 +276,21 @@ describe Dokken::Helpers do
       _(File.exist?(host.dokken_verifier_sandbox)).must_equal false
     end
 
+    # `kitchen destroy` runs on instances that never got as far as creating a
+    # sandbox, and runs again on instances that are already destroyed. Neither
+    # may raise. This is a property of FileUtils.rm_rf, which swallows a
+    # missing path rather than raising Errno::ENOENT -- the reason the two
+    # rescues that used to sit here could never fire.
     it "is a no-op to delete sandboxes that were never created" do
+      host.dokken_delete_sandbox
+
+      _(File.exist?(host.dokken_kitchen_sandbox)).must_equal false
+    end
+
+    it "is a no-op to delete the same sandboxes twice" do
+      host.dokken_create_sandbox
+      host.dokken_delete_sandbox
+
       host.dokken_delete_sandbox
 
       _(File.exist?(host.dokken_kitchen_sandbox)).must_equal false
@@ -324,6 +372,60 @@ describe Dokken::Helpers do
       err = _ { host.parse_port("9001-9000") }.must_raise Kitchen::UserError
 
       _(err.message).must_include "9001-9000"
+    end
+
+    # A spec with more colons than the three documented forms used to fall off
+    # the end of the case statement, leaving container_port nil and blowing up
+    # with `undefined method 'split' for nil` several lines later. An IPv6 host
+    # address is the way a user actually hits this: "[::1]:8500:8500" splits
+    # into five parts, not three.
+    it "raises a Kitchen error for a spec with too many parts" do
+      err = _ { host.parse_port("[::1]:8500:8500") }.must_raise Kitchen::UserError
+
+      _(err.message).must_include "[::1]:8500:8500"
+    end
+
+    it "raises a Kitchen error rather than failing on nil somewhere downstream" do
+      err = _ { host.parse_port("1:2:3:4") }.must_raise Kitchen::UserError
+
+      _(err.message).must_include "1:2:3:4"
+    end
+
+    it "raises a Kitchen error for an empty spec" do
+      _ { host.parse_port("") }.must_raise Kitchen::UserError
+    end
+
+    # `"8080-".split("-")` is ["8080"], not ["8080", ""] -- Ruby drops
+    # trailing empty fields -- so the high port was nil and the guard below
+    # compared an Integer against it. The user saw "comparison of Integer
+    # with nil failed" for what was simply a typo in kitchen.yml.
+    it "names the range rather than comparing a port against nil" do
+      err = _ { host.parse_port("8080-") }.must_raise Kitchen::UserError
+
+      _(err.message).must_include "8080-"
+    end
+
+    it "rejects a range with no low port" do
+      _ { host.parse_port("-8080") }.must_raise Kitchen::UserError
+    end
+
+    it "rejects a range whose ends are not numbers" do
+      _ { host.parse_port("http-https") }.must_raise Kitchen::UserError
+    end
+
+    # `"/".split("/")` is [], so port_range was nil and `include?` blew up.
+    it "rejects a spec that is nothing but a protocol separator" do
+      _ { host.parse_port("/") }.must_raise Kitchen::UserError
+    end
+
+    it "rejects a protocol with no port in front of it" do
+      err = _ { host.parse_port("/tcp") }.must_raise Kitchen::UserError
+
+      _(err.message).must_include "no container port"
+    end
+
+    it "still accepts the boundary case of a single-port range" do
+      _(host.parse_port("8080-8080").map { |p| p["container_port"] }).must_equal ["8080/tcp"]
     end
   end
 

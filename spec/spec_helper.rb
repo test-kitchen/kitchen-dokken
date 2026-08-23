@@ -30,6 +30,20 @@ end
 
 require "minitest/autorun"
 require "mocha/minitest"
+
+# Refuse to stub a method that does not exist on the object being stubbed.
+#
+# Without this a spec can stub `::Docker::Image.exist` (no `?`), assert
+# happily against its own typo, and stay green while the real call fails for
+# every user. It is the only thing standing between this suite and a
+# docker-api upgrade that renames a method we depend on.
+#
+# Note the value: mocha's `check` silently treats an unrecognised value as
+# `:allow`, so `:prohibit` or `:strict` would look configured and enforce
+# nothing. `spec/mocha_configuration_spec.rb` proves this setting is live.
+Mocha.configure do |c|
+  c.stubbing_non_existent_method = :prevent
+end
 require "tmpdir"
 require "fileutils"
 require "json"
@@ -64,15 +78,27 @@ module Kitchen
       SANDBOX_HOME = Dir.mktmpdir("dokken-spec-home")
       Minitest.after_run { FileUtils.remove_entry(SANDBOX_HOME) if File.directory?(SANDBOX_HOME) }
 
-      # Point `Dir.home` at the shared empty home before every example.
+      # Point `Dir.home` at the shared empty home before every example, and
+      # take `CI` out of the environment.
       #
       # Examples that need to write into a home directory call {#stub_home!},
       # which replaces this with one they own.
+      #
+      # `CI` is removed for the same reason the home directory is faked: the
+      # driver forwards it into every container it creates
+      # (`container_env` appends "CI=<value>" whenever it is set), so leaving
+      # it ambient makes any spec that touches a container's Env assert
+      # against a different payload on a runner than on a laptop. That is not
+      # hypothetical -- it is what broke the create-payload snapshots.
+      #
+      # The forwarding behaviour is still covered, by an example that forces
+      # the CI state with a stub rather than inheriting it.
       #
       # @return [void]
       def setup
         super
         Dir.stubs(:home).returns(SANDBOX_HOME)
+        @original_ci = ENV.delete("CI")
       end
 
       # A disposable directory that lives for the duration of one example.
@@ -91,10 +117,32 @@ module Kitchen
         tmphome
       end
 
-      # Remove the scratch home directory, if one was created.
+      # An in-memory Docker daemon, installed over the real docker-api entry
+      # points for the duration of this example.
+      #
+      # Unlike a per-call stub, this holds state: containers exist or they do
+      # not, a stopped container reports itself stopped, and a `get` for
+      # something that was never created raises the way the daemon does. Use
+      # it for anything that exercises a sequence of operations rather than a
+      # single call.
+      #
+      # @param images [Array<String>] image references that already exist
+      # @return [Kitchen::Dokken::Spec::FakeDaemon]
+      def fake_daemon(images: [])
+        @fake_daemon ||= Kitchen::Dokken::Spec::FakeDaemon.new(images: images).install!
+      end
+
+      # Restore the environment, remove the scratch home directory, and
+      # uninstall the fake daemon.
+      #
+      # The daemon replaces singleton methods on the real docker-api classes,
+      # so leaving one installed would leak into every example that ran after
+      # it -- in a randomly ordered suite, that is a heisenbug generator.
       #
       # @return [void]
       def teardown
+        ENV["CI"] = @original_ci unless @original_ci.nil?
+        @fake_daemon&.uninstall!
         FileUtils.remove_entry(@tmphome) if @tmphome && File.directory?(@tmphome)
         super
       end
