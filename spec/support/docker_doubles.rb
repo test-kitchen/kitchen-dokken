@@ -37,11 +37,15 @@ module Kitchen
 
         # Record a start request.
         #
+        # The driver calls the bang form, because docker-api's `#start`
+        # rescues ServerError and so hides every reason the daemon refused.
+        #
         # @return [self]
-        def start
+        def start!
           @start_count += 1
           self
         end
+        alias start start!
 
         # Record a stop request.
         #

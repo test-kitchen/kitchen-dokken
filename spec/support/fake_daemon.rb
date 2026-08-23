@@ -62,6 +62,7 @@ module Kitchen
           @next_id         = 0
           @exposed_ports   = EXPOSED_PORTS.merge(exposed_ports)
           @exits_on_start  = exits_on_start.dup
+          @refuses_start   = {}
         end
 
         # Make a container exit as soon as it is started.
@@ -76,6 +77,26 @@ module Kitchen
         # @return [Boolean] whether starting it leaves it stopped
         def exits_on_start?(name)
           @exits_on_start.include?(name)
+        end
+
+        # Make the daemon refuse to start a container.
+        #
+        # This is a different failure from {#exits_on_start}: the container
+        # never runs at all, `FinishedAt` stays unset, and the reason is
+        # recorded in `State.Error` -- which is how a port collision or an
+        # unsatisfiable mount really presents.
+        #
+        # @param name [String] the container name
+        # @param reason [String] the message the daemon answers with
+        # @return [void]
+        def refuses_start(name, reason)
+          @refuses_start[name] = reason
+        end
+
+        # @param name [String] the container name
+        # @return [String, nil] why the daemon will refuse to start it
+        def refuses_start?(name)
+          @refuses_start[name]
         end
 
         # The ports an image declares with EXPOSE.
@@ -118,6 +139,8 @@ module Kitchen
             @finished_at    = NEVER_FINISHED
             @start_count    = 0
             @deleted        = false
+            @error          = ""
+            @exit_code      = 0
           end
 
           # @return [Boolean] whether the container is running
@@ -148,6 +171,8 @@ module Kitchen
               "State" => {
                 "Running"    => @running,
                 "FinishedAt" => @finished_at,
+                "Error"      => @error,
+                "ExitCode"   => @exit_code,
               },
               "Config"         => @create_options,
               "HostConfig"     => host_config,
@@ -160,11 +185,23 @@ module Kitchen
           #
           # @return [self]
           # @raise [Docker::Error::NotFoundError] if it has been deleted
-          def start
+          # @raise [Docker::Error::ServerError] if the daemon refuses
+          def start!
             raise ::Docker::Error::NotFoundError, "No such container: #{@name}" if @deleted
 
             @start_count += 1
             @daemon.record(:start, @name)
+
+            # The daemon can refuse outright -- a host port already bound, a
+            # mount it cannot satisfy. The container stays in `created`, and
+            # the reason lands in State.Error rather than in `docker logs`.
+            refusal = @daemon.refuses_start?(@name)
+            if refusal
+              @running = false
+              @error = refusal
+              @exit_code = 128
+              raise ::Docker::Error::ServerError, %({"message":"#{refusal}"})
+            end
 
             # A container whose pid 1 exits immediately -- `/bin/true` as a
             # pid_one_command, an entrypoint that returns, an image that
@@ -174,10 +211,26 @@ module Kitchen
             if @daemon.exits_on_start?(@name)
               @running = false
               @finished_at = "2024-01-01T00:00:00Z"
+              @exit_code = 1
             else
               @running = true
             end
 
+            self
+          end
+
+          # Start the container, swallowing a refusal by the daemon.
+          #
+          # docker-api defines the unsuffixed form this way -- "#start! and
+          # #kill! both perform the associated action and return the
+          # Container. #start and #kill do the same, but rescue from
+          # ServerErrors" -- and the driver calling it by mistake is exactly
+          # the bug this models.
+          #
+          # @return [self]
+          def start
+            start!
+          rescue ::Docker::Error::ServerError
             self
           end
 
