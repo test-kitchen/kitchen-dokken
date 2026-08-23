@@ -776,7 +776,11 @@ module Kitchen
         with_retries { @image = ::Docker::Image.get(name, { "platform" => oci_platform(config[:platform]) }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error::DockerError
-        puts "Image #{name} not found. Nothing to delete."
+        # `debug`, not `puts`: this is routine during destroy, and writing
+        # straight to stdout puts it outside kitchen's logging entirely --
+        # it bypasses the log level, never reaches `.kitchen/logs`, and
+        # interleaves with kitchen's own output.
+        debug "Image #{name} not found. Nothing to delete."
       end
 
       # Whether the daemon knows about a container.
