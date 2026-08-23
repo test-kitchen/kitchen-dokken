@@ -1205,6 +1205,69 @@ describe Kitchen::Driver::Dokken do
       driver.send(:make_dokken_network)
     end
 
+    # The dokken network is created once and shared by every instance, and
+    # `kitchen destroy` deliberately leaves it behind. So on any workstation
+    # that has run a non-ipv6 suite, the network already exists without ipv6
+    # -- and because make_dokken_network only creates when absent, a later
+    # `ipv6: true` suite silently reuses it and tests nothing.
+    #
+    # This is not hypothetical: a full local `kitchen test` run fails the ipv6
+    # suite for exactly this reason, with the container holding no ipv6
+    # address at all and no explanation anywhere. Removing the network makes
+    # the same suite pass.
+    describe "when the existing network does not match the requested ipv6 setting" do
+      it "says so, rather than silently testing nothing" do
+        config[:ipv6] = true
+        ::Docker::Network.expects(:get).with("dokken", {}, connection)
+          .returns(stub(info: { "EnableIPv6" => false }))
+
+        driver.send(:make_dokken_network)
+
+        _(logged_output.string).must_include "dokken"
+        _(logged_output.string.downcase).must_include "ipv6"
+      end
+
+      it "names the command that fixes it" do
+        config[:ipv6] = true
+        ::Docker::Network.expects(:get).with("dokken", {}, connection)
+          .returns(stub(info: { "EnableIPv6" => false }))
+
+        driver.send(:make_dokken_network)
+
+        _(logged_output.string).must_include "docker network rm dokken"
+      end
+
+      it "stays quiet when the existing network already matches" do
+        config[:ipv6] = true
+        ::Docker::Network.expects(:get).with("dokken", {}, connection)
+          .returns(stub(info: { "EnableIPv6" => true }))
+
+        driver.send(:make_dokken_network)
+
+        _(logged_output.string).wont_include "docker network rm"
+      end
+
+      it "stays quiet when ipv6 was never asked for" do
+        ::Docker::Network.expects(:get).with("dokken", {}, connection)
+          .returns(stub(info: { "EnableIPv6" => false }))
+
+        driver.send(:make_dokken_network)
+
+        _(logged_output.string).wont_include "docker network rm"
+      end
+
+      # A daemon that does not report the flag must not produce a spurious
+      # warning on every single converge.
+      it "stays quiet when the daemon does not report the flag" do
+        config[:ipv6] = true
+        ::Docker::Network.expects(:get).with("dokken", {}, connection).returns(stub(info: {}))
+
+        driver.send(:make_dokken_network)
+
+        _(logged_output.string).wont_include "docker network rm"
+      end
+    end
+
     # Several kitchen instances converge in parallel and all race to create
     # the one shared network; losing that race is not an error.
     it "swallows a create that lost the race to another instance" do

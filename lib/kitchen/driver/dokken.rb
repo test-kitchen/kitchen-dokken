@@ -543,7 +543,8 @@ module Kitchen
         return unless self[:network_mode] == "dokken"
 
         with_file_lock("#{home_dir}/.dokken-network.lock") do
-          with_retries { ::Docker::Network.get("dokken", {}, docker_connection) }
+          network = with_retries { ::Docker::Network.get("dokken", {}, docker_connection) }
+          warn_on_ipv6_mismatch(network)
         rescue ::Docker::Error::NotFoundError
           begin
             with_retries { ::Docker::Network.create("dokken", network_settings) }
@@ -551,6 +552,34 @@ module Kitchen
             debug "driver - error :#{e}:"
           end
         end
+      end
+
+      # Say something when the shared network cannot honour `ipv6: true`.
+      #
+      # The dokken network is created once and shared by every instance, and
+      # `destroy` deliberately leaves it behind -- so on any workstation that
+      # has run a non-ipv6 suite, it already exists without ipv6. Since the
+      # network is only created when absent, a later `ipv6: true` suite
+      # quietly reuses it, the container gets no ipv6 address, and nothing
+      # anywhere says why.
+      #
+      # Deliberately a warning rather than an error: the network may be in use
+      # by other instances right now, and removing it is the user's call.
+      #
+      # @param network [::Docker::Network] the existing dokken network
+      # @return [void]
+      def warn_on_ipv6_mismatch(network)
+        return unless self[:ipv6]
+
+        # A daemon that does not report the flag must not produce a warning on
+        # every converge.
+        enabled = network.info["EnableIPv6"] if network.respond_to?(:info)
+        return if enabled.nil? || enabled
+
+        warn "The existing dokken network was created without IPv6, so `ipv6: true` " \
+             "will have no effect and this instance will get no IPv6 address. The " \
+             "network is shared and `kitchen destroy` leaves it in place; recreate it " \
+             "with `docker network rm dokken` once no containers are using it."
       end
 
       # Build the data image, unless it is already present.
