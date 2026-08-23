@@ -23,6 +23,7 @@ require "docker"
 require "shellwords" unless defined?(Shellwords)
 require "base64" unless defined?(Base64)
 require_relative "../helpers"
+require_relative "dokken_version"
 
 include Dokken::Helpers
 
@@ -42,6 +43,14 @@ module Kitchen
     #
     # @author Sean OMeara <sean@sean.io>
     class Dokken < Kitchen::Driver::Base
+      kitchen_driver_api_version 2
+
+      # kitchen-dokken's own version, not test-kitchen's. `kitchen diagnose`
+      # is the first thing a bug report carries, and it used to report the
+      # test-kitchen version here -- which says nothing about the plugin the
+      # report is actually about.
+      plugin_version Kitchen::Driver::DOKKEN_VERSION
+
       default_config :api_retries, 20
       default_config :binds, []
       default_config :cap_add, nil
