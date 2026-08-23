@@ -166,6 +166,16 @@ module Kitchen
         # just use the defaults
         config[:chef_log_level] = "warn" if config[:chef_log_level].empty?
         config[:chef_output_format] = "doc" if config[:chef_output_format].empty?
+
+        # ChefBase#chef_args appends `--log_level #{config[:log_level]}` to
+        # whatever base command it is handed, so the parent's flag lands
+        # *after* the `-l` built below. `-l` and `--log_level` are the same
+        # chef-client option and the last occurrence wins, which meant
+        # chef_log_level was parsed, written into the staged run_command, and
+        # then silently overridden by the parent's default of "auto".
+        # Keeping the two in step makes the documented setting the one chef
+        # actually runs at.
+        config[:log_level] = config[:chef_log_level]
       end
 
       private
