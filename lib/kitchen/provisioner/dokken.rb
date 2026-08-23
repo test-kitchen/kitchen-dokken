@@ -79,7 +79,17 @@ module Kitchen
         create_sandbox
         write_run_command(run_command)
         instance.transport.connection(state) do |conn|
-          if remote_docker_host? || running_inside_docker?
+          # Gate on what the driver recorded, not on a fresh probe. The driver
+          # already answered this at create time -- it built a data container
+          # or it did not -- and re-deriving the answer here means the two can
+          # disagree. Point DOCKER_HOST somewhere else between `kitchen
+          # create` and `kitchen converge` and they do: this side decides to
+          # upload, the container it would upload through was never created,
+          # and the transport dies on nil several frames down.
+          #
+          # Kitchen::Verifier::Base#call has always gated on the recorded
+          # state; this is the provisioner agreeing with it.
+          unless state[:data_container].nil?
             info("Transferring files to #{instance.to_str}")
             conn.upload(sandbox_dirs, config[:root_path])
           end

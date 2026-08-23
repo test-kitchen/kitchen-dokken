@@ -121,6 +121,17 @@ module Kitchen
         # @raise [Kitchen::UserError] if docker_host_url is not tcp:// or unix://
         # @raise [Kitchen::Transport::TransportFailed] if the copy fails
         def upload(locals, remote)
+          # Every route through ssh_endpoint reads the data container out of
+          # state, so being handed none is not a transfer that fails -- it is
+          # a caller that should not have asked. Said plainly here rather than
+          # as `undefined method '[]' for nil` from three frames down.
+          if options[:data_container].nil?
+            raise Kitchen::Transport::TransportFailed,
+              "Cannot upload to #{options[:instance_name]}: no data container was created " \
+              "for this instance. Files are only shipped over ssh when the docker daemon " \
+              "cannot read the local filesystem; otherwise the sandbox is bind-mounted."
+          end
+
           ssh_ip, ssh_port = ssh_endpoint
 
           debug "ssh_ip : #{ssh_ip}"

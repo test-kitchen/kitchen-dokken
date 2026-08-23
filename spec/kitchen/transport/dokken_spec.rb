@@ -458,6 +458,29 @@ describe Kitchen::Transport::Dokken do
         end
       end
 
+      # Reached when the provisioner or verifier asks for an upload on an
+      # instance the driver never built a data container for. Every route
+      # through ssh_endpoint reads that container out of state, so without
+      # this the first nil surfaces as `undefined method '[]' for nil` from
+      # inside ssh_port_binding.
+      it "says plainly when there is no data container to upload through" do
+        options[:data_container] = nil
+
+        err = _ { connection.upload(["/tmp/sandbox"], "/opt/kitchen") }
+          .must_raise Kitchen::Transport::TransportFailed
+
+        _(err.message).must_include "no data container"
+      end
+
+      it "names the instance, so the error is actionable" do
+        options[:data_container] = nil
+
+        err = _ { connection.upload(["/tmp/sandbox"], "/opt/kitchen") }
+          .must_raise Kitchen::Transport::TransportFailed
+
+        _(err.message).must_include "abc123-default-almalinux-9"
+      end
+
       it "raises a helpful error for a docker_host_url it cannot route" do
         options[:docker_host_url] = "npipe:////./pipe/docker_engine"
 
