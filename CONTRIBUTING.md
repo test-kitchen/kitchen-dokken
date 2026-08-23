@@ -50,6 +50,15 @@ Two of those are enforced for you in `spec/spec_helper.rb`: every example gets
 passed locally and failed on CI purely because the runner had Docker Hub
 credentials on disk.
 
+`CI` is removed from the environment for the same reason. The driver forwards
+it into every container it creates, so an ambient `CI=true` makes any spec
+that touches a container's `Env` assert against a different payload on a
+runner than on a laptop — which is exactly how the create-payload snapshots
+first broke. When you need to test environment-dependent behaviour, **force
+the state with a stub** rather than inheriting it; see "forwards the CI
+environment variable when kitchen runs in CI" in the driver spec.
+`spec/suite_hermeticity_spec.rb` proves both guards are live.
+
 When you need a Docker object, prefer the doubles in `spec/support` over
 stubbing the `docker-api` gem globally, so a failing expectation points at
 kitchen-dokken rather than at a fake.

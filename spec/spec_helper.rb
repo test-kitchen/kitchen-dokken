@@ -78,15 +78,27 @@ module Kitchen
       SANDBOX_HOME = Dir.mktmpdir("dokken-spec-home")
       Minitest.after_run { FileUtils.remove_entry(SANDBOX_HOME) if File.directory?(SANDBOX_HOME) }
 
-      # Point `Dir.home` at the shared empty home before every example.
+      # Point `Dir.home` at the shared empty home before every example, and
+      # take `CI` out of the environment.
       #
       # Examples that need to write into a home directory call {#stub_home!},
       # which replaces this with one they own.
+      #
+      # `CI` is removed for the same reason the home directory is faked: the
+      # driver forwards it into every container it creates
+      # (`container_env` appends "CI=<value>" whenever it is set), so leaving
+      # it ambient makes any spec that touches a container's Env assert
+      # against a different payload on a runner than on a laptop. That is not
+      # hypothetical -- it is what broke the create-payload snapshots.
+      #
+      # The forwarding behaviour is still covered, by an example that forces
+      # the CI state with a stub rather than inheriting it.
       #
       # @return [void]
       def setup
         super
         Dir.stubs(:home).returns(SANDBOX_HOME)
+        @original_ci = ENV.delete("CI")
       end
 
       # A disposable directory that lives for the duration of one example.
@@ -120,7 +132,8 @@ module Kitchen
         @fake_daemon ||= Kitchen::Dokken::Spec::FakeDaemon.new(images: images).install!
       end
 
-      # Remove the scratch home directory and uninstall the fake daemon.
+      # Restore the environment, remove the scratch home directory, and
+      # uninstall the fake daemon.
       #
       # The daemon replaces singleton methods on the real docker-api classes,
       # so leaving one installed would leak into every example that ran after
@@ -128,6 +141,7 @@ module Kitchen
       #
       # @return [void]
       def teardown
+        ENV["CI"] = @original_ci unless @original_ci.nil?
         @fake_daemon&.uninstall!
         FileUtils.remove_entry(@tmphome) if @tmphome && File.directory?(@tmphome)
         super
