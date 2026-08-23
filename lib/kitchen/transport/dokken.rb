@@ -488,7 +488,11 @@ module Kitchen
       # @return [TrueClass,FalseClass]
       def docker_for_mac_or_win?
         ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "docker-desktop"
-      rescue
+      # `::StandardError`, spelled out. This method lives inside module
+      # Kitchen, where a bare `StandardError` resolves to
+      # Kitchen::StandardError -- which Excon::Error::Socket is not, so an
+      # unreachable daemon would escape instead of answering "no".
+      rescue ::StandardError
         false
       end
 

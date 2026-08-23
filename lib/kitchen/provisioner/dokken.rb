@@ -214,7 +214,7 @@ module Kitchen
       # @return [String] the container name
       # @api private
       def runner_container_name
-        instance.name.to_s
+        instance_name.to_s
       end
 
       # Empty the sandbox after a converge, keeping the directory itself.

@@ -805,7 +805,11 @@ module Kitchen
         with_retries { @image = ::Docker::Image.get(name, { "platform" => oci_platform(config[:platform]) }, docker_connection) }
         with_retries { @image.remove(force: true) }
       rescue ::Docker::Error::DockerError
-        puts "Image #{name} not found. Nothing to delete."
+        # `debug`, not `puts`: this is routine during destroy, and writing
+        # straight to stdout puts it outside kitchen's logging entirely --
+        # it bypasses the log level, never reaches `.kitchen/logs`, and
+        # interleaves with kitchen's own output.
+        debug "Image #{name} not found. Nothing to delete."
       end
 
       # Whether the daemon knows about a container.
@@ -879,7 +883,7 @@ module Kitchen
       # @raise [RuntimeError] if the container could not be created
       def create_container(args, platform: nil)
         with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
-      rescue
+      rescue ::Docker::Error::NotFoundError
         with_retries do
           # Merge rather than append: start_runner_container passes config[:env]
           # straight through, so mutating args["Env"] would edit the driver's
