@@ -160,6 +160,39 @@ describe Kitchen::Provisioner::Dokken do
       _(command).must_include " -F doc"
     end
 
+    # ChefBase#chef_args appends `--log_level` after the `-l` built here, and
+    # chef lets the last occurrence of the option win -- so chef_log_level was
+    # accepted, staged into run_command, and then overridden by the parent's
+    # default of "auto". A converge asked to log at debug logged nothing.
+    describe "the log level chef actually runs at" do
+      # Every occurrence of the option, in the order chef will parse them.
+      def log_levels
+        command.scan(/(?:^|\s)(?:-l|--log_level)[ =](\S+)/).flatten
+      end
+
+      it "is the configured level, not the parent's default" do
+        _(log_levels.last).must_equal "warn"
+      end
+
+      it "follows chef_log_level when it is changed" do
+        config[:chef_log_level] = "debug"
+
+        _(log_levels.last).must_equal "debug"
+      end
+
+      it "never leaves the parent's auto to win" do
+        config[:chef_log_level] = "debug"
+
+        _(command).wont_include "--log_level auto"
+      end
+
+      it "agrees with itself however many times the option appears" do
+        config[:chef_log_level] = "info"
+
+        _(log_levels.uniq).must_equal ["info"]
+      end
+    end
+
     it "points chef at the client.rb and dna.json in the sandbox" do
       _(command).must_include " -c /opt/kitchen/client.rb"
       _(command).must_include " -j /opt/kitchen/dna.json"
