@@ -18,6 +18,7 @@
 require "kitchen"
 require "kitchen/provisioner/chef_infra"
 require_relative "../helpers"
+require_relative "../driver/dokken_version"
 
 include Dokken::Helpers
 
@@ -35,7 +36,10 @@ module Kitchen
     class Dokken < Kitchen::Provisioner::ChefInfra
       kitchen_provisioner_api_version 2
 
-      plugin_version Kitchen::VERSION
+      # kitchen-dokken's own version. Kitchen::VERSION is test-kitchen's,
+      # so `kitchen diagnose` reported the framework version as the
+      # plugin version for every dokken plugin.
+      plugin_version Kitchen::Driver::DOKKEN_VERSION
 
       default_config :root_path, "/opt/kitchen"
       default_config :chef_binary do |provisioner|

@@ -19,5 +19,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "docker-api", ">= 1.33", "< 3"
   spec.add_dependency "kitchen-omnibus-chef", ">= 1.0"
-  spec.add_dependency "test-kitchen", ">= 1.15", "< 5"
+  spec.add_dependency "test-kitchen", ">= 3.0", "< 5"
 end

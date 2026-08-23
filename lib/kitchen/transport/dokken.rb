@@ -22,6 +22,7 @@ require "digest/sha1" unless defined?(Digest::SHA1)
 require "open3" unless defined?(Open3)
 require "shellwords" unless defined?(Shellwords)
 require_relative "../helpers"
+require_relative "../driver/dokken_version"
 
 include Dokken::Helpers
 
@@ -45,7 +46,10 @@ module Kitchen
     class Dokken < Kitchen::Transport::Base
       kitchen_transport_api_version 2
 
-      plugin_version Kitchen::VERSION
+      # kitchen-dokken's own version. Kitchen::VERSION is test-kitchen's,
+      # so `kitchen diagnose` reported the framework version as the
+      # plugin version for every dokken plugin.
+      plugin_version Kitchen::Driver::DOKKEN_VERSION
 
       default_config :docker_info do |transport|
         docker_info(transport[:docker_host_url])
