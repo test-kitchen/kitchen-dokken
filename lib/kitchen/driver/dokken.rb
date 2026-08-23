@@ -850,7 +850,7 @@ module Kitchen
       # @raise [RuntimeError] if the container could not be created
       def create_container(args, platform: nil)
         with_retries { @container = ::Docker::Container.get(args["name"], {}, docker_connection) }
-      rescue
+      rescue ::Docker::Error::NotFoundError
         with_retries do
           # Merge rather than append: start_runner_container passes config[:env]
           # straight through, so mutating args["Env"] would edit the driver's

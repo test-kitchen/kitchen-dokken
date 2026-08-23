@@ -453,7 +453,12 @@ module Dokken
     def running_inside_docker_desktop?
       Resolv.getaddress "host.docker.internal."
       true
-    rescue
+    # Deliberately every StandardError, spelled out rather than bare. This is
+    # a probe: "can I resolve host.docker.internal" has exactly two useful
+    # answers, and a DNS timeout or a SocketError must be "no" rather than
+    # something that aborts a converge. Listing Resolv::ResolvError as well
+    # would be redundant -- it is a StandardError already.
+    rescue ::StandardError
       false
     end
 
