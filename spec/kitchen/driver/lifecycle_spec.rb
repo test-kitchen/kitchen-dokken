@@ -241,6 +241,80 @@ describe Kitchen::Driver::Dokken do
   # rather than trusting the last recorded action. The driver used to inherit
   # Base's "unknown", so a container that was plainly `Up` still listed as
   # unknown -- for a driver talking to a daemon that knows the answer exactly.
+  describe "#doctor" do
+    # doctor reports through warn; collect the messages so the assertions are
+    # about what it found rather than how the logger formatted it.
+    def doctor_messages
+      messages = []
+      driver.stubs(:warn).with { |m| messages << m; true }
+      [driver.doctor(state), messages]
+    end
+
+    it "passes when the daemon answers and no creds_file is configured" do
+      ::Docker.stubs(:version).returns("Version" => "27.1.1", "ApiVersion" => "1.46")
+
+      found, messages = doctor_messages
+
+      _(found).must_equal false
+      _(messages).must_be_empty
+    end
+
+    it "reports the daemon version it reached, so a pass says something" do
+      ::Docker.stubs(:version).returns("Version" => "27.1.1", "ApiVersion" => "1.46")
+
+      driver.doctor(state)
+
+      _(logged_output.string).must_match(/version 27\.1\.1, API 1\.46/)
+    end
+
+    it "reports an unreachable daemon and names the url it tried" do
+      ::Docker.stubs(:version).raises(Excon::Error::Socket.new(StandardError.new("no socket")))
+
+      found, messages = doctor_messages
+
+      _(found).must_equal true
+      _(messages.join("\n")).must_match(/Could not reach the docker daemon at/)
+    end
+
+    it "reports a creds_file that is not there" do
+      ::Docker.stubs(:version).returns("Version" => "27.1.1", "ApiVersion" => "1.46")
+      config[:creds_file] = "/nope/config.json"
+
+      found, messages = doctor_messages
+
+      _(found).must_equal true
+      _(messages.join("\n")).must_match(/does not exist/)
+    end
+
+    it "reports a creds_file that is not valid JSON" do
+      ::Docker.stubs(:version).returns("Version" => "27.1.1", "ApiVersion" => "1.46")
+      Tempfile.create("creds") do |f|
+        f.write("{ not json")
+        f.flush
+        config[:creds_file] = f.path
+
+        found, messages = doctor_messages
+
+        _(found).must_equal true
+        _(messages.join("\n")).must_match(/is not valid JSON/)
+      end
+    end
+
+    it "accepts a creds_file that parses" do
+      ::Docker.stubs(:version).returns("Version" => "27.1.1", "ApiVersion" => "1.46")
+      Tempfile.create("creds") do |f|
+        f.write('{"username":"u","password":"p"}')
+        f.flush
+        config[:creds_file] = f.path
+
+        found, messages = doctor_messages
+
+        _(found).must_equal false
+        _(messages).must_be_empty
+      end
+    end
+  end
+
   describe "#status" do
     def status
       driver.status(state)
