@@ -21,7 +21,6 @@ group :test do
 end
 
 group :development do
-  gem "pry"
   gem "yard" # `rake doc` -- documentation is not gated in CI
 end
 
