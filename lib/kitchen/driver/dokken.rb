@@ -186,7 +186,53 @@ module Kitchen
         }
       end
 
+      # Checks the two things that stop a dokken run before it starts.
+      #
+      # @param state [Hash] mutable instance and driver state
+      # @return [Boolean] true when a problem was reported
+      def doctor(state) # rubocop:disable Lint/UnusedMethodArgument
+        problems = daemon_problems + creds_file_problems
+
+        problems.each { |problem| warn(problem) }
+        !problems.empty?
+      end
+
       private
+
+      # Confirms the docker daemon is actually reachable, which is the single
+      # most common reason a dokken run fails, and reports the version when it
+      # is so the answer is useful rather than merely green.
+      #
+      # @return [Array<String>] a connectivity problem, or an empty array
+      def daemon_problems
+        version = ::Docker.version(docker_connection)
+        info("docker daemon at #{config[:docker_host_url]} is reachable " \
+             "(version #{version["Version"]}, API #{version["ApiVersion"]})")
+        []
+      rescue ::StandardError => e
+        ["Could not reach the docker daemon at #{config[:docker_host_url]}: " \
+         "#{e.message}"]
+      end
+
+      # A configured creds_file that cannot be read or parsed fails inside
+      # +authenticate!+ on the first line of +create+, before anything is
+      # built, so it is worth catching here.
+      #
+      # @return [Array<String>] a credentials problem, or an empty array
+      def creds_file_problems
+        return [] if config[:creds_file].nil?
+
+        unless File.exist?(config[:creds_file])
+          return ["creds_file #{config[:creds_file]} does not exist."]
+        end
+
+        JSON.parse(IO.read(config[:creds_file]))
+        []
+      rescue JSON::ParserError => e
+        ["creds_file #{config[:creds_file]} is not valid JSON: #{e.message}"]
+      rescue ::StandardError => e
+        ["creds_file #{config[:creds_file]} could not be read: #{e.message}"]
+      end
 
       # Translate a container's `State` into kitchen's status shape.
       #
