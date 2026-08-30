@@ -177,6 +177,38 @@ describe Kitchen::Driver::Dokken do
       end
     end
 
+    describe "user_ns_mode" do
+      # The option was declared, documented as "Docker UsernsMode for the
+      # container", and never written into the payload: the only thing that
+      # ever read it was the debug line in the privileged branch. Setting it
+      # did nothing at all.
+      it "is sent as UsernsMode" do
+        extra_config[:user_ns_mode] = "keep-id"
+
+        _(runner_payload["HostConfig"]["UsernsMode"]).must_equal "keep-id"
+      end
+
+      it "is omitted when not configured, so the daemon default applies" do
+        _(runner_payload["HostConfig"]).wont_include "UsernsMode"
+      end
+
+      # userns_host is the older spelling of `user_ns_mode: host`, so the
+      # explicit setting is the one that means something when both are given.
+      it "wins over userns_host" do
+        extra_config[:userns_host] = true
+        extra_config[:user_ns_mode] = "keep-id"
+
+        _(runner_payload["HostConfig"]["UsernsMode"]).must_equal "keep-id"
+      end
+
+      it "is still overridden by privileged" do
+        extra_config[:user_ns_mode] = "keep-id"
+        extra_config[:privileged] = true
+
+        _(runner_payload["HostConfig"]["UsernsMode"]).must_equal "host"
+      end
+    end
+
     describe "the entrypoint" do
       it "is omitted when not configured, so the image's own is used" do
         _(runner_payload).wont_include "Entrypoint"

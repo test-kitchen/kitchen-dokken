@@ -202,8 +202,8 @@ rebuilding them is the slow part.
 | `privileged` | `false` | Run privileged. Implies host user namespaces. |
 | `cap_add` / `cap_drop` | none | Linux capabilities to add or drop. |
 | `security_opt` | none | Values for `--security-opt`, e.g. `seccomp=unconfined`. |
-| `userns_host` | `false` | Disable user-namespace remapping for the container. |
-| `user_ns_mode` | none | Docker `UsernsMode` for the container. `privileged` is only honoured when this is `host`. |
+| `userns_host` | `false` | Shorthand for `user_ns_mode: host`: disable user-namespace remapping for the container. |
+| `user_ns_mode` | none | Docker `UsernsMode` for the container. Wins over `userns_host`; `privileged` forces `host` regardless, because the daemon will not run a privileged container inside a user namespace. |
 | `cgroupns_host` | `false` | Run in the host cgroup namespace. |
 | `volumes` | none | Anonymous volumes, or `host:container` bind mounts. |
 | `binds` | `[]` | Bind mounts, in Docker `host:container[:opts]` form. |

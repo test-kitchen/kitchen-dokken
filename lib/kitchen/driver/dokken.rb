@@ -616,14 +616,21 @@ module Kitchen
         if self[:cgroupns_host]
           config["HostConfig"]["CgroupnsMode"] = "host"
         end
-        if self[:userns_host]
-          config["HostConfig"]["UsernsMode"] = "host"
+        # `userns_host: true` is the older spelling of `user_ns_mode: host`.
+        # The explicit setting wins when both are given.
+        config["HostConfig"]["UsernsMode"] = "host" if self[:userns_host]
+        unless self[:user_ns_mode].to_s.empty?
+          config["HostConfig"]["UsernsMode"] = self[:user_ns_mode]
         end
 
+        # A privileged container cannot be namespaced -- the daemon rejects
+        # the combination outright -- so privileged overrides whatever else
+        # asked for. Said out loud, because it is the one case where the
+        # container does not run with the UsernsMode that was configured.
         if self[:privileged]
-          if self[:user_ns_mode] != "host"
+          if config["HostConfig"]["UsernsMode"] != "host"
             debug "driver - privileged mode is not supported with user namespaces enabled"
-            debug "driver - changing UsernsMode from '#{self[:user_ns_mode]}' to 'host'"
+            debug "driver - changing UsernsMode from '#{config["HostConfig"]["UsernsMode"]}' to 'host'"
           end
           config["HostConfig"]["UsernsMode"] = "host"
         end
