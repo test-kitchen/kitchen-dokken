@@ -1687,12 +1687,66 @@ describe Kitchen::Driver::Dokken do
 
     it "wraps a credential helper in a lazily invoked proc" do
       write_docker_config("credHelpers" => { "quay.io" => "ecr-login" })
-      driver.stubs(:`).returns(JSON.dump("ServerURL" => "quay.io", "Username" => "u", "Secret" => "s"))
+      Open3.stubs(:capture2).returns([
+        JSON.dump("ServerURL" => "quay.io", "Username" => "u", "Secret" => "s"),
+        stub(success?: true, exitstatus: 0),
+      ])
 
       helper = driver.send(:docker_config_creds)["quay.io"]
 
       _(helper).must_respond_to :call
       _(helper.call).must_equal(serveraddress: "quay.io", username: "u", password: "s")
+    end
+
+    # The helper protocol is "registry key on stdin, JSON object on stdout".
+    # It used to be `echo #{k} | docker-credential-#{v} get`, which handed a
+    # key out of a file this gem did not write straight to /bin/sh.
+    it "runs the credential helper as argv, with the registry on stdin" do
+      write_docker_config("credHelpers" => { "quay.io" => "ecr-login" })
+      captured = nil
+      Open3.stubs(:capture2).with do |*args, **opts|
+        captured = [args, opts]
+        true
+      end.returns([JSON.dump("ServerURL" => "quay.io"), stub(success?: true, exitstatus: 0)])
+
+      driver.send(:docker_config_creds)["quay.io"].call
+
+      _(captured[0]).must_equal ["docker-credential-ecr-login", "get"]
+      _(captured[1][:stdin_data]).must_equal "quay.io"
+    end
+
+    # A helper that is not installed used to reach JSON.parse with the empty
+    # string /bin/sh returns for status 127, and the run died on "unexpected
+    # end of input" -- naming neither the helper nor the registry.
+    it "pulls anonymously when the credential helper is not installed" do
+      write_docker_config("credHelpers" => { "quay.io" => "nope" })
+      Open3.stubs(:capture2).raises(Errno::ENOENT, "docker-credential-nope")
+
+      _(driver.send(:docker_config_creds)["quay.io"].call).must_be_nil
+    end
+
+    it "pulls anonymously when the credential helper exits non-zero" do
+      write_docker_config("credHelpers" => { "quay.io" => "ecr-login" })
+      Open3.stubs(:capture2).returns(["", stub(success?: false, exitstatus: 1)])
+
+      _(driver.send(:docker_config_creds)["quay.io"].call).must_be_nil
+    end
+
+    it "pulls anonymously when the credential helper does not answer with JSON" do
+      write_docker_config("credHelpers" => { "quay.io" => "ecr-login" })
+      Open3.stubs(:capture2).returns(["not json", stub(success?: true, exitstatus: 0)])
+
+      _(driver.send(:docker_config_creds)["quay.io"].call).must_be_nil
+    end
+
+    # An interrupted `docker login` leaves a truncated config.json behind.
+    # That used to abort every kitchen create with a bare parser error, from
+    # a code path the user never asked for.
+    it "ignores a config.json that is not valid JSON" do
+      FileUtils.mkdir_p(File.join(tmphome, ".docker"))
+      File.write(File.join(tmphome, ".docker", "config.json"), '{"auths": ')
+
+      _(driver.send(:docker_config_creds)).must_equal({})
     end
 
     it "reads the file only once" do

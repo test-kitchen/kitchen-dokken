@@ -22,6 +22,7 @@ require "tmpdir" unless defined?(Dir.mktmpdir)
 require "docker"
 require "shellwords" unless defined?(Shellwords)
 require "base64" unless defined?(Base64)
+require "open3" unless defined?(Open3)
 require_relative "../helpers"
 require_relative "dokken_version"
 
@@ -815,7 +816,7 @@ module Kitchen
         @docker_config_creds = {}
         config_file = ::File.join(::Dir.home, ".docker", "config.json")
         if ::File.exist?(config_file)
-          config = JSON.load_file!(config_file)
+          config = read_docker_config(config_file)
           if config["auths"]
             config["auths"].each do |k, v|
               next if v["auth"].nil?
@@ -828,10 +829,7 @@ module Kitchen
 
           if config["credHelpers"]
             config["credHelpers"].each do |k, v|
-              @docker_config_creds[k] = Proc.new do
-                c = JSON.parse(`echo #{k} | docker-credential-#{v} get`)
-                { serveraddress: c["ServerURL"], username: c["Username"], password: c["Secret"] }
-              end
+              @docker_config_creds[k] = Proc.new { credential_helper_creds(k, v) }
             end
           end
         else
@@ -839,6 +837,63 @@ module Kitchen
         end
 
         @docker_config_creds
+      end
+
+      # Read ~/.docker/config.json.
+      #
+      # A config.json that is not valid JSON is somebody else's bug -- an
+      # interrupted `docker login`, a credential helper that wrote a partial
+      # file -- but it used to abort every `kitchen create` with a bare
+      # `unexpected token at ...` and no indication of which file was at
+      # fault, from a code path the user never asked for. Credentials are an
+      # optimisation here: an unreadable config means "pull anonymously", not
+      # "stop".
+      #
+      # @param config_file [String] path to config.json
+      # @return [Hash] the parsed config, or an empty hash
+      def read_docker_config(config_file)
+        JSON.load_file!(config_file)
+      rescue JSON::ParserError, ::SystemCallError, IOError => e
+        warn("Ignoring #{config_file}: #{e.message}")
+        {}
+      end
+
+      # Ask a docker credential helper for one registry's credentials.
+      #
+      # The helper protocol is "write the registry key on stdin, read a JSON
+      # object back". Run as argv rather than through a shell: a registry key
+      # is an arbitrary string out of a file this gem did not write, and
+      # `echo #{k} | docker-credential-#{v} get` handed both it and the
+      # helper name straight to /bin/sh.
+      #
+      # A helper that is not installed, that fails, or that answers with
+      # anything other than JSON is reported and treated as "no credentials
+      # for this registry", so the pull is retried anonymously. Previously
+      # the not-installed case reached JSON.parse with the empty string
+      # /bin/sh returns for status 127, and the whole run died on
+      # `unexpected end of input` -- which names neither the helper nor the
+      # registry.
+      #
+      # @param registry [String] the config.json credHelpers key
+      # @param helper [String] the helper suffix, e.g. "ecr-login"
+      # @return [Hash, nil] the credentials, or nil when they could not be read
+      def credential_helper_creds(registry, helper)
+        program = "docker-credential-#{helper}"
+        output, status = Open3.capture2(program, "get", stdin_data: registry)
+
+        unless status.success?
+          warn("#{program} exited #{status.exitstatus} for #{registry}; pulling anonymously")
+          return nil
+        end
+
+        c = JSON.parse(output)
+        { serveraddress: c["ServerURL"], username: c["Username"], password: c["Secret"] }
+      rescue ::SystemCallError => e
+        warn("Could not run #{program} for #{registry} (#{e.message}); pulling anonymously")
+        nil
+      rescue JSON::ParserError
+        warn("#{program} did not return JSON for #{registry}; pulling anonymously")
+        nil
       end
 
       # The `auths` key `docker login` itself writes for Docker Hub.
