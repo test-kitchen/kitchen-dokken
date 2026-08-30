@@ -7,16 +7,46 @@ Fast Chef Infra cookbook testing with Docker. `kitchen-dokken` is a
 containers in seconds rather than minutes.
 
 - [Why kitchen-dokken?](#why-kitchen-dokken)
+  - [When *not* to use it](#when-not-to-use-it)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [How it works](#how-it-works)
 - [Configuration reference](#configuration-reference)
+  - [Driver](#driver) · [Provisioner](#provisioner) · [Transport](#transport)
 - [Recipes](#recipes)
+  - Images and platforms:
+    [Testing services and init systems](#testing-services-and-init-systems) ·
+    [Minimalist images](#minimalist-images) ·
+    [Using dokken-images](#using-dokken-images) ·
+    [Multi-architecture testing](#multi-architecture-testing)
+  - Chef Infra Client:
+    [Using Cinc](#using-cinc) ·
+    [Using with Chef](#using-with-chef) ·
+    [Chef Infra Client options](#chef-infra-client-options) ·
+    [Testing without Chef](#testing-without-chef) ·
+    [Pre-release and archived Chef versions](#pre-release-and-archived-chef-versions)
+  - Networking:
+    [Networking](#networking) ·
+    [IPv6](#ipv6) ·
+    [Testing behind a TLS-intercepting proxy](#testing-behind-a-tls-intercepting-proxy)
+  - Registries and daemons:
+    [Private registries](#private-registries) ·
+    [Pulling through a mirror](#pulling-through-a-mirror) ·
+    [Remote and containerised Docker hosts](#remote-and-containerised-docker-hosts) ·
+    [Using Podman](#using-podman)
+  - Performance and resources:
+    [Caching downloaded packages](#caching-downloaded-packages) ·
+    [Preserving the Chef cache](#preserving-the-chef-cache) ·
+    [Limiting container memory](#limiting-container-memory) ·
+    [tmpfs on /tmp](#tmpfs-on-tmp)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [FAQ](#faq)
 - [License](#license)
+
+Also in this repository: [Running under Podman](documentation/PODMAN.md) and
+[Accepting the Chef license](documentation/chef_license.md).
 
 ## Why kitchen-dokken?
 
@@ -56,7 +86,11 @@ use [kitchen-docker](https://github.com/test-kitchen/kitchen-docker).
 - Ruby 3.1 or later
 - A reachable Docker daemon — Docker Engine, Docker Desktop, Rancher Desktop
   or [Podman](documentation/PODMAN.md)
-- Test Kitchen 1.15 or later
+- Test Kitchen 3.0 or later (below 5.0)
+- `kitchen-omnibus-chef` 1.0 or later, which is where the `ChefInfra`
+  provisioner this plugin extends now lives
+
+The last two are gem dependencies and are installed for you.
 
 The daemon is found via `DOCKER_HOST`, then `/var/run/docker.sock`, then
 `tcp://127.0.0.1:2375`. Set `docker_host_url` to override.
@@ -186,78 +220,130 @@ rebuilding them is the slow part.
 
 ## Configuration reference
 
+Every option below is optional; the defaults are what you get from the
+`kitchen.yml` in [Quick start](#quick-start). Types are given because several
+options accept more than one shape — anywhere `String, Array<String>` appears,
+a bare scalar is wrapped for you, so `cap_add: SYS_ADMIN` and
+`cap_add: [SYS_ADMIN]` mean the same thing.
+
 ### Driver
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `image` | derived from the platform name | Base image for the platform under test, e.g. `dokken/almalinux-9`. Falls back to `<platform>:<release>`. |
-| `chef_version` | `latest` | Tag of the Chef Infra image to mount. Also accepts `current` for pre-releases, or `stable` as an alias for `latest`. |
-| `chef_image` | `chef/chef` (or `cincproject/cinc`) | Repository the Chef Infra Client is mounted from. |
-| `pid_one_command` | `sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"` | Command run as PID 1 to keep the container alive. Set to an init for service testing. |
-| `intermediate_instructions` | none | Extra Dockerfile lines baked into the work image. See [Minimalist images](#minimalist-images). |
-| `entrypoint` | none | Container `Entrypoint`. |
-| `env` | none | Environment variables, as `KEY=value` strings. |
-| `hostname` | `dokken` | Container hostname, also registered as a network alias. |
-| `hostname_aliases` | none | Extra network aliases resolving to the container. |
-| `privileged` | `false` | Run privileged. Implies host user namespaces. |
-| `cap_add` / `cap_drop` | none | Linux capabilities to add or drop. |
-| `security_opt` | none | Values for `--security-opt`, e.g. `seccomp=unconfined`. |
-| `userns_host` | `false` | Disable user-namespace remapping for the container. |
-| `user_ns_mode` | none | Docker `UsernsMode` for the container. `privileged` is only honoured when this is `host`. |
-| `cgroupns_host` | `false` | Run in the host cgroup namespace. |
-| `volumes` | none | Anonymous volumes, or `host:container` bind mounts. |
-| `binds` | `[]` | Bind mounts, in Docker `host:container[:opts]` form. |
-| `tmpfs` | `{}` | tmpfs mounts, as `/path: options` or `"/path:options"`. |
-| `memory_limit` | `0` (unlimited) | Container memory limit, in bytes. |
-| `ports` | none | Published ports: `container`, `host:container` or `ip:host:container`, with optional `/proto` and `low-high` ranges. |
-| `network_mode` | `dokken` | Docker network to attach to. `host` and `bridge` skip alias configuration. |
-| `dns` / `dns_search` | none | Nameservers and search domains for the container. |
-| `links` | none | Legacy container links. |
-| `ipv6` | `false` | Create the `dokken` network with IPv6 enabled. |
-| `ipv6_subnet` | `2001:db8:1::/64` | Subnet used when `ipv6` is on. |
-| `platform` | none | OCI platform to pin containers and images to, e.g. `linux/arm64/v8`. See [Multi-architecture testing](#multi-architecture-testing). |
-| `docker_registry` | none | Registry prefix applied to every image pulled. |
-| `image_prefix` | none | Prefix for the locally built work image name. |
-| `pull_platform_image` | `true` | Always pull the platform image. `false` pulls only when it is missing. |
-| `pull_chef_image` | `true` | Always pull the Chef Infra image. `false` pulls only when it is missing. |
-| `creds_file` | none | JSON file of registry credentials. See [Private registries](#private-registries). |
-| `docker_config_creds` | `true` | Read credentials from `~/.docker/config.json`. |
-| `data_image` | `dokken/kitchen-cache:latest` | Image the data container is built from. |
-| `data_ssh_port` | none | Fixed host port for the data container's SSH service. |
-| `docker_host_url` | auto-detected | Docker daemon to talk to. |
-| `read_timeout` / `write_timeout` | `3600` | Docker API timeouts, in seconds. |
-| `api_retries` | `20` | How many times to retry a retryable Docker API call. |
-| `docker_info` | queried from the daemon | Cached `docker info` output, used to detect the daemon's operating system. Resolved automatically; set it only to override that detection. |
+#### Image and Chef Infra Client
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `image` | String | derived from the platform name | Base image for the platform under test, e.g. `dokken/almalinux-9`. Falls back to `<platform>:<release>`. |
+| `chef_version` | String | `latest` | Tag of the Chef Infra image to mount. Also accepts `current` for pre-releases, or `stable` as an alias for `latest`. |
+| `chef_image` | String | `chef/chef` (or `cincproject/cinc`) | Repository the Chef Infra Client is mounted from. |
+| `intermediate_instructions` | String, Array\<String\> | none | Extra Dockerfile lines baked into the work image. See [Minimalist images](#minimalist-images). |
+| `image_prefix` | String | none | Prefix for the locally built work image name. |
+| `pull_platform_image` | Boolean | `true` | Always pull the platform image. `false` pulls only when it is missing. |
+| `pull_chef_image` | Boolean | `true` | Always pull the Chef Infra image. `false` pulls only when it is missing. |
+| `platform` | String | `""` (the daemon's own) | OCI platform to pin containers and images to, e.g. `linux/arm64/v8`. See [Multi-architecture testing](#multi-architecture-testing). |
+
+#### Container runtime
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `pid_one_command` | String | `sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"` | Command run as PID 1 to keep the container alive. Set to an init for service testing. |
+| `entrypoint` | String, Array\<String\> | none | Container `Entrypoint`. |
+| `env` | Array\<String\> | none | Environment variables, as `KEY=value` strings. |
+| `privileged` | Boolean | `false` | Run privileged. Forces host user namespaces, because the daemon will not run a privileged container inside one. |
+| `cap_add` | String, Array\<String\> | none | Linux capabilities to add. |
+| `cap_drop` | String, Array\<String\> | none | Linux capabilities to drop. |
+| `security_opt` | String, Array\<String\> | none | Values for `--security-opt`, e.g. `seccomp=unconfined`. |
+| `userns_host` | Boolean | `false` | Shorthand for `user_ns_mode: host`: disable user-namespace remapping for the container. |
+| `user_ns_mode` | String | none | Docker `UsernsMode` for the container. Wins over `userns_host`; `privileged` forces `host` regardless. |
+| `cgroupns_host` | Boolean | `false` | Run in the host cgroup namespace. |
+| `memory_limit` | Integer | `0` (unlimited) | Container memory limit, in bytes. |
+
+#### Volumes
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `volumes` | Array\<String\>, Hash | none | Anonymous volumes. Entries containing a colon are treated as `host:container` bind mounts and moved into `binds` for you. |
+| `binds` | Array\<String\> | `[]` | Bind mounts, in Docker `host:container[:opts]` form. |
+| `tmpfs` | Hash, Array\<String\> | `{}` | tmpfs mounts, as a `/path: options` mapping or `"/path:options"` strings. |
+
+#### Networking
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `hostname` | String | `dokken` | Container hostname, also registered as a network alias. |
+| `hostname_aliases` | String, Array\<String\> | none | Extra network aliases resolving to the container. |
+| `network_mode` | String | `dokken` | Docker network to attach to. `host` and `bridge` skip alias configuration. |
+| `ports` | String, Integer, Array, Hash | none | Published ports: `container`, `host:container` or `ip:host:container`, with optional `/proto` and `low-high` ranges. |
+| `dns` | String, Array\<String\> | none | Nameservers for the container. |
+| `dns_search` | String, Array\<String\> | none | DNS search domains for the container. |
+| `links` | String, Array\<String\> | none | Legacy container links. |
+| `ipv6` | Boolean | `false` | Create the `dokken` network with IPv6 enabled. |
+| `ipv6_subnet` | String | `2001:db8:1::/64` | Subnet used when `ipv6` is on. |
+
+#### Registries
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `docker_registry` | String | none | Registry prefix applied to every image pulled. |
+| `creds_file` | String | none | Path to a JSON file of registry credentials. See [Private registries](#private-registries). |
+| `docker_config_creds` | Boolean | `true` | Read credentials from `~/.docker/config.json`. |
+
+#### Daemon and data container
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `docker_host_url` | String | auto-detected | Docker daemon to talk to. |
+| `read_timeout` | Integer | `3600` | Docker API read timeout, in seconds. |
+| `write_timeout` | Integer | `3600` | Docker API write timeout, in seconds. |
+| `api_retries` | Integer | `20` | How many times to retry a retryable Docker API call. |
+| `docker_info` | Hash | queried from the daemon | Cached `docker info` output, used to detect the daemon's operating system. Resolved automatically; set it only to override that detection. |
+| `data_image` | String | `dokken/kitchen-cache:latest` | Image the data container is built from. Only used when the daemon cannot read your filesystem — see [Remote and containerised Docker hosts](#remote-and-containerised-docker-hosts). |
+| `data_ssh_port` | Integer, String | none | Fixed host port for the data container's SSH service. |
+
+`pre_create_command`, which the Test Kitchen driver base class declares, is
+**not** supported: `kitchen-dokken` replaces `create` outright and never runs
+it.
 
 ### Provisioner
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `product_name` | `chef` | `chef` or `cinc`. See [Using Cinc](#using-cinc). |
-| `product_version` | the driver's `chef_version` | Version of the client the provisioner reports running. Follows `chef_version` unless overridden. |
-| `chef_license` | prompted, then remembered | License acceptance value, e.g. `accept`, `accept-silent`, `accept-no-persist`. Set it to avoid an interactive prompt in CI. |
-| `chef_binary` | `/opt/chef/bin/chef-client` | Client binary to run. Defaults to the Cinc path when `product_name: cinc`. |
-| `chef_options` | `" -z"` | Options passed to the client. A leading space is added if you omit it. |
-| `chef_log_level` | `warn` | Value for `-l`. |
-| `chef_output_format` | `doc` | Value for `-F`. |
-| `root_path` | `/opt/kitchen` | Where the kitchen sandbox is mounted inside the container. |
-| `clean_dokken_sandbox` | `true` | Empty the sandbox after each converge. See [Preserving the Chef cache](#preserving-the-chef-cache). |
-| `profile_ruby` | `false` | Pass `--profile-ruby`. |
-| `slow_resource_report` | `false` | Pass `--slow-report`. An Integer sets the threshold. Requires Chef Infra Client 17.2+. |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `product_name` | String | `chef` | `chef` or `cinc`. See [Using Cinc](#using-cinc). |
+| `product_version` | String | the driver's `chef_version` | Version of the client the provisioner reports running. Follows `chef_version` unless overridden. |
+| `chef_license` | String | prompted, then remembered | License acceptance value, e.g. `accept`, `accept-silent`, `accept-no-persist`. Set it to avoid an interactive prompt in CI. |
+| `chef_binary` | String | `/opt/chef/bin/chef-client` | Client binary to run. Defaults to the Cinc path when `product_name: cinc`. |
+| `chef_options` | String | `" -z"` | Options passed to the client. A leading space is added if you omit it. |
+| `chef_log_level` | String | `warn` | Value for `-l`. This is the log level the client actually runs at: it also overwrites the inherited `log_level`, so setting `log_level` on its own has no effect. |
+| `chef_output_format` | String | `doc` | Value for `-F`. |
+| `root_path` | String | `/opt/kitchen` | Where the kitchen sandbox is mounted inside the container. |
+| `clean_dokken_sandbox` | Boolean | `true` | Empty the sandbox after each converge. See [Preserving the Chef cache](#preserving-the-chef-cache). |
+| `profile_ruby` | Boolean | `false` | Pass `--profile-ruby`. |
+| `slow_resource_report` | Boolean, Integer | none | Pass `--slow-report`. An Integer sets the threshold. Requires Chef Infra Client 17.2+. |
+| `docker_host_url` | String | auto-detected | Docker daemon the provisioner resolves its own `docker_info` against. |
+| `docker_info` | Hash | queried from the daemon | Cached `docker info` output for the provisioner's `docker_host_url`. The driver, provisioner and transport resolve this independently. |
 
-The provisioner inherits from `ChefInfra`, so its options — `enforce_idempotency`,
+The provisioner inherits from `ChefInfra`, so `enforce_idempotency`,
 `multiple_converge`, `deprecations_as_errors`, `retry_on_exit_code`,
-`max_retries`, `wait_for_retry` and the rest — work here too.
+`max_retries`, `wait_for_retry`, `attributes`, `named_run_list`,
+`policyfile`, `berksfile_path` and the rest of the cookbook-resolution options all
+work here too.
+
+Two inherited options do **not**, because this provisioner replaces `call`
+rather than extending it:
+
+- `uploads` — files are never copied in.
+- `downloads` — files are never copied out. The transport implements no
+  `download` either, so this one is a genuine gap rather than a decision.
 
 ### Transport
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `login_command` | `docker` | Executable used by `kitchen login`. |
-| `read_timeout` / `write_timeout` | `3600` | Docker API timeouts, in seconds. |
-| `host_ip_override` | auto-detected | Address used to reach the data container's SSH service. Detected as `host.docker.internal` inside Docker Desktop, `localhost` against a Docker Desktop daemon, and unused otherwise. |
-| `docker_host_url` | auto-detected | Docker daemon to talk to. |
-| `docker_info` | queried from the daemon | Cached `docker info` output for `docker_host_url`. The driver and transport resolve this independently. |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `login_command` | String | `docker` | Executable used by `kitchen login`. |
+| `write_timeout` | Integer | `3600` | How long a single `docker exec` may run, in seconds. Despite the name this is a command timeout, not a Docker API timeout. |
+| `read_timeout` | Integer | `3600` | Accepted but unused. The transport's own API connection uses the global docker-api options; the driver's `read_timeout` is the one that has an effect. |
+| `host_ip_override` | String, `false` | auto-detected | Address used to reach the data container's SSH service. Detected as `host.docker.internal` inside Docker Desktop, `localhost` against a Docker Desktop daemon, and unused otherwise. |
+| `docker_host_url` | String | auto-detected | Docker daemon to talk to. |
+| `docker_info` | Hash | queried from the daemon | Cached `docker info` output for `docker_host_url`. The driver, provisioner and transport resolve this independently. |
 
 ## Recipes
 
@@ -681,9 +767,24 @@ A complete, non-trivial `kitchen.yml` lives in the
 
 ## Troubleshooting
 
+Two Test Kitchen commands answer most of the questions below without you
+having to guess:
+
+```shell
+kitchen doctor default-almalinux-9   # is the daemon reachable? is creds_file readable?
+kitchen list --live                  # ask the daemon what is actually running
+```
+
+`kitchen doctor` reports the daemon it resolved, its version, and whether a
+configured `creds_file` exists and parses — the two things that stop a run
+before anything is built. `kitchen list --live` reads container state straight
+from the daemon rather than from the last recorded action, so a container that
+died out from under Test Kitchen shows as `exited` instead of `created`.
+
 **`could not connect to the docker host ... Is docker running?`**
 The daemon is unreachable. Check `docker info`, and set `docker_host_url` if
 your daemon is not at `DOCKER_HOST` or `/var/run/docker.sock`.
+Run `kitchen doctor` to see which daemon was resolved.
 
 **The `service` resource fails, or `systemctl` reports no init system.**
 Set `pid_one_command` to your init and run `privileged: true`. See
@@ -705,6 +806,19 @@ force a rebuild.
 **IPv6 settings do not take effect.**
 The `dokken` network is created once and never reconfigured. See
 [IPv6](#ipv6).
+
+**`Transferring files to ...` hangs or times out against a remote daemon.**
+The sandbox is shipped over SSH to a data container, and Test Kitchen has to
+have a route to it. See
+[Remote and containerised Docker hosts](#remote-and-containerised-docker-hosts)
+— when Test Kitchen is itself in a container, it has to join the `dokken`
+network.
+
+**A container will not start, and the error names `pid 1`.**
+The image's PID 1 exited immediately. Check `pid_one_command` and
+`entrypoint`, and read `docker logs <instance-name>`. If the daemon refused
+outright the error says so instead, and quotes the daemon's own reason — a
+capability the kernel would not grant, or a port already bound.
 
 **Stale containers or images are piling up.**
 `kitchen destroy` intentionally leaves the shared chef container and the
