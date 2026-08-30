@@ -11,6 +11,13 @@
 * Docs: document the last four options and lead with Cinc ([#398](https://github.com/test-kitchen/kitchen-dokken/pull/398)) ([c13e9ba](https://github.com/test-kitchen/kitchen-dokken/commit/c13e9ba))
 * Remove dependabot config in favor of renovate ([#400](https://github.com/test-kitchen/kitchen-dokken/pull/400)) ([b24f802](https://github.com/test-kitchen/kitchen-dokken/commit/b24f802))
 
+## [2.25.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.24.0...v2.25.0) (2026-08-30)
+
+
+### Features
+
+* implement the driver doctor hook ([#418](https://github.com/test-kitchen/kitchen-dokken/issues/418)) ([46760db](https://github.com/test-kitchen/kitchen-dokken/commit/46760dbada39799afef14c2b21c8bedc6c9c0aad))
+
 ## [2.24.0](https://github.com/test-kitchen/kitchen-dokken/compare/v2.23.8...v2.24.0) (2026-08-23)
 
 
