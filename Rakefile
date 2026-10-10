@@ -11,12 +11,6 @@ end
 desc "Run all unit tests"
 task test: %i{unit}
 
-desc "Run the unit tests with coverage reporting"
-task :coverage do
-  ENV["COVERAGE"] = "1"
-  Rake::Task[:unit].invoke
-end
-
 begin
   require "yard"
   YARD::Rake::YardocTask.new(:doc)

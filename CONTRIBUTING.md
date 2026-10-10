@@ -36,8 +36,6 @@ bundle exec rake        # cookstyle + unit tests
 
 ```shell
 bundle exec rake unit                 # minitest, via spec/
-bundle exec rake coverage             # the same, with a coverage report
-COVERAGE=1 bundle exec rake unit      # equivalent
 ```
 
 The suite is **hermetic**, and new tests are expected to keep it that way. It
@@ -62,10 +60,6 @@ environment variable when kitchen runs in CI" in the driver spec.
 When you need a Docker object, prefer the doubles in `spec/support` over
 stubbing the `docker-api` gem globally, so a failing expectation points at
 kitchen-dokken rather than at a fake.
-
-Coverage is reported but **not gated** — it is a tool for finding gaps, not a
-number to defend. The suite is built around what each layer can actually
-catch, not around a percentage.
 
 ### The layers, and what each one is for
 

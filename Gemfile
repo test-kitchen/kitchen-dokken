@@ -17,7 +17,6 @@ group :test do
   gem "minitest"
   gem "mocha"
   gem "rake", ">= 11.0"
-  gem "simplecov", require: false # opt-in via COVERAGE=1
 end
 
 group :development do

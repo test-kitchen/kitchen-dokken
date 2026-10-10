@@ -18,16 +18,6 @@ module Warning
   end
 end
 
-# Opt-in coverage: `COVERAGE=1 bundle exec rake unit`, or `rake coverage`.
-# Deliberately not enforced -- it is a tool for finding gaps, not a gate.
-if ENV["COVERAGE"]
-  require "simplecov"
-  SimpleCov.start do
-    add_filter "/spec/"
-    enable_coverage :branch
-  end
-end
-
 require "minitest/autorun"
 require "mocha/minitest"
 
