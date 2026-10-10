@@ -512,12 +512,43 @@ describe Kitchen::Transport::Dokken do
 
       it "builds an rsync command that will not prompt or cache host keys" do
         cmd = connection.send(:rsync_command, ["/a", "/b"], "/opt/kitchen", "172.17.0.5", "22", "/keys")
+        ssh_opts = cmd[cmd.index("-e") + 1]
 
-        _(cmd).must_include "-o StrictHostKeyChecking=no"
-        _(cmd).must_include "-o UserKnownHostsFile=/dev/null"
-        _(cmd).must_include "-i /keys/id_rsa"
-        _(cmd).must_include "-p 22"
-        _(cmd).must_include "/a /b root@172.17.0.5:/opt/kitchen"
+        _(ssh_opts).must_include "-o StrictHostKeyChecking=no"
+        _(ssh_opts).must_include "-o UserKnownHostsFile=/dev/null"
+        _(ssh_opts).must_include "-i /keys/id_rsa"
+        _(ssh_opts).must_include "-p 22"
+      end
+
+      # The sandboxes live under the user's home directory, and a home
+      # directory with a space in it is ordinary on macOS and Windows.
+      # Interpolated into a shell command line it split into two arguments
+      # and rsync failed with "No such file or directory" naming half a path;
+      # a quote or a `$` in the path was worse, because the shell acted on it.
+      it "keeps each path a separate argument, so spaces and quotes survive" do
+        local = "/Users/Tim Smith/.dokken/kitchen_sandbox/abc-default"
+        cmd = connection.send(:rsync_command, [local], "/opt/kitchen", "172.17.0.5", "22", "/keys")
+
+        _(cmd).must_be_kind_of Array
+        _(cmd.first).must_equal Kitchen::Transport::Dokken::Connection::RSYNC_PATH
+        _(cmd).must_include local
+        _(cmd.last).must_equal "root@172.17.0.5:/opt/kitchen"
+      end
+
+      # Splatted into Open3, so rsync is exec'd directly. Handing it one
+      # joined string would put /bin/sh back in the path.
+      it "spawns rsync without a shell" do
+        connection.stubs(:rsync_available?).returns(true)
+        captured = nil
+        Open3.stubs(:capture2e).with do |*args|
+          captured = args
+          true
+        end.returns(["", stub(success?: true, exitstatus: 0)])
+
+        connection.upload(["/tmp/sand box"], "/opt/kitchen")
+
+        _(captured.length).must_be :>, 1
+        _(captured).must_include "/tmp/sand box"
       end
 
       # The old code shelled out with backticks and rescued Errno::ENOENT to

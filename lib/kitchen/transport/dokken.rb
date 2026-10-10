@@ -349,14 +349,27 @@ module Kitchen
 
         # Build the rsync invocation used to copy the sandbox in.
         #
+        # Returned as an argv array, not a command line, so that
+        # {#upload_via_rsync} can spawn rsync directly instead of through
+        # /bin/sh. The paths here are the kitchen and verifier sandboxes,
+        # which live under the user's home directory -- and a home directory
+        # containing a space is ordinary on macOS and Windows. Interpolated
+        # into a shell string it split into two arguments, and rsync failed
+        # with "No such file or directory" naming half a path. A quote or a
+        # `$` in the path was worse: the shell acted on it.
+        #
         # @param locals [Array<String>] local paths to copy
         # @param remote [String] the destination path inside the container
         # @param ssh_ip [String] the address to ssh to
         # @param ssh_port [String] the port to ssh to
         # @param key_dir [String] directory holding the `id_rsa` file
-        # @return [String] a shell command line
+        # @return [Array<String>] an argv array
         # @api private
         def rsync_command(locals, remote, ssh_ip, ssh_port, key_dir)
+          # rsync word-splits the -e value itself, so this one stays a
+          # string. It carries no user-supplied path: key_dir is built by
+          # {#write_insecure_key} under Dir.tmpdir, and ssh_port comes from
+          # the daemon's own port bindings.
           ssh_opts = [
             "ssh -2",
             "-i #{key_dir}/id_rsa",
@@ -369,7 +382,7 @@ module Kitchen
             "-p #{ssh_port}",
           ].join(" ")
 
-          "#{RSYNC_PATH} -a -e '#{ssh_opts}' #{locals.join(" ")} root@#{ssh_ip}:#{remote}"
+          [RSYNC_PATH, "-a", "-e", ssh_opts, *locals, "root@#{ssh_ip}:#{remote}"]
         end
 
         # Copy files in with rsync.
@@ -388,9 +401,12 @@ module Kitchen
         # @api private
         def upload_via_rsync(locals, remote, ssh_ip, ssh_port, key_dir)
           cmd = rsync_command(locals, remote, ssh_ip, ssh_port, key_dir)
-          debug "rsync_cmd :#{cmd}:"
+          debug "rsync_cmd :#{cmd.inspect}:"
 
-          output, status = Open3.capture2e(cmd)
+          # Splatted, so Open3 execs rsync directly. Handing it one joined
+          # string would put /bin/sh back in the path and undo the quoting
+          # this argv exists to avoid.
+          output, status = Open3.capture2e(*cmd)
           return if status.success?
 
           raise Kitchen::Transport::TransportFailed.new(
