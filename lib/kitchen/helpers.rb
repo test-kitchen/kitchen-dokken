@@ -134,6 +134,13 @@ module Dokken
 
     # Build and tag the data image, unless it is already present.
     #
+    # Note that every `::Docker` call below is unqualified, so all four run
+    # against the process-global connection rather than the driver's own
+    # {Kitchen::Driver::Dokken#docker_connection}. That global is whatever
+    # `::Docker.url =` in {#docker_info} last set, so with a kitchen.yml
+    # pointing plugins at different daemons this can build the image on a
+    # daemon other than the one the runner is created on.
+    #
     # @param registry [String, nil] a registry to pull the base image from
     # @return [void]
     def create_data_image(registry)
@@ -263,16 +270,24 @@ module Dokken
     # used to carry their own copies of these two lines, and three copies of
     # a container-naming rule is three chances for them to drift apart.
     #
-    # @param instance [Object] the kitchen instance
+    # @param instance [Kitchen::Instance] the instance to name; only its
+    #   `name` is read
     # @return [String] the instance name
     def self.instance_name_for(instance)
       prefix = (Digest::SHA2.hexdigest FileUtils.pwd)[0, 10]
       "#{prefix}-#{instance.name}".downcase
     end
 
-    # (see Dokken::Helpers.instance_name_for)
+    # A container-safe, collision-free name for this kitchen instance.
+    #
+    # The mixed-in form of {Dokken::Helpers.instance_name_for}: it takes no
+    # arguments, and reads `instance` off the plugin this module was mixed
+    # into. Deliberately not a `(see ...)` reference to the module function --
+    # that copies the referenced docstring wholesale, which put an
+    # `@param instance` on a method that has no parameters.
     #
     # @return [String] the instance name
+    # @see Dokken::Helpers.instance_name_for
     def instance_name
       ::Dokken::Helpers.instance_name_for(instance)
     end

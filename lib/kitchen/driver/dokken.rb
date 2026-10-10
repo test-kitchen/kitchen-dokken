@@ -140,6 +140,11 @@ module Kitchen
       #
       # The chef volume container and the dokken network are deliberately left
       # behind: both are shared by every instance using the same chef version.
+      #
+      # @param _state [Hash] mutable instance state; unread, because every
+      #   container this removes is found by its derived name rather than by
+      #   the id `create` recorded
+      # @return [void]
       def destroy(_state)
         if remote_docker_host? || running_inside_docker?
           stop_data_container
@@ -872,14 +877,12 @@ module Kitchen
         first
       end
 
-      # Look up the ~/.docker/config.json entry that applies to an image's
-      # registry. Returns nil when that registry has no entry so the pull is
-      # attempted anonymously, rather than offering it another registry's
-      # credentials.
       # Pick the config.json key that holds the Docker Hub credentials. A
       # config may spell Hub several ways, so prefer the canonical key and then
       # a fixed alias order rather than whichever happens to be listed first.
-      # @return [String, nil] the config.json key holding Docker Hub credentials
+      #
+      # @return [String, nil] the config.json key holding Docker Hub
+      #   credentials, or nil when the config names no Hub registry
       def docker_hub_creds_key
         keys = docker_config_creds.keys.select { |k| DOCKER_HUB_HOSTS.include?(parse_registry_host(k)) }
         return if keys.empty?
@@ -889,6 +892,11 @@ module Kitchen
       end
 
       # The ~/.docker/config.json credentials that apply to an image.
+      #
+      # Returns nil when that registry has no entry, so the pull is attempted
+      # anonymously rather than offering it another registry's credentials.
+      # A `credHelpers` entry is stored as a proc and is only invoked here,
+      # once the registry it belongs to is the one being pulled from.
       #
       # @param image [String] an image reference
       # @return [Hash, nil] the credentials, or nil when none apply
@@ -1295,11 +1303,15 @@ module Kitchen
         pull_image image
       end
 
-      # https://github.com/docker/docker/blob/4fcb9ac40ce33c4d6e08d5669af6be5e076e2574/registry/auth.go#L231
       # Reduce a config.json registry key to a bare host.
       #
+      # `docker login` writes the key as a URL for Docker Hub and as a bare
+      # host for everything else, so both forms have to normalise to the same
+      # thing before they can be compared against an image's registry. See
+      # https://github.com/docker/docker/blob/4fcb9ac40ce33c4d6e08d5669af6be5e076e2574/registry/auth.go#L231
+      #
       # @param val [String] a registry key, possibly a URL
-      # @return [String] the host
+      # @return [String] the host, with any scheme and path stripped
       def parse_registry_host(val)
         val.sub(%r{https?://}, "").split("/").first
       end

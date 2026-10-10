@@ -188,6 +188,14 @@ module Kitchen
       #
       # patching Kitchen::Provisioner::ChefInfra#run_command
       #
+      # Note that `root_path` is interpolated unquoted, here and in the
+      # `sh #{config[:root_path]}/run_command` that {#call} execs. A
+      # `root_path` containing a space or a shell metacharacter therefore
+      # breaks the staged script. It is a container-side path with a
+      # `/opt/kitchen` default that nothing in dokken derives from the host,
+      # so it is only reachable by setting `root_path` to such a value
+      # deliberately.
+      #
       # @return [String] a shell command line
       # @api private
       def run_command

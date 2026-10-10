@@ -70,7 +70,14 @@ module Kitchen
 
       # (see Base#connection)
       #
-      # @param state [Hash] mutable instance state
+      # The connection is memoised and handed back whenever the options it was
+      # built from are unchanged, so a converge and the verify that follows it
+      # share one object.
+      #
+      # @param state [Hash] mutable instance state, merged over the transport
+      #   config to build the connection options
+      # @param block [Proc, nil] passed through to the connection; yielded the
+      #   connection when one is given
       # @yieldparam connection [Connection] the connection, if a block is given
       # @return [Connection] a connection to the runner container
       def connection(state, &block)
@@ -487,9 +494,13 @@ module Kitchen
         end
       end
 
-      # Detect whether or not we are running in Docker for Mac or Windows
+      # Detect whether or not we are running in Docker for Mac or Windows.
       #
-      # @return [TrueClass,FalseClass]
+      # Asked of the daemon rather than of the local OS: what matters is that
+      # the daemon shares the host's filesystem, which is true of Docker
+      # Desktop however it is reached. An unreachable daemon answers false.
+      #
+      # @return [Boolean] true when the daemon identifies as Docker Desktop
       def docker_for_mac_or_win?
         ::Docker.info(::Docker::Connection.new(config[:docker_host_url], {}))["Name"] == "docker-desktop"
       # `::StandardError`, spelled out. This method lives inside module
@@ -524,8 +535,13 @@ module Kitchen
       # Creates a new Dokken Connection instance and save it for potential future
       # reuse.
       #
-      # @param options [Hash] connection options
-      # @return [Ssh::Connection] an SSH Connection instance
+      # @param options [Hash] connection options, as built by
+      #   {#connection_options}
+      # @param block [Proc, nil] passed to the Connection constructor, which
+      #   yields itself to it
+      # @yieldparam connection [Connection] the new connection, if a block is
+      #   given
+      # @return [Connection] a Dokken Connection instance
       # @api private
       def create_new_connection(options, &block)
         if @connection
@@ -539,7 +555,9 @@ module Kitchen
 
       # Return the last saved Dokken connection instance.
       #
-      # @return [Dokken::Connection] an Dokken Connection instance
+      # @yieldparam connection [Connection] the saved connection, if a block
+      #   is given
+      # @return [Connection] the saved Dokken Connection instance
       # @api private
       def reuse_connection
         logger.debug("[Dokken] reusing existing connection #{@connection}")
